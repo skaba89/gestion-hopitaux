@@ -43,6 +43,7 @@ import {
   Lightbulb,
   Handshake,
   Globe2,
+  GraduationCap,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -1130,7 +1131,7 @@ function Footer() {
               </div>
             </div>
             <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
-              Système d&apos;Information Hospitalier nouvelle génération pour la Guinée et l&apos;Afrique.
+              Solutions numériques multi-secteurs pour l&apos;Afrique — Santé, Finance, Éducation, Administration, Énergie.
               Développé par DataSphere Innovation — France & Guinée.
             </p>
             <p className="text-xs text-slate-500 mt-2">
@@ -1197,25 +1198,41 @@ function Footer() {
 
 function DataSpherePortfolioSection() {
   const values = [
-    { icon: Lightbulb, title: 'Innovation', desc: 'Nous repoussons les limites de la technologie pour transformer la santé en Afrique.' },
-    { icon: Handshake, title: 'Impact social', desc: 'Chaque ligne de code vise à améliorer l\'accès aux soins pour les populations.' },
-    { icon: ShieldAlert, title: 'Sécurité', desc: 'La protection des données de santé est au cœur de notre approche.' },
-    { icon: Target, title: 'Excellence', desc: 'Des standards internationaux adaptés au contexte africain.' },
+    { icon: Lightbulb, title: 'Innovation', desc: 'Nous repoussons les limites de la technologie pour transformer les secteurs clés en Afrique.' },
+    { icon: Handshake, title: 'Impact social', desc: 'Chaque solution vise à améliorer la vie des populations et le développement du continent.' },
+    { icon: ShieldAlert, title: 'Sécurité', desc: 'La protection des données et la cybersécurité sont au cœur de chaque projet.' },
+    { icon: Target, title: 'Excellence', desc: 'Des standards internationaux adaptés aux réalités locales africaines.' },
   ]
 
   const keyFigures = [
     { value: '2', label: 'Pays', sublabel: 'France & Guinée' },
-    { value: '45+', label: 'Établissements', sublabel: 'Connectés' },
-    { value: '120K+', label: 'Patients', sublabel: 'Gérés' },
+    { value: '5+', label: 'Secteurs', sublabel: 'Couverts' },
+    { value: '50+', label: 'Clients', sublabel: 'Accompagnés' },
     { value: '99.9%', label: 'Uptime', sublabel: 'Garanti' },
+  ]
+
+  const sectors = [
+    { icon: Heart, name: 'Santé', desc: 'HealthFlow Guinea — SIH complet pour hôpitaux et cliniques', color: 'teal' },
+    { icon: Building2, name: 'Administration', desc: 'Plateformes e-gouvernement et gestion des services publics', color: 'blue' },
+    { icon: TrendingUp, name: 'Finance', desc: 'Solutions FinTech, Mobile Money et inclusion financière', color: 'emerald' },
+    { icon: GraduationCap, name: 'Éducation', desc: 'Plateformes e-learning et gestion scolaire numérique', color: 'purple' },
+    { icon: Zap, name: 'Énergie', desc: 'Monitoring et optimisation des réseaux énergétiques', color: 'amber' },
   ]
 
   const milestones = [
     { year: '2023', event: 'Création de DataSphere Innovation à Paris et Conakry par Sekouna KABA' },
-    { year: '2024', event: 'Lancement du programme HealthFlow Guinea — premier pilote à Conakry' },
-    { year: '2025', event: 'Déploiement dans 15 hôpitaux guinéens, partenariat avec le Ministère de la Santé' },
-    { year: '2026', event: 'Expansion régionale — HealthFlow déployé au Sénégal, Mali et Côte d\'Ivoire' },
+    { year: '2024', event: 'Lancement de HealthFlow Guinea et premières solutions multi-secteurs' },
+    { year: '2025', event: 'Déploiement Santé + Finance + Éducation — 50+ clients accompagnés' },
+    { year: '2026', event: 'Expansion régionale au Sénégal, Mali et Côte d\'Ivoire — 5 secteurs couverts' },
   ]
+
+  const sectorColors: Record<string, string> = {
+    teal: 'bg-teal-50 dark:bg-teal-950/50 text-teal-600 dark:text-teal-400',
+    blue: 'bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400',
+    emerald: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400',
+    purple: 'bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400',
+    amber: 'bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400',
+  }
 
   return (
     <section className="py-20 lg:py-28 bg-white dark:bg-slate-950">
@@ -1227,14 +1244,15 @@ function DataSpherePortfolioSection() {
               DataSphere Innovation
             </Badge>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white mt-4">
-              La HealthTech{' '}
+              La Tech multi-secteurs{' '}
               <span className="bg-gradient-to-r from-teal-600 to-emerald-500 bg-clip-text text-transparent">
                 franco-guinéenne
               </span>
             </h2>
             <p className="mt-4 text-lg text-slate-600 dark:text-slate-300">
-              Fondée par Sekouna KABA, DataSphere Innovation développe des solutions numériques de santé
-              pensées pour l&apos;Afrique, avec des standards internationaux et une expertise locale.
+              Fondée par Sekouna KABA, DataSphere Innovation conçoit des solutions numériques
+              pour tous les secteurs — santé, finance, éducation, administration et énergie —
+              avec des standards internationaux et une expertise locale africaine.
             </p>
           </div>
         </Reveal>
@@ -1254,11 +1272,12 @@ function DataSpherePortfolioSection() {
                     <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Sekouna KABA</h3>
                     <p className="text-teal-600 dark:text-teal-400 font-semibold mt-1">Fondateur & Directeur Général</p>
                     <p className="text-slate-600 dark:text-slate-300 mt-3 leading-relaxed">
-                      Entrepreneur franco-guinéen passionné par la transformation numérique de la santé en Afrique.
-                      Fort de son expérience dans les systèmes d&apos;information hospitaliers en Europe, il a créé
-                      DataSphere Innovation pour combler le fossé technologique dans les établissements de santé
-                      guinéens et africains. Sa vision : rendre la santé numérique accessible, sécurisée et
-                      adaptée aux réalités locales.
+                      Entrepreneur franco-guinéen visionnaire, Sekouna KABA a créé DataSphere Innovation
+                      pour accélérer la transformation numérique en Afrique dans tous les secteurs clés.
+                      Fort de son expérience en systèmes d&apos;information en Europe, il porte une conviction :
+                      l&apos;Afrique mérite des solutions technologiques de classe mondiale, pensées
+                      pour ses réalités. De la santé à la finance, de l&apos;éducation à l&apos;administration,
+                      DataSphere innove pour un continent connecté.
                     </p>
                     <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-4">
                       <Badge className="bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800">
@@ -1268,13 +1287,44 @@ function DataSpherePortfolioSection() {
                         <MapPin className="w-3 h-3 mr-1" /> Conakry, Guinée
                       </Badge>
                       <Badge className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700">
-                        <Award className="w-3 h-3 mr-1" /> HealthTech
+                        <Award className="w-3 h-3 mr-1" /> Multi-secteurs
                       </Badge>
                     </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
+          </div>
+        </Reveal>
+
+        {/* Sectors Grid */}
+        <Reveal>
+          <div className="mb-16">
+            <h3 className="text-2xl font-bold text-center text-slate-900 dark:text-white mb-3">
+              Nos secteurs d&apos;expertise
+            </h3>
+            <p className="text-center text-slate-500 dark:text-slate-400 mb-10 max-w-2xl mx-auto">
+              Des solutions numériques sur mesure pour chaque domaine stratégique du développement africain.
+            </p>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-5">
+              {sectors.map((s, i) => (
+                <motion.div
+                  key={s.name}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                  viewport={{ once: true }}
+                  whileHover={{ y: -6 }}
+                  className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-lg transition-all text-center"
+                >
+                  <div className={`w-14 h-14 rounded-2xl ${sectorColors[s.color]} flex items-center justify-center mx-auto mb-4`}>
+                    <s.icon className="w-7 h-7" />
+                  </div>
+                  <h4 className="font-bold text-slate-900 dark:text-white mb-2">{s.name}</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{s.desc}</p>
+                </motion.div>
+              ))}
+            </div>
           </div>
         </Reveal>
 
@@ -1388,7 +1438,7 @@ function DataSpherePortfolioSection() {
                     <MapPin className="w-4 h-4" /> Conakry, Guinée
                   </h4>
                   <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                    Bureau opérationnel — Déploiement terrain, formation utilisateurs, support local et relations ministérielles.
+                    Bureau opérationnel — Déploiement terrain, formation utilisateurs, support local et relations institutionnelles.
                   </p>
                 </div>
               </CardContent>

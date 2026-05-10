@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "HealthFlow Guinea - Système d'Information Hospitalier",
-  description: "Le futur de la santé en Guinée commence ici. Plateforme numérique complète pour la gestion hospitalière, patients, laboratoire, pharmacie et plus. Par DataSphere Innovation — Fondée par Sekouna KABA.",
-  keywords: ["HealthFlow", "Guinée", "système hospitalier", "santé numérique", "HIS", "DataSphere Innovation", "Sekouna KABA", "téléconsultation", "gestion patients"],
+  description: "Solutions numériques multi-secteurs pour l'Afrique — HealthFlow Guinea SIH, Finance, Éducation, Administration, Énergie. Par DataSphere Innovation — Fondée par Sekouna KABA.",
+  keywords: ["HealthFlow", "Guinée", "système hospitalier", "santé numérique", "HIS", "DataSphere Innovation", "Sekouna KABA", "FinTech", "e-gouvernement", "e-learning", "téléconsultation", "multi-secteurs"],
   authors: [{ name: "DataSphere Innovation" }],
   icons: {
     icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
