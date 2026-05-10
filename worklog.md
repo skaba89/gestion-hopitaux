@@ -121,3 +121,66 @@ Stage Summary:
 - Lint: ✅ Zero errors
 - Build: ✅ Successful
 - All TypeScript types validated
+---
+Task ID: 1
+Agent: Main
+Task: Fix Framer Motion spring keyframes runtime error
+
+Work Log:
+- Identified the error: "Only two keyframes currently supported with spring and inertia animations. Trying to animate 1,1.1,1"
+- Found the source at line 2121 in landing-page.tsx: `animate={{ scale: [1, 1.1, 1] }}` with `type: 'spring'`
+- Changed transition from `type: 'spring' as const, bounce: 0.4` to `ease: 'easeInOut'` to preserve the 3-keyframe pulse animation
+- Verified all other spring usages only have 2 keyframes (safe)
+- Build succeeds with 0 errors
+
+Stage Summary:
+- Fixed the runtime error by replacing spring transition with easeInOut for the 3-keyframe animation
+- All other spring animations are safe (2 keyframes only)
+---
+Task ID: 2
+Agent: Main
+Task: Verify RBAC for patient records (already implemented)
+
+Work Log:
+- Confirmed ROLE_PERMISSIONS in data-store.ts defines 6 roles with canDownload/canView/canUpload/canDelete/needsAuthorization
+- Administrateur: full access (canDownload=true, needsAuthorization=false)
+- Other roles: view-only with authorization required (canDownload=false, needsAuthorization=true)
+- Patients.tsx already uses these permissions for document access control
+- DocumentAuthorization system with request/approve/refuse workflow is in place
+- Patient portal already enforces view-only for documents with message: "Consultation seule — le téléchargement est réservé au personnel médical"
+
+Stage Summary:
+- RBAC is fully implemented and functional
+---
+Task ID: 3
+Agent: Main
+Task: Verify demo video with explanation (already implemented)
+
+Work Log:
+- DemoVideoModal component exists with 8 steps covering all major features
+- Steps: Welcome, Dashboard, Patients, Appointments, Lab/Pharmacy, Emergency/Hospitalization, Patient Portal, CTA
+- Each step has: icon, title, description, features list, and visual mockup
+- Auto-advances every 8 seconds, pauses on hover
+- Navigation with Previous/Next buttons and progress dots
+- Final step links to "Essayer gratuitement" with CTA to dashboard
+
+Stage Summary:
+- Demo video is fully implemented with rich step-by-step explanation
+---
+Task ID: 4
+Agent: Main
+Task: Verify patient portal with family accounts (already implemented)
+
+Work Log:
+- PortalLogin: Phone-based login with verification code (demo: +224 622 11 22 33 / code 2233)
+- FamilyAccount type with members array and relationships (Moi, Conjoint, Enfant, Parent, Frère/Sœur, Autre)
+- PortalDashboard: Sidebar with family member list + detail view
+- FamilyMemberCard: Visual cards with selection state
+- AddFamilyMemberDialog: Add patients to family account
+- BookAppointmentDialog: Schedule appointments for any family member
+- PatientDetail: 4 tabs (Info, Appointments, Documents, History) with view-only documents
+- 3 demo family accounts pre-populated
+- Store integration with portalUser state (isLoggedIn, accountId, phone)
+
+Stage Summary:
+- Patient portal with family accounts is fully implemented and functional

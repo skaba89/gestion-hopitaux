@@ -2118,7 +2118,7 @@ function DemoStepMockup({ type }: { type: string }) {
   if (type === 'cta') {
     return (
       <div className="flex flex-col items-center justify-center py-6 text-center space-y-4">
-        <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 2, repeat: Infinity, type: 'spring' as const, bounce: 0.4 }} className="w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center shadow-xl shadow-teal-500/30">
+        <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }} className="w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center shadow-xl shadow-teal-500/30">
           <Sparkles className="w-8 h-8 text-white" />
         </motion.div>
         <div className="text-sm font-bold text-teal-700 dark:text-teal-300">D\u00e9marrer maintenant</div>
