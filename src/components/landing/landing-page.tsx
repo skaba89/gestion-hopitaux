@@ -8,42 +8,57 @@ import {
   Baby,
   BarChart3,
   Bed,
+  Building2,
   Calendar,
   ChevronRight,
-  Globe,
-  Heart,
-  Hospital,
-  Microscope,
-  Moon,
-  Pill,
-  Receipt,
-  ShieldAlert,
-  Sun,
-  Users,
-  Video,
-  Menu,
-  X,
-  Phone,
-  Mail,
-  MapPin,
-  ArrowRight,
-  Check,
-  Star,
-  Sparkles,
-  Stethoscope,
   ClipboardCheck,
-  Zap,
-  TrendingUp,
-  Building2,
+  Cloud,
+  Database,
   Facebook,
-  Twitter,
-  Linkedin,
-  Award,
-  Target,
-  Lightbulb,
-  Handshake,
+  Film,
+  Globe,
   Globe2,
   GraduationCap,
+  Handshake,
+  Heart,
+  Hospital,
+  Landmark,
+  Lightbulb,
+  Linkedin,
+  MapPin,
+  Microscope,
+  Pickaxe,
+  Moon,
+  Package,
+  Phone,
+  Pill,
+  Receipt,
+  Bot,
+  Scale,
+  ScatterChart,
+  ShieldAlert,
+  Signal,
+  Smartphone,
+  Sparkles,
+  Star,
+  Stethoscope,
+  Sun,
+  Target,
+  TrendingUp,
+  Truck,
+  Twitter,
+  Users,
+  Video,
+  Wheat,
+  X,
+  Zap,
+  ArrowRight,
+  Check,
+  Menu,
+  Mail,
+  Award,
+  Cpu,
+  LayoutGrid,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -1208,42 +1223,319 @@ function Footer() {
 /* ─────────── DataSphere Innovation Portfolio Section ─────────── */
 
 function DataSpherePortfolioSection() {
+  const [activeCategory, setActiveCategory] = useState<string>('all')
+  const [hoveredProject, setHoveredProject] = useState<string | null>(null)
+
   const values = [
-    { icon: Lightbulb, title: 'Innovation', desc: 'Nous repoussons les limites de la technologie pour transformer les secteurs clés en Afrique.' },
+    { icon: Lightbulb, title: 'Innovation', desc: 'Nous repoussons les limites de la technologie pour transformer les secteurs clés en Afrique et en Europe.' },
     { icon: Handshake, title: 'Impact social', desc: 'Chaque solution vise à améliorer la vie des populations et le développement du continent.' },
     { icon: ShieldAlert, title: 'Sécurité', desc: 'La protection des données et la cybersécurité sont au cœur de chaque projet.' },
-    { icon: Target, title: 'Excellence', desc: 'Des standards internationaux adaptés aux réalités locales africaines.' },
+    { icon: Target, title: 'Excellence', desc: 'Des standards internationaux adaptés aux réalités locales africaines et européennes.' },
   ]
 
   const keyFigures = [
+    { value: '20+', label: 'Projets', sublabel: 'Réalisés' },
+    { value: '10', label: 'Secteurs', sublabel: 'Couverts' },
     { value: '2', label: 'Pays', sublabel: 'France & Guinée' },
-    { value: '5+', label: 'Secteurs', sublabel: 'Couverts' },
-    { value: '50+', label: 'Clients', sublabel: 'Accompagnés' },
     { value: '99.9%', label: 'Uptime', sublabel: 'Garanti' },
   ]
 
-  const sectors = [
-    { icon: Heart, name: 'Santé', desc: 'HealthFlow Guinea — SIH complet pour hôpitaux et cliniques', color: 'teal' },
-    { icon: Building2, name: 'Administration', desc: 'Plateformes e-gouvernement et gestion des services publics', color: 'blue' },
-    { icon: TrendingUp, name: 'Finance', desc: 'Solutions FinTech, Mobile Money et inclusion financière', color: 'emerald' },
-    { icon: GraduationCap, name: 'Éducation', desc: 'Plateformes e-learning et gestion scolaire numérique', color: 'purple' },
-    { icon: Zap, name: 'Énergie', desc: 'Monitoring et optimisation des réseaux énergétiques', color: 'amber' },
+  const categories = [
+    { id: 'all', label: 'Tous les projets', icon: LayoutGrid },
+    { id: 'govtech', label: 'GovTech', icon: Landmark },
+    { id: 'education', label: 'Éducation', icon: GraduationCap },
+    { id: 'health', label: 'Santé', icon: Heart },
+    { id: 'telecom', label: 'Télécom', icon: Signal },
+    { id: 'mines', label: 'Mines', icon: Pickaxe },
+    { id: 'agritech', label: 'AgriTech', icon: Wheat },
+    { id: 'logistics', label: 'Logistique', icon: Truck },
+    { id: 'gis', label: 'Cartographie', icon: MapPin },
+    { id: 'ai', label: 'IA & Automation', icon: Bot },
+    { id: 'media', label: 'Média', icon: Film },
+    { id: 'social', label: 'Social', icon: Smartphone },
+    { id: 'business', label: 'Business', icon: TrendingUp },
+    { id: 'food', label: 'FoodTech', icon: Package },
+    { id: 'fintech', label: 'FinTech', icon: Receipt },
+    { id: 'data', label: 'Data Eng.', icon: Database },
+    { id: 'cloud', label: 'Cloud', icon: Cloud },
+    { id: 'france', label: '🇫🇷 France', icon: Cpu },
+  ]
+
+  const projects = [
+    {
+      id: 'eadmin',
+      name: 'eAdministration Suite',
+      subtitle: 'Plateforme de Digitalisation Administrative Intégrée',
+      category: 'govtech',
+      flag: '🇬🇳',
+      icon: Landmark,
+      color: 'from-blue-500 to-indigo-600',
+      features: ['GED', 'Workflows', 'Parapheur électronique', 'Portail citoyen', 'Signatures électroniques', 'Dashboards administratifs'],
+      targets: 'Ministères, institutions publiques, collectivités, universités',
+    },
+    {
+      id: 'natdata',
+      name: 'National Data Platform',
+      subtitle: 'Plateforme Nationale de Données & Pilotage Décisionnel',
+      category: 'govtech',
+      flag: '🇬🇳',
+      icon: Database,
+      color: 'from-cyan-500 to-blue-600',
+      features: ['Data Lake', 'Data Warehouse', 'Pipelines data', 'Dashboards nationaux', 'Analytics', 'Gouvernance data', 'IA analytique'],
+      targets: 'Apache Airflow, dbt, Apache Superset, Kafka, PostgreSQL',
+    },
+    {
+      id: 'smartcity',
+      name: 'SmartCity Guinea',
+      subtitle: 'Plateforme de Ville Intelligente',
+      category: 'govtech',
+      flag: '🇬🇳',
+      icon: Building2,
+      color: 'from-sky-500 to-cyan-600',
+      features: ['Cartographie', 'Gestion incidents urbains', 'Mobilité', 'Éclairage public', 'Participation citoyenne', 'Dashboards temps réel'],
+      targets: 'Mairies, collectivités, agences urbaines',
+    },
+    {
+      id: 'justicetech',
+      name: 'JusticeTech Guinea',
+      subtitle: 'Digitalisation du système judiciaire',
+      category: 'govtech',
+      flag: '🇬🇳',
+      icon: Scale,
+      color: 'from-violet-500 to-purple-600',
+      features: ['Gestion dossiers judiciaires', 'Workflows magistrats', 'Audiences', 'Signatures', 'Archivage', 'Portail citoyen'],
+      targets: 'Ministère de la Justice, tribunaux, cours',
+    },
+    {
+      id: 'fingov',
+      name: 'FinGov Analytics',
+      subtitle: 'Pilotage Financier Public & Budgétaire',
+      category: 'govtech',
+      flag: '🇬🇳',
+      icon: BarChart3,
+      color: 'from-emerald-500 to-teal-600',
+      features: ['Exécution budgétaire', 'Analytics finances publiques', 'Détection anomalies', 'Dashboards ministériels'],
+      targets: 'Ministère des Finances, directions budgétaires',
+    },
+    {
+      id: 'campus360',
+      name: 'Campus360 Guinea',
+      subtitle: 'Smart Campus & Université Digitale',
+      category: 'education',
+      flag: '🇬🇳',
+      icon: GraduationCap,
+      color: 'from-purple-500 to-pink-600',
+      features: ['Gestion scolaire', 'Carte étudiante', 'Analytics étudiants', 'Portail parents', 'E-learning', 'Paiement Mobile Money'],
+      targets: 'Universités, écoles, instituts',
+    },
+    {
+      id: 'healthflow',
+      name: 'HealthFlow Guinea',
+      subtitle: 'Système d\'Information Hospitalier',
+      category: 'health',
+      flag: '🇬🇳',
+      icon: Heart,
+      color: 'from-teal-500 to-emerald-600',
+      features: ['Dossier patient', 'Laboratoire', 'Pharmacie', 'Urgences', 'Téléconsultation', 'Dashboards santé'],
+      targets: 'Hôpitaux, cliniques, centres de santé',
+      featured: true,
+    },
+    {
+      id: 'telecom',
+      name: 'Telecom Intelligence Platform',
+      subtitle: 'Monitoring QoS & Analytics Télécom',
+      category: 'telecom',
+      flag: '🇬🇳',
+      icon: Signal,
+      color: 'from-orange-500 to-red-600',
+      features: ['Monitoring réseau', 'QoS', 'Heatmaps', 'Analytics abonnés', 'Incidents télécoms'],
+      targets: 'ARPT Guinée, opérateurs télécoms',
+    },
+    {
+      id: 'mineops',
+      name: 'MineOps Intelligence',
+      subtitle: 'Data Platform Minière & Industrielle',
+      category: 'mines',
+      flag: '🇬🇳',
+      icon: Pickaxe,
+      color: 'from-amber-500 to-orange-600',
+      features: ['Production minière', 'Maintenance prédictive', 'HSE', 'Analytics industriels', 'Logistique minière'],
+      targets: 'Compagnies minières, industries extractives',
+    },
+    {
+      id: 'agridata',
+      name: 'AgriData Guinea',
+      subtitle: 'Agriculture Intelligente & Analytics',
+      category: 'agritech',
+      flag: '🇬🇳',
+      icon: Wheat,
+      color: 'from-lime-500 to-green-600',
+      features: ['Météo', 'Suivi exploitations', 'Cartographie agricole', 'Analytics récoltes', 'IoT agricole'],
+      targets: 'Ministère de l\'Agriculture, coopératives',
+    },
+    {
+      id: 'logisticsflow',
+      name: 'LogisticsFlow Africa',
+      subtitle: 'Plateforme Logistique & Supply Chain',
+      category: 'logistics',
+      flag: '🇬🇳',
+      icon: Truck,
+      color: 'from-slate-500 to-zinc-600',
+      features: ['Tracking flotte', 'Analytics logistiques', 'Optimisation routes', 'Suivi cargaisons', 'Dashboards supply chain'],
+      targets: 'Transporteurs, logisticiens, importateurs',
+    },
+    {
+      id: 'addressing',
+      name: 'National Addressing Platform',
+      subtitle: 'Adressage & Cartographie Nationale',
+      category: 'gis',
+      flag: '🇬🇳',
+      icon: MapPin,
+      color: 'from-rose-500 to-pink-600',
+      features: ['Géolocalisation', 'Numérotation rues', 'QR code adresse', 'Cartographie nationale'],
+      targets: 'Poste nationale, services d\'urbanisme',
+    },
+    {
+      id: 'dsai',
+      name: 'DataSphere AI Platform',
+      subtitle: 'Plateforme IA Africaine Multi-services',
+      category: 'ai',
+      flag: '🇬🇳',
+      icon: Bot,
+      color: 'from-indigo-500 to-violet-600',
+      features: ['Agents IA', 'OCR', 'NLP', 'Copilote administratif', 'IA générative', 'Analytics intelligents'],
+      targets: 'Entreprises, administrations, institutions',
+    },
+    {
+      id: 'traducteur',
+      name: 'TraducteurPro / PolyglotVision',
+      subtitle: 'Traduction Vidéo IA',
+      category: 'media',
+      flag: '🇬🇳',
+      icon: Film,
+      color: 'from-fuchsia-500 to-purple-600',
+      features: ['Transcription', 'Traduction', 'Doublage voix IA', 'Sous-titrage', 'Interface web/mobile', 'Intégration ElevenLabs'],
+      targets: 'Médias, producteurs, créateurs de contenu',
+    },
+    {
+      id: 'viralai',
+      name: 'Viral Content AI Suite',
+      subtitle: 'SaaS IA Publication Réseaux Sociaux',
+      category: 'social',
+      flag: '🇬🇳',
+      icon: Smartphone,
+      color: 'from-pink-500 to-rose-600',
+      features: ['Génération vidéos', 'Publication TikTok/YouTube/Facebook', 'IA contenu viral', 'Automation réseaux sociaux'],
+      targets: 'Influenceurs, agences marketing, créateurs',
+    },
+    {
+      id: 'kamogui',
+      name: 'KAMOGUI Gold Intelligence',
+      subtitle: 'CRM Investisseurs & Intelligence Marché Or',
+      category: 'business',
+      flag: '🇬🇳',
+      icon: Star,
+      color: 'from-yellow-500 to-amber-600',
+      features: ['CRM investisseurs', 'Analytics marché or', 'Scoring IA', 'Dashboards premium', 'Pipeline commercial'],
+      targets: 'Investisseurs, courtiers or, traders',
+    },
+    {
+      id: 'kfmdelice',
+      name: 'KFM Délice Platform',
+      subtitle: 'Plateforme Restaurant & Livraison',
+      category: 'food',
+      flag: '🇬🇳',
+      icon: Package,
+      color: 'from-red-500 to-orange-600',
+      features: ['Commande en ligne', 'Panier', 'Suivi commandes', 'WhatsApp', 'Paiement', 'Gestion restaurant'],
+      targets: 'Restaurants, fast-foods, livraison',
+    },
+    {
+      id: 'facturepro',
+      name: 'FacturePro / GKL Logistics',
+      subtitle: 'SaaS Facturation & Gestion Entreprise',
+      category: 'fintech',
+      flag: '🇬🇳',
+      icon: Receipt,
+      color: 'from-green-500 to-emerald-600',
+      features: ['Factures', 'Devis', 'Paiements', 'Dashboard analytics', 'Relances automatiques', 'IA comptable'],
+      targets: 'PME, TPE, auto-entrepreneurs',
+    },
+    {
+      id: 'noc',
+      name: 'NOC Conformité Platform',
+      subtitle: 'Plateforme Data Engineering & Monitoring',
+      category: 'data',
+      flag: '🇬🇳',
+      icon: ScatterChart,
+      color: 'from-teal-500 to-cyan-600',
+      features: ['Pipelines dbt', 'Analytics conformité', 'Dashboards Superset', 'Monitoring data', 'Gouvernance'],
+      targets: 'Directions conformité, auditeurs, DPO',
+    },
+    {
+      id: 'multicloud',
+      name: 'MultiCloud Realtime Platform',
+      subtitle: 'AWS / Azure / GCP / Docker',
+      category: 'cloud',
+      flag: '🇬🇳',
+      icon: Cloud,
+      color: 'from-sky-500 to-blue-600',
+      features: ['Ingestion temps réel', 'Kafka', 'CDC', 'Snowflake', 'Synapse', 'BigQuery', 'PostgreSQL', 'MinIO', 'Airflow', 'MLflow'],
+      targets: 'DSI, architectses data, cloud engineers',
+    },
+  ]
+
+  const franceServices = [
+    {
+      title: 'Agents IA Entreprise',
+      desc: 'Conception et déploiement d\'agents IA autonomes pour automatiser les processus métiers : classification de documents, extraction d\'informations, prise de décision assistée, et orchestration de workflows intelligents.',
+      icon: Bot,
+      color: 'from-violet-500 to-indigo-600',
+    },
+    {
+      title: 'Architecture Microservices',
+      desc: 'Design et mise en œuvre d\'architectures microservices évolutives avec Kubernetes, Istio, et les patterns les plus avancés : event-driven architecture, CQRS, saga pattern, et service mesh pour les entreprises françaises.',
+      icon: LayoutGrid,
+      color: 'from-blue-500 to-cyan-600',
+    },
+    {
+      title: 'Data Platforms Modernes',
+      desc: 'Construction de plateformes data end-to-end : data lakehouse, pipelines temps réel avec Kafka et Flink, dbt pour la transformation, et Superset/Metabase pour la visualisation. Architecture Medallion et governance complète.',
+      icon: Database,
+      color: 'from-emerald-500 to-teal-600',
+    },
+    {
+      title: 'Cloud & DevOps',
+      desc: 'Stratégie multi-cloud AWS/Azure/GCP, infrastructure as code avec Terraform, CI/CD avancé, monitoring avec Grafana/Prometheus, et gestion de clusters Kubernetes en production pour des entreprises à forte charge.',
+      icon: Cloud,
+      color: 'from-sky-500 to-blue-600',
+    },
+    {
+      title: 'RAG & IA Générative',
+      desc: 'Implémentation de systèmes RAG (Retrieval Augmented Generation) sur mesure, fine-tuning de modèles LLM, intégration de copilotes intelligents dans les outils métiers, et architectures vectorielles avec Pinecone/Weaviate.',
+      icon: Sparkles,
+      color: 'from-purple-500 to-pink-600',
+    },
+    {
+      title: 'Modernisation Legacy',
+      desc: 'Migration et modernisation de systèmes legacy vers des architectures cloud-native : décomposition de monolithes, strangler pattern, API-first design, et transition progressive avec zéro downtime garanti.',
+      icon: Cpu,
+      color: 'from-amber-500 to-orange-600',
+    },
   ]
 
   const milestones = [
     { year: '2023', event: 'Création de DataSphere Innovation à Paris et Conakry par Sekouna KABA' },
-    { year: '2024', event: 'Lancement de HealthFlow Guinea et premières solutions multi-secteurs' },
-    { year: '2025', event: 'Déploiement Santé + Finance + Éducation — 50+ clients accompagnés' },
-    { year: '2026', event: 'Expansion régionale au Sénégal, Mali et Côte d\'Ivoire — 5 secteurs couverts' },
+    { year: '2024', event: 'Lancement des premières plateformes GovTech et HealthFlow Guinea' },
+    { year: '2025', event: '20+ projets déployés — 10 secteurs couverts en Afrique et en France' },
+    { year: '2026', event: 'Expansion régionale + Services IA & Architecture pour entreprises françaises' },
   ]
 
-  const sectorColors: Record<string, string> = {
-    teal: 'bg-teal-50 dark:bg-teal-950/50 text-teal-600 dark:text-teal-400',
-    blue: 'bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400',
-    emerald: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400',
-    purple: 'bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400',
-    amber: 'bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400',
-  }
+  const filteredProjects = activeCategory === 'all'
+    ? projects
+    : activeCategory === 'france'
+      ? []
+      : projects.filter(p => p.category === activeCategory)
 
   return (
     <section className="py-20 lg:py-28 bg-white dark:bg-slate-950">
@@ -1255,15 +1547,15 @@ function DataSpherePortfolioSection() {
               DataSphere Innovation
             </Badge>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white mt-4">
-              La Tech multi-secteurs{' '}
+              20+ projets,{' '}
               <span className="bg-gradient-to-r from-teal-600 to-emerald-500 bg-clip-text text-transparent">
-                franco-guinéenne
+                10 secteurs
               </span>
             </h2>
             <p className="mt-4 text-lg text-slate-600 dark:text-slate-300">
               Fondée par Sekouna KABA, DataSphere Innovation conçoit des solutions numériques
-              pour tous les secteurs — santé, finance, éducation, administration et énergie —
-              avec des standards internationaux et une expertise locale africaine.
+              pour l&apos;Afrique et la France — GovTech, Santé, Finance, IA, Data Engineering
+              et bien plus. De Conakry à Paris, nous transformons les secteurs clés.
             </p>
           </div>
         </Reveal>
@@ -1284,11 +1576,10 @@ function DataSpherePortfolioSection() {
                     <p className="text-teal-600 dark:text-teal-400 font-semibold mt-1">Fondateur & Directeur Général</p>
                     <p className="text-slate-600 dark:text-slate-300 mt-3 leading-relaxed">
                       Entrepreneur franco-guinéen visionnaire, Sekouna KABA a créé DataSphere Innovation
-                      pour accélérer la transformation numérique en Afrique dans tous les secteurs clés.
-                      Fort de son expérience en systèmes d&apos;information en Europe, il porte une conviction :
-                      l&apos;Afrique mérite des solutions technologiques de classe mondiale, pensées
-                      pour ses réalités. De la santé à la finance, de l&apos;éducation à l&apos;administration,
-                      DataSphere innove pour un continent connecté.
+                      pour accélérer la transformation numérique en Afrique et en Europe.
+                      Fort de son expertise en architecture logicielle et intelligence artificielle,
+                      il a dirigé plus de 20 projets couvrant 10 secteurs — de la GovTech à la FinTech,
+                      de la Santé à l&apos;IA. De Conakry à Paris, DataSphere innove pour un monde connecté.
                     </p>
                     <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-4">
                       <Badge className="bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800">
@@ -1298,44 +1589,13 @@ function DataSpherePortfolioSection() {
                         <MapPin className="w-3 h-3 mr-1" /> Conakry, Guinée
                       </Badge>
                       <Badge className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700">
-                        <Award className="w-3 h-3 mr-1" /> Multi-secteurs
+                        <Award className="w-3 h-3 mr-1" /> 20+ Projets
                       </Badge>
                     </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
-          </div>
-        </Reveal>
-
-        {/* Sectors Grid */}
-        <Reveal>
-          <div className="mb-16">
-            <h3 className="text-2xl font-bold text-center text-slate-900 dark:text-white mb-3">
-              Nos secteurs d&apos;expertise
-            </h3>
-            <p className="text-center text-slate-500 dark:text-slate-400 mb-10 max-w-2xl mx-auto">
-              Des solutions numériques sur mesure pour chaque domaine stratégique du développement africain.
-            </p>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-5">
-              {sectors.map((s, i) => (
-                <motion.div
-                  key={s.name}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                  viewport={{ once: true }}
-                  whileHover={{ y: -6 }}
-                  className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-lg transition-all text-center"
-                >
-                  <div className={`w-14 h-14 rounded-2xl ${sectorColors[s.color]} flex items-center justify-center mx-auto mb-4`}>
-                    <s.icon className="w-7 h-7" />
-                  </div>
-                  <h4 className="font-bold text-slate-900 dark:text-white mb-2">{s.name}</h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{s.desc}</p>
-                </motion.div>
-              ))}
-            </div>
           </div>
         </Reveal>
 
@@ -1360,6 +1620,139 @@ function DataSpherePortfolioSection() {
             ))}
           </div>
         </Reveal>
+
+        {/* Category Filter */}
+        <Reveal>
+          <div className="mb-10">
+            <h3 className="text-2xl font-bold text-center text-slate-900 dark:text-white mb-3">
+              Nos projets réalisés
+            </h3>
+            <p className="text-center text-slate-500 dark:text-slate-400 mb-8 max-w-2xl mx-auto">
+              Découvrez l&apos;ensemble de nos solutions déployées en Guinée et en France, classées par secteur d&apos;activité.
+            </p>
+            <div className="flex flex-wrap justify-center gap-2 mb-10">
+              {categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setActiveCategory(cat.id)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                    activeCategory === cat.id
+                      ? 'bg-gradient-to-r from-teal-600 to-emerald-600 text-white shadow-md shadow-teal-500/25'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  <cat.icon className="w-3.5 h-3.5" />
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </Reveal>
+
+        {/* France Services Section */}
+        {activeCategory === 'france' && (
+          <Reveal>
+            <div className="mb-16">
+              <div className="text-center mb-10">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 mb-4">
+                  <span className="text-lg">🇫🇷</span>
+                  <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">Services en France</span>
+                </div>
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
+                  Agents IA & Architectures Modernes
+                </h3>
+                <p className="text-slate-500 dark:text-slate-400 mt-2 max-w-2xl mx-auto">
+                  DataSphere Innovation accompagne les entreprises françaises dans la mise en place
+                  d&apos;agents IA, d&apos;architectures microservices et de plateformes data modernes.
+                </p>
+              </div>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {franceServices.map((svc, i) => (
+                  <motion.div
+                    key={svc.title}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                    viewport={{ once: true }}
+                    whileHover={{ y: -6, scale: 1.02 }}
+                    className="group relative p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all overflow-hidden"
+                  >
+                    <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${svc.color}`} />
+                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${svc.color} flex items-center justify-center mb-4 shadow-lg`}>
+                      <svc.icon className="w-6 h-6 text-white" />
+                    </div>
+                    <h4 className="font-bold text-slate-900 dark:text-white mb-2">{svc.title}</h4>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{svc.desc}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </Reveal>
+        )}
+
+        {/* Projects Grid */}
+        {activeCategory !== 'france' && (
+          <Reveal>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+              {filteredProjects.map((p, i) => (
+                <motion.div
+                  key={p.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.06 }}
+                  viewport={{ once: true }}
+                  whileHover={{ y: -6, scale: 1.02 }}
+                  onHoverStart={() => setHoveredProject(p.id)}
+                  onHoverEnd={() => setHoveredProject(null)}
+                  className={`group relative p-6 rounded-2xl bg-white dark:bg-slate-900 border shadow-sm hover:shadow-xl transition-all overflow-hidden ${
+                    p.featured
+                      ? 'border-2 border-teal-200 dark:border-teal-800 ring-1 ring-teal-100 dark:ring-teal-900/50'
+                      : 'border-slate-100 dark:border-slate-800'
+                  }`}
+                >
+                  {p.featured && (
+                    <div className="absolute top-3 right-3">
+                      <Badge className="bg-gradient-to-r from-teal-600 to-emerald-600 text-white text-[10px] border-0">
+                        <Sparkles className="w-3 h-3 mr-1" /> Vous êtes ici
+                      </Badge>
+                    </div>
+                  )}
+                  <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${p.color}`} />
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${p.color} flex items-center justify-center shadow-lg flex-shrink-0`}>
+                      <p.icon className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">{p.flag}</span>
+                        <h4 className="font-bold text-slate-900 dark:text-white truncate">{p.name}</h4>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">{p.subtitle}</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    {p.features.slice(0, hoveredProject === p.id ? p.features.length : 4).map((f, fi) => (
+                      <span
+                        key={fi}
+                        className="px-2 py-0.5 rounded-full bg-slate-50 dark:bg-slate-800 text-[10px] font-medium text-slate-600 dark:text-slate-300 border border-slate-100 dark:border-slate-700"
+                      >
+                        {f}
+                      </span>
+                    ))}
+                    {p.features.length > 4 && hoveredProject !== p.id && (
+                      <span className="px-2 py-0.5 rounded-full bg-teal-50 dark:bg-teal-950/50 text-[10px] font-medium text-teal-600 dark:text-teal-400">
+                        +{p.features.length - 4}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 leading-relaxed">
+                    <span className="font-medium text-slate-500 dark:text-slate-400">Cibles :</span> {p.targets}
+                  </p>
+                </motion.div>
+              ))}
+            </div>
+          </Reveal>
+        )}
 
         {/* Values */}
         <Reveal>
@@ -1434,7 +1827,8 @@ function DataSpherePortfolioSection() {
                     <MapPin className="w-4 h-4" /> Paris, France
                   </h4>
                   <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                    Siège social — R&D, architecture logicielle, conformité RGPD, partenariats européens et levée de fonds.
+                    Siège social — R&D, architecture logicielle, agents IA, architectures modernes,
+                    conformité RGPD, partenariats européens et levée de fonds.
                   </p>
                 </div>
               </CardContent>
@@ -1449,7 +1843,8 @@ function DataSpherePortfolioSection() {
                     <MapPin className="w-4 h-4" /> Conakry, Guinée
                   </h4>
                   <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                    Bureau opérationnel — Déploiement terrain, formation utilisateurs, support local et relations institutionnelles.
+                    Bureau opérationnel — Déploiement terrain, formation utilisateurs, support local,
+                    relations institutionnelles et 20+ projets déployés.
                   </p>
                 </div>
               </CardContent>
