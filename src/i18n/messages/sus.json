@@ -1,0 +1,136 @@
+{
+  "common": {
+    "appName": "HealthFlow Africa",
+    "shortName": "HealthFlow",
+    "loading": "Nakara...",
+    "save": "Bili",
+    "cancel": "Bulɛnti",
+    "delete": "Pɛrɛ",
+    "edit": "Fili",
+    "create": "Mɛnɛ",
+    "add": "Tɛmɛ",
+    "search": "Sɛrɛ",
+    "filter": "Sɛrɛ dɛ",
+    "export": "Pɛrɛ bɔ",
+    "import": "Don a la",
+    "print": "Gban",
+    "download": "Gban bɔ",
+    "upload": "Don a la",
+    "close": "Bili a kɔ",
+    "back": "Fɛn bɛɛ",
+    "next": "Dɛmɛ",
+    "previous": "Bɛ fɛ",
+    "submit": "Don a ma",
+    "confirm": "Kɛ a ye",
+    "yes": "Ɔwɔ",
+    "no": "Ayi",
+    "all": "Bɛɛ",
+    "none": "Si",
+    "other": "Wɛrɛ",
+    "status": "Jɔcɛ",
+    "date": "Dɔkɔ",
+    "time": "Wakati",
+    "actions": "Kɛcogo",
+    "details": "Fɛn bɛɛ",
+    "noResults": "Sɛrɛ ma sɔrɔ",
+    "noData": "Kunnafoni si tɛ",
+    "success": "A bɛ kɛ",
+    "error": "Fili bɛ sɔrɔ",
+    "warning": "Kɔkɛ",
+    "info": "Kunnafoni",
+    "required": "Nin fɛn tɛmɛna",
+    "today": "Bi",
+    "yesterday": "Kunu",
+    "tomorrow": "Sini",
+    "online": "Nɛti bɛ",
+    "offline": "Nɛti si tɛ",
+    "syncing": "Yɛlɛma bɛ kɛ...",
+    "pending": "Bɛ na",
+    "completed": "Dɔnnen",
+    "active": "Bɛ kɛ",
+    "inactive": "Si kɛ"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "patients": "Marabaw",
+    "appointments": "Randevu",
+    "consultations": "Dɔkɔtɔrɔ ye lajɛ",
+    "laboratory": "Labo",
+    "pharmacy": "Faramasi",
+    "hospitalization": "Lopital",
+    "emergencies": "Sɔgɔma",
+    "maternity": "Muso yɔrɔ",
+    "vaccination": "Wɔlɔ",
+    "billing": "Wari",
+    "teleconsultation": "Telekonsiltasiyon",
+    "administration": "Kɛtigi",
+    "settings": "Sɛtiri",
+    "patientPortal": "Maraba yɔrɔ"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "I na bɔ",
+    "totalPatients": "Marabaw bɛɛ",
+    "appointmentsToday": "Bi randevuw",
+    "newPatient": "Maraba kura",
+    "newAppointment": "Randevu kura"
+  },
+  "patients": {
+    "title": "Marabaw",
+    "newPatient": "Maraba kura",
+    "searchPatient": "Maraba sɛrɛ...",
+    "firstName": "Tɔgɔ",
+    "lastName": "Siyakɔrɔ",
+    "dateOfBirth": "Bangɛ dɔkɔ",
+    "gender": "Cɛ/Muso",
+    "male": "Cɛ",
+    "female": "Muso",
+    "phone": "Telefɔni",
+    "bloodType": "Jɛgɛ",
+    "allergies": "Alɛraji"
+  },
+  "appointments": {
+    "title": "Randevuw",
+    "newAppointment": "Randevu kura",
+    "doctor": "Dɔkɔtɔrɔ",
+    "date": "Dɔkɔ",
+    "time": "Wakati"
+  },
+  "consultations": {
+    "title": "Lajɛ",
+    "doctor": "Dɔkɔtɔrɔ",
+    "diagnosis": "Banayɛrɛ"
+  },
+  "auth": {
+    "signIn": "Don",
+    "signOut": "Bɔ",
+    "phoneNumber": "Telefɔni",
+    "otpCode": "Kɔdi OTP",
+    "sendOtp": "Kɔdi ci",
+    "welcomeBack": "I na bɔ"
+  },
+  "settings": {
+    "title": "Sɛtiri",
+    "language": "Kan",
+    "theme": "Kalan"
+  },
+  "emergencies": {
+    "title": "Sɔgɔmaw",
+    "newCase": "Kɛma kura"
+  },
+  "pharmacy": {
+    "title": "Faramasi"
+  },
+  "hospitalization": {
+    "title": "Lopital"
+  },
+  "maternity": {
+    "title": "Muso yɔrɔ"
+  },
+  "vaccination": {
+    "title": "Wɔlɔ"
+  },
+  "billing": {
+    "title": "Wari"
+  }
+}

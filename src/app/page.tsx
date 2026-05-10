@@ -19,6 +19,9 @@ import { AnalyticsPage } from '@/components/app/modules/analytics'
 import { AdministrationPage } from '@/components/app/modules/administration'
 import { SettingsPage } from '@/components/app/modules/settings'
 import { PatientPortalPage } from '@/components/app/modules/patient-portal'
+import { I18nProvider } from '@/i18n/provider'
+import { QueryProvider } from '@/lib/query-provider'
+import { PWARegistrar } from '@/components/app/pwa-registrar'
 
 const viewComponents: Record<AppView, React.ComponentType> = {
   landing: LandingPage,
@@ -40,7 +43,7 @@ const viewComponents: Record<AppView, React.ComponentType> = {
   'patient-portal': PatientPortalPage,
 }
 
-export default function Home() {
+function AppContent() {
   const { currentView } = useStore()
 
   if (currentView === 'landing') {
@@ -53,5 +56,16 @@ export default function Home() {
     <AppShell>
       <PageComponent />
     </AppShell>
+  )
+}
+
+export default function Home() {
+  return (
+    <I18nProvider>
+      <QueryProvider>
+        <PWARegistrar />
+        <AppContent />
+      </QueryProvider>
+    </I18nProvider>
   )
 }

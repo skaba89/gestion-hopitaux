@@ -1,0 +1,136 @@
+{
+  "common": {
+    "appName": "HealthFlow Africa",
+    "shortName": "HealthFlow",
+    "loading": "Hoto...",
+    "save": "Danɗa",
+    "cancel": "Haayta",
+    "delete": "Momtu",
+    "edit": "Waylita",
+    "create": "Sosɗa",
+    "add": "Ɓeydu",
+    "search": "Yiilo",
+    "filter": "Filtire",
+    "export": "Jiggo",
+    "import": "Naɓɓa",
+    "print": "Winnda",
+    "download": "Aawto",
+    "upload": "Naɓɓa",
+    "close": "Uddu",
+    "back": "Rutto",
+    "next": "Yeeso",
+    "previous": "Ɓaawo",
+    "submit": "Neldu",
+    "confirm": "Tabbitina",
+    "yes": "Eey",
+    "no": "Alaa",
+    "all": "Fof",
+    "none": "Hayhu",
+    "other": "Goɗɗo",
+    "status": "Ngeru",
+    "date": "Ñalnde",
+    "time": "Sabbo",
+    "actions": "Golle",
+    "details": "Ceeɓe",
+    "noResults": "Njeñtotaako",
+    "noData": "Alaa keɓe",
+    "success": "Golliima",
+    "error": "Jamma",
+    "warning": "Reeno",
+    "info": "Habo",
+    "required": "Nnguɗaama",
+    "today": "Hannde",
+    "yesterday": "Haŋkitii",
+    "tomorrow": "Jaŋngo",
+    "online": "Neerɗo",
+    "offline": "Alaa neerɗo",
+    "syncing": "Hawtindo...",
+    "pending": "Ina fadi",
+    "completed": "Gasii",
+    "active": "Ina golla",
+    "inactive": "Hoto gollo"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "patients": "Marɗoɓe",
+    "appointments": "Jaajol",
+    "consultations": "Yaɓɓito",
+    "laboratory": "Laboratuwaar",
+    "pharmacy": "Farmasi",
+    "hospitalization": "Opitaal",
+    "emergencies": "Kesi",
+    "maternity": "Nasru",
+    "vaccination": "Peewngol",
+    "billing": "Kaalis",
+    "teleconsultation": "Telekonsiltasiyoŋ",
+    "administration": "Ardungal",
+    "settings": "Teeltannde",
+    "patientPortal": "Marɗo yeso"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "A jaaraama",
+    "totalPatients": "Marɗoɓe fof",
+    "appointmentsToday": "Jaajol hannde",
+    "newPatient": "Marɗo keso",
+    "newAppointment": "Jaajol keso"
+  },
+  "patients": {
+    "title": "Marɗoɓe",
+    "newPatient": "Marɗo keso",
+    "searchPatient": "Marɗo yiilo...",
+    "firstName": "Innde",
+    "lastName": "Ɓiɗɗo",
+    "dateOfBirth": "Ñalngu jibinannde",
+    "gender": "Gorko/Debbo",
+    "male": "Gorko",
+    "female": "Debbo",
+    "phone": "Telefoŋ",
+    "bloodType": "Ɓiiƴam",
+    "allergies": "Aleerji"
+  },
+  "appointments": {
+    "title": "Jaajol",
+    "newAppointment": "Jaajol keso",
+    "doctor": "Doktoor",
+    "date": "Ñalnde",
+    "time": "Sabbo"
+  },
+  "consultations": {
+    "title": "Yaɓɓito",
+    "doctor": "Doktoor",
+    "diagnosis": "Ñawu"
+  },
+  "auth": {
+    "signIn": "Seŋo",
+    "signOut": "Yaltu",
+    "phoneNumber": "Telefoŋ",
+    "otpCode": "Kod OTP",
+    "sendOtp": "Kod neldu",
+    "welcomeBack": "A jaaraama"
+  },
+  "settings": {
+    "title": "Teeltannde",
+    "language": "Ɗemngal",
+    "theme": "Mbaadi"
+  },
+  "emergencies": {
+    "title": "Kesi",
+    "newCase": "Kesum keso"
+  },
+  "pharmacy": {
+    "title": "Farmasi"
+  },
+  "hospitalization": {
+    "title": "Opitaal"
+  },
+  "maternity": {
+    "title": "Nasru"
+  },
+  "vaccination": {
+    "title": "Peewngol"
+  },
+  "billing": {
+    "title": "Kaalis"
+  }
+}

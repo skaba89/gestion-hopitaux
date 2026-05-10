@@ -35,6 +35,8 @@ import {
 } from 'lucide-react'
 import { useStore, type AppView } from '@/lib/store'
 import { useDataStore } from '@/lib/data-store'
+import { NetworkStatus } from '@/components/app/network-status'
+import { LanguageSwitcher } from '@/components/app/language-switcher'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -426,7 +428,11 @@ function TopHeader() {
         <Search className="size-5" />
       </Button>
 
+      <NetworkStatus />
+
       <NotificationsPanel />
+
+      <LanguageSwitcher />
 
       <Button
         variant="ghost"
