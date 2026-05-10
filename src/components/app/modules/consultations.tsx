@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import {
-  Stethoscope, Plus, Search, Heart, Thermometer, Activity, Eye, Clock, FileText, Pill,
+  Stethoscope, Plus, Search, Heart, Thermometer, Activity, Eye, Clock, FileText, Pill, ShieldAlert,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useDataStore, type Consultation } from '@/lib/data-store'
+import { useStore } from '@/lib/store'
 import { useToast } from '@/hooks/use-toast'
 
 const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.1 } } }
@@ -47,6 +48,7 @@ export function ConsultationsPage() {
   const [selectedConsult, setSelectedConsult] = useState<Consultation | null>(null)
 
   const { consultations, addConsultation, updateConsultation } = useDataStore()
+  const { setCurrentView } = useStore()
   const { toast } = useToast()
 
   // New consultation form state
@@ -237,9 +239,19 @@ export function ConsultationsPage() {
                   </div>
                   {consult.prescriptions.length > 0 && (
                     <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
-                      <div className="flex items-center gap-1.5 mb-1.5">
-                        <Pill className="size-3.5 text-teal-600 dark:text-teal-400" />
-                        <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Ordonnance</span>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <Pill className="size-3.5 text-teal-600 dark:text-teal-400" />
+                          <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Ordonnance</span>
+                        </div>
+                        {consult.prescriptions.length > 1 && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setCurrentView('ai-interactions'); }}
+                            className="text-[10px] text-amber-600 dark:text-amber-400 font-medium hover:underline flex items-center gap-1"
+                          >
+                            <ShieldAlert className="size-3" /> Vérifier interactions
+                          </button>
+                        )}
                       </div>
                       {consult.prescriptions.map((p, i) => (
                         <p key={i} className="text-xs text-slate-500 dark:text-slate-400 ml-5">• {p.medication} — {p.dosage} ({p.duration})</p>

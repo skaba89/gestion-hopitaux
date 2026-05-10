@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import {
-  Pill, Plus, Search, AlertTriangle, Package, TrendingDown, Clock, ArrowRight, ArrowLeft, CheckCircle2,
+  Pill, Plus, Search, AlertTriangle, Package, TrendingDown, Clock, ArrowRight, ArrowLeft, CheckCircle2, ShieldAlert,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { useDataStore, type Medication } from '@/lib/data-store'
+import { useStore } from '@/lib/store'
 import { useToast } from '@/hooks/use-toast'
 
 const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.1 } } }
@@ -28,6 +29,7 @@ function getStockLevel(stock: number, maxStock: number) {
 
 export function PharmacyPage() {
   const { toast } = useToast()
+  const { setCurrentView } = useStore()
   const { medications, addMedication, stockEntry, stockExit } = useDataStore()
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
@@ -126,6 +128,9 @@ export function PharmacyPage() {
           </div>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setCurrentView('ai-interactions')} className="gap-1.5">
+            <ShieldAlert className="size-4" /> Vérifier interactions
+          </Button>
           <Button onClick={() => setShowNewDialog(true)} className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white shadow-lg shadow-teal-500/20">
             <Plus className="size-4 mr-1" /> Nouveau
           </Button>
@@ -207,8 +212,13 @@ export function PharmacyPage() {
                         className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                       >
                         <td className="py-3 px-2">
-                          <p className="font-medium text-slate-900 dark:text-white">{med.name}</p>
-                          <p className="text-xs text-slate-400 dark:text-slate-500">{med.dosage}</p>
+                          <div className="flex items-center gap-1.5">
+                            <div className={`size-2 rounded-full ${med.category === 'Antipaludéen' ? 'bg-teal-500' : med.category === 'Antibiotique' ? 'bg-blue-500' : med.category === 'Antidiabétique' ? 'bg-purple-500' : med.category === 'Antihypertenseur' ? 'bg-rose-500' : 'bg-slate-300'}`} title={med.category} />
+                            <div>
+                              <p className="font-medium text-slate-900 dark:text-white">{med.name}</p>
+                              <p className="text-xs text-slate-400 dark:text-slate-500">{med.dosage}</p>
+                            </div>
+                          </div>
                         </td>
                         <td className="py-3 px-2"><Badge variant="secondary" className="text-[10px]">{med.category}</Badge></td>
                         <td className="py-3 px-2">

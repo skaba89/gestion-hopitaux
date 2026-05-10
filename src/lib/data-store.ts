@@ -337,6 +337,103 @@ export interface FamilyMember {
   isPrimary: boolean
 }
 
+/* ─────────── Phase 3: AI Health Intelligence Types ─────────── */
+
+export interface DiagnosticSession {
+  id: string
+  symptoms: string[]
+  patientContext: PatientContext
+  possibleDiagnoses: PossibleDiagnosis[]
+  recommendedExams: string[]
+  orientation: OrientationLevel
+  redFlags: string[]
+  questions: string[]
+  isOffline: boolean
+  createdAt: string
+}
+
+export interface PatientContext {
+  age: number
+  gender: 'M' | 'F'
+  weight?: number
+  height?: number
+  conditions: string[]
+  medications: string[]
+  allergies: string[]
+  isPregnant: boolean
+  recentTravel: string
+  vaccinationStatus: string
+}
+
+export interface PossibleDiagnosis {
+  name: string
+  confidence: number
+  urgency: 'Faible' | 'Modéré' | 'Élevé' | 'Critique'
+  description: string
+}
+
+export type OrientationLevel = 'Centre de santé' | 'Hôpital de district' | 'Hôpital national' | 'Urgences'
+
+export interface DrugInteractionAlert {
+  id: string
+  drug1: string
+  drug2: string
+  severity: 'MINEUR' | 'MODÉRÉ' | 'MAJEUR' | 'CRITIQUE'
+  description: string
+  recommendation: string
+}
+
+export interface DosageAdjustment {
+  medication: string
+  standardDosage: string
+  adjustedDosage: string
+  reason: string
+}
+
+export interface InteractionCheckResult {
+  interactions: DrugInteractionAlert[]
+  contraindications: string[]
+  dosageAdjustments: DosageAdjustment[]
+  isOffline: boolean
+}
+
+export type SurveillanceAlertLevel = 'VEILLE' | 'ALERTE' | 'ÉPIDÉMIE'
+
+export interface EpidemiologicalAlert {
+  id: string
+  disease: string
+  location: string
+  healthZone: string
+  alertLevel: SurveillanceAlertLevel
+  firstCaseDate: string
+  caseCount: number
+  deathCount: number
+  affectedAreas: string[]
+  description: string
+  recommendedActions: string[]
+  status: 'Actif' | 'En investigation' | 'Résolu'
+  createdAt: string
+  updatedAt: string
+}
+
+export interface SurveillanceDataPoint {
+  date: string
+  disease: string
+  location: string
+  caseCount: number
+  deathCount: number
+  alertLevel: SurveillanceAlertLevel
+}
+
+export interface OutbreakPrediction {
+  disease: string
+  riskScore: number
+  probability: number
+  predictedPeakDate: string
+  confidence: number
+  preventiveActions: string[]
+}
+
 /* ─────────── Demo Data ─────────── */
 
 const demoPatients: Patient[] = [
@@ -615,6 +712,76 @@ const demoPaymentPlans: PaymentPlan[] = [
   },
 ]
 
+/* ─────────── Phase 3 Demo Data ─────────── */
+
+const demoEpidemiologicalAlerts: EpidemiologicalAlert[] = [
+  {
+    id: 'EPI-001', disease: 'Paludisme', location: 'Conakry', healthZone: 'Kaloum',
+    alertLevel: 'ALERTE', firstCaseDate: '2026-04-15', caseCount: 47, deathCount: 3,
+    affectedAreas: ['Kaloum', 'Dixinn', 'Matam'], description: 'Augmentation significative des cas de paludisme avec début de saison des pluies',
+    recommendedActions: ['Renforcer la distribution de moustiquaires', 'Augmenter les stocks de TDR et ACT', 'Campagne de sensibilisation'],
+    status: 'Actif', createdAt: '2026-04-20', updatedAt: '2026-05-08'
+  },
+  {
+    id: 'EPI-002', disease: 'Choléra', location: 'Kindia', healthZone: 'Kindia Centre',
+    alertLevel: 'ÉPIDÉMIE', firstCaseDate: '2026-03-28', caseCount: 124, deathCount: 8,
+    affectedAreas: ['Kindia Centre', 'Kindia Périphérie', 'Télimélé'], description: 'Épidémie de choléra déclarée dans la région de Kindia, liée aux inondations récentes',
+    recommendedActions: ['Activation du centre de traitement choléra', 'Distribution de kits de purification d\'eau', 'Vaccination orale', 'Signalement OMS'],
+    status: 'Actif', createdAt: '2026-04-02', updatedAt: '2026-05-09'
+  },
+  {
+    id: 'EPI-003', disease: 'Méningite', location: 'N\'Zérékoré', healthZone: 'N\'Zérékoré Centre',
+    alertLevel: 'VEILLE', firstCaseDate: '2026-04-05', caseCount: 12, deathCount: 1,
+    affectedAreas: ['N\'Zérékoré Centre'], description: 'Cluster de cas de méningite en zone forestière, période sèche',
+    recommendedActions: ['Surveillance renforcée', 'Préparer stocks de vaccins', 'Éducation communautaire'],
+    status: 'En investigation', createdAt: '2026-04-10', updatedAt: '2026-05-05'
+  },
+  {
+    id: 'EPI-004', disease: 'Rougeole', location: 'Conakry', healthZone: 'Matoto',
+    alertLevel: 'ALERTE', firstCaseDate: '2026-04-22', caseCount: 28, deathCount: 0,
+    affectedAreas: ['Matoto', 'Ratoma'], description: 'Cas groupés de rougeole chez les enfants non vaccinés de Matoto',
+    recommendedActions: ['Campagne de vaccination de riposte', 'Recherche active de cas', 'Isolation des cas'],
+    status: 'Actif', createdAt: '2026-04-28', updatedAt: '2026-05-08'
+  },
+  {
+    id: 'EPI-005', disease: 'Fièvre de Lassa', location: 'Faranah', healthZone: 'Faranah Centre',
+    alertLevel: 'VEILLE', firstCaseDate: '2026-05-01', caseCount: 3, deathCount: 1,
+    affectedAreas: ['Faranah Centre'], description: 'Cas suspects de fièvre de Lassa dans la région de Faranah',
+    recommendedActions: ['Confirmation laboratoire', 'Traçage des contacts', 'Dépistage dans les villages voisins'],
+    status: 'En investigation', createdAt: '2026-05-03', updatedAt: '2026-05-09'
+  },
+]
+
+const demoSurveillanceData: SurveillanceDataPoint[] = [
+  { date: '2026-04-01', disease: 'Paludisme', location: 'Conakry', caseCount: 32, deathCount: 2, alertLevel: 'VEILLE' },
+  { date: '2026-04-08', disease: 'Paludisme', location: 'Conakry', caseCount: 38, deathCount: 3, alertLevel: 'VEILLE' },
+  { date: '2026-04-15', disease: 'Paludisme', location: 'Conakry', caseCount: 47, deathCount: 3, alertLevel: 'ALERTE' },
+  { date: '2026-04-22', disease: 'Paludisme', location: 'Conakry', caseCount: 55, deathCount: 4, alertLevel: 'ALERTE' },
+  { date: '2026-04-29', disease: 'Paludisme', location: 'Conakry', caseCount: 63, deathCount: 5, alertLevel: 'ALERTE' },
+  { date: '2026-05-06', disease: 'Paludisme', location: 'Conakry', caseCount: 71, deathCount: 6, alertLevel: 'ALERTE' },
+  { date: '2026-04-01', disease: 'Choléra', location: 'Kindia', caseCount: 15, deathCount: 1, alertLevel: 'ALERTE' },
+  { date: '2026-04-08', disease: 'Choléra', location: 'Kindia', caseCount: 34, deathCount: 3, alertLevel: 'ÉPIDÉMIE' },
+  { date: '2026-04-15', disease: 'Choléra', location: 'Kindia', caseCount: 67, deathCount: 5, alertLevel: 'ÉPIDÉMIE' },
+  { date: '2026-04-22', disease: 'Choléra', location: 'Kindia', caseCount: 89, deathCount: 6, alertLevel: 'ÉPIDÉMIE' },
+  { date: '2026-04-29', disease: 'Choléra', location: 'Kindia', caseCount: 108, deathCount: 7, alertLevel: 'ÉPIDÉMIE' },
+  { date: '2026-05-06', disease: 'Choléra', location: 'Kindia', caseCount: 124, deathCount: 8, alertLevel: 'ÉPIDÉMIE' },
+  { date: '2026-04-01', disease: 'Méningite', location: 'N\'Zérékoré', caseCount: 2, deathCount: 0, alertLevel: 'VEILLE' },
+  { date: '2026-04-15', disease: 'Méningite', location: 'N\'Zérékoré', caseCount: 5, deathCount: 0, alertLevel: 'VEILLE' },
+  { date: '2026-05-01', disease: 'Méningite', location: 'N\'Zérékoré', caseCount: 12, deathCount: 1, alertLevel: 'VEILLE' },
+  { date: '2026-04-22', disease: 'Rougeole', location: 'Conakry', caseCount: 8, deathCount: 0, alertLevel: 'VEILLE' },
+  { date: '2026-04-29', disease: 'Rougeole', location: 'Conakry', caseCount: 18, deathCount: 0, alertLevel: 'ALERTE' },
+  { date: '2026-05-06', disease: 'Rougeole', location: 'Conakry', caseCount: 28, deathCount: 0, alertLevel: 'ALERTE' },
+]
+
+const demoOutbreakPredictions: OutbreakPrediction[] = [
+  { disease: 'Paludisme', riskScore: 85, probability: 0.78, predictedPeakDate: '2026-06-15', confidence: 0.72, preventiveActions: ['Distribution moustiquaires imprégnées', 'Pulvérisation intra-domiciliaire', 'Prophylaxie saisonnière enfants'] },
+  { disease: 'Choléra', riskScore: 92, probability: 0.88, predictedPeakDate: '2026-05-30', confidence: 0.82, preventiveActions: ['Chloration points d\'eau', 'Latrines d\'urgence', 'Vaccination orale de masse'] },
+  { disease: 'Méningite', riskScore: 45, probability: 0.35, predictedPeakDate: '2026-06-01', confidence: 0.55, preventiveActions: ['Vaccination méningococcique', 'Surveillance renforcée'] },
+  { disease: 'Fièvre de Lassa', riskScore: 55, probability: 0.42, predictedPeakDate: '2026-07-01', confidence: 0.48, preventiveActions: ['Lutte anti-rongeurs', 'Hygiène alimentaire', 'Protection du personnel de santé'] },
+  { disease: 'Rougeole', riskScore: 70, probability: 0.65, predictedPeakDate: '2026-05-25', confidence: 0.68, preventiveActions: ['Campagne vaccination rattrapage', 'Recherche active cas', 'Isolation'] },
+  { disease: 'COVID-19/Influenza', riskScore: 30, probability: 0.25, predictedPeakDate: '2026-08-01', confidence: 0.40, preventiveActions: ['Surveillance grippale', 'Vaccination COVID rappel'] },
+]
+
 const defaultReminderSettings: ReminderSettings = {
   appointmentReminders: true,
   appointmentChannel: 'SMS',
@@ -653,6 +820,11 @@ interface DataState {
   messageLogs: MessageLog[]
   paymentPlans: PaymentPlan[]
   reminderSettings: ReminderSettings
+
+  // Phase 3 - AI
+  epidemiologicalAlerts: EpidemiologicalAlert[]
+  surveillanceData: SurveillanceDataPoint[]
+  outbreakPredictions: OutbreakPrediction[]
 
   // Actions
   addPatient: (patient: Patient) => void
@@ -759,6 +931,11 @@ const initialState = {
   messageLogs: demoMessageLogs,
   paymentPlans: demoPaymentPlans,
   reminderSettings: defaultReminderSettings,
+
+  // Phase 3 - AI
+  epidemiologicalAlerts: demoEpidemiologicalAlerts,
+  surveillanceData: demoSurveillanceData,
+  outbreakPredictions: demoOutbreakPredictions,
 }
 
 export const useDataStore = create<DataState>()(

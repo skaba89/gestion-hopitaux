@@ -1,176 +1,204 @@
-# HealthFlow Africa — Phase 2 Implementation Worklog
+# HealthFlow Guinea — Phase 3: AI Health Intelligence Implementation Worklog
 
-## Date: 2026-05-10
+**Date**: 2026-05-10
+**Phase**: 3 — AI Health Intelligence
+**Status**: ✅ Completed
 
 ## Summary
-Implemented Phase 2 of HealthFlow Guinea: Mobile Money, SMS/WhatsApp, QR Payments & Insurance modules. This adds comprehensive payment and communication capabilities to the hospital information system.
 
-## Files Created
+Implemented a comprehensive AI Health Intelligence system for HealthFlow Guinea, a hospital information system built with Next.js 16, React 19, TypeScript, Tailwind CSS, shadcn/ui, Framer Motion, Zustand, and Prisma. This phase adds three major AI-powered features using the z-ai-web-dev-sdk, with full offline fallback capabilities.
 
-### Service Layers (src/lib/)
-1. **src/lib/mobile-money.ts** — Mobile Money service layer
-   - Orange Money API integration class (sandbox/demo)
-   - MTN MoMo API integration class (sandbox/demo)
-   - Unified MobileMoneyService that auto-selects provider based on phone number (+224 6XX = Orange, +224 5XX = MTN)
-   - Phone validation for Guinea format (+224)
-   - Transaction reference generation
-   - Webhook signature verification (demo)
-   - Payment link generation
+## Sub-Phase 3.1: AI Diagnostic Assistant
 
-2. **src/lib/messaging.ts** — Unified messaging service
-   - SMS channel (Twilio-compatible API demo)
-   - WhatsApp Business API (demo)
-   - Rate limiting (100 SMS/hour, 50 WhatsApp/hour)
-   - Message queue for offline/batched sending
-   - OTP sending via SMS
-   - Appointment reminders, lab result notifications, payment confirmations
+### Backend
+- **`src/lib/ai-diagnostic.ts`** — AI diagnostic service with:
+  - `buildMedicalPrompt()` — Builds medical system + user prompts for the AI
+  - `parseDiagnosticResponse()` — Parses AI JSON response into structured diagnostic data
+  - `getDiagnosticTree()` — Offline diagnostic trees for 5 symptom categories:
+    - Fièvre (Paludisme, Typhoïde, Dengue, Fièvre de Lassa)
+    - Douleurs abdominales (Appendicite, Ulcère, Hépatite, Paludisme viscéral)
+    - Difficultés respiratoires (Pneumonie, Asthme, Tuberculose, COVID-19)
+    - Symptômes neurologiques (Méningite, AVC, Paludisme cérébral, Épilepsie)
+    - Symptômes pédiatriques (Rougeole, Paludisme grave, Malnutrition, Infection respiratoire)
+  - Full TypeScript types: DiagnosticRequest, DiagnosticResponse, PossibleDiagnosis, PatientContext
 
-3. **src/lib/message-templates.ts** — French message templates
-   - 16 templates across 7 categories: Rendez-vous, Résultat, Vaccination, Paiement, Urgence, Ordonnance, Campagne
-   - All templates in French with placeholder support
-   - Template filling utility function
+- **`src/app/api/ai/diagnostic/route.ts`** — API endpoint:
+  - POST endpoint accepting symptoms and patient context
+  - Rate limiting: 20 requests/hour per IP
+  - Tries z-ai-web-dev-sdk first, falls back to offline diagnostic trees
+  - Returns structured JSON with possibleDiagnoses, recommendedExams, orientation, redFlags, questions
 
-4. **src/lib/insurance.ts** — Insurance service layer
-   - Coverage verification (demo)
-   - Claim submission (demo)
-   - Pre-authorization requests (demo)
-   - Reimbursement calculation
-   - Provider and claim status formatting helpers
+### Frontend
+- **`src/components/ai/symptom-selector.tsx`** — Symptom selection UI:
+  - 8 symptom categories with icons (Généraux, Tête, Respiratoire, Digestif, Urinaire, Cutané, Musculosquelettique, Pédiatrique)
+  - Search/filter functionality
+  - Custom symptom input
+  - Selected symptoms as removable tags with duration and severity editing
+  - Duration selector (aigu <7j, subaigu 7-30j, chronique >30j)
+  - Severity slider (1-10)
 
-### API Routes (src/app/api/)
-5. **src/app/api/payments/mobile-money/route.ts** — POST initiate payment, GET check status
-6. **src/app/api/payments/mobile-money/callback/route.ts** — POST webhook callback
-7. **src/app/api/payments/dashboard/route.ts** — GET financial statistics
-8. **src/app/api/messaging/sms/route.ts** — POST send SMS (single/bulk)
-9. **src/app/api/messaging/whatsapp/route.ts** — POST send WhatsApp, GET webhook verification
-10. **src/app/api/insurance/route.ts** — GET coverage check, POST claim/pre-auth, PUT update claim
+- **`src/components/ai/patient-context-form.tsx`** — Patient context form:
+  - Age, gender, weight, height inputs
+  - Pre-existing conditions with quick-select buttons
+  - Current medications with custom input
+  - Known allergies with quick-select buttons
+  - Pregnancy status toggle
+  - Recent travel and vaccination status
 
-### Payment UI Components (src/components/payments/)
-11. **src/components/payments/mobile-money-form.tsx** — Full payment form with:
-    - Auto-detect provider from phone number
-    - Amount input with GNF/USD currency selector
-    - Phone number input with +224 prefix
-    - Payment reason selection
-    - Invoice linking
-    - Processing animation with Framer Motion
-    - Success/failure states with animated transitions
-    - Receipt download button
+- **`src/components/ai/diagnostic-assistant.tsx`** — Main diagnostic UI:
+  - 4-step wizard flow (Symptômes → Contexte → Analyse → Résultats)
+  - Voice input support via Web Speech API
+  - Loading animation with pulsing brain icon
+  - Results display with:
+    - Confidence bars color-coded by percentage
+    - Urgency badges (Faible, Modéré, Élevé, Critique)
+    - Red flags with warning animations
+    - Orientation recommendation with contextual icons
+    - Recommended exams as badges
+    - Follow-up questions
+  - Export report to text file
+  - Offline mode indicator
+  - Medical disclaimer
 
-12. **src/components/payments/payment-status-badge.tsx** — Status badge with:
-    - 5 statuses: En attente (yellow), En cours (blue/pulsing), Réussi (green), Échoué (red), Remboursé (purple)
-    - Animated pulse for "En cours" status
+## Sub-Phase 3.2: Drug Interaction Checker
 
-13. **src/components/payments/transaction-history.tsx** — Transaction list with:
-    - Stats cards (total, pending, per-provider counts)
-    - Search by reference, patient, phone
-    - Filter by provider and status
-    - CSV export
-    - Pagination
-    - Refresh individual transactions
+### Backend
+- **`src/lib/drug-interactions.ts`** — Drug interaction service:
+  - `buildInteractionPrompt()` — Builds AI prompt for interaction analysis
+  - `parseInteractionResponse()` — Parses AI response
+  - `checkInteractionsOffline()` — Offline interaction database with 25+ known interactions
+  - Covers African medications:
+    - Antipaludéens (Artéméther/Luméfantrine, Quinine, Primaquine)
+    - Antibiotiques (Amoxicilline, Ciprofloxacine, Métronidazole, Cotrimoxazole, Rifampicine, Isoniazide)
+    - Antirétroviraux (Efavirenz, Ténofovir, Dolutégravir)
+    - Antihypertenseurs (Amlodipine, Losartan, Hydrochlorothiazide)
+    - Antidiabétiques (Metformine, Glibenclamide, Insuline)
+    - Antalgiques/Anti-inflammatoires (Paracétamol, Ibuprofène, Diclofénac, Prednisone)
+  - Severity levels: MINEUR, MODÉRÉ, MAJEUR, CRITIQUE
 
-14. **src/components/payments/qr-payment.tsx** — QR Code payment with:
-    - Custom SVG-based QR code generator (no external npm package)
-    - Generate QR containing payment reference, amount, facility ID
-    - Print receipt with QR code
-    - Share via WhatsApp/Web Share API
-    - Copy-to-clipboard fallback
+- **`src/app/api/ai/interactions/route.ts`** — API endpoint:
+  - POST: Check interactions between medications
+  - AI-first with offline fallback
+  - Returns interactions, contraindications, dosage adjustments
 
-15. **src/components/payments/financial-dashboard.tsx** — Financial overview with:
-    - Animated number counters
-    - KPI cards (total revenue, mobile money, outstanding, projections)
-    - Daily revenue bar chart (Recharts)
-    - Monthly trend line chart
-    - Payment method pie chart
-    - Orange Money vs MTN MoMo split
-    - Revenue by service horizontal bar chart
-    - Top debtors list
-    - All charts using Recharts (already installed)
+### Frontend
+- **`src/components/ai/interaction-checker.tsx`** — Interaction checker UI:
+  - Medication search from 30+ medication database
+  - Add multiple medications as tags
+  - Patient age/weight context
+  - "Vérifier les interactions" button with loading state
+  - Results display:
+    - Severity-coded interaction cards with color bars (CRITIQUE=red, MAJEUR=amber, MODÉRÉ=yellow, MINEUR=green)
+    - Severity legend with counts
+    - Detailed descriptions and recommendations
+    - Contraindications section
+    - Dosage adjustment suggestions
+  - Print report button
+  - Medical disclaimer
 
-16. **src/components/payments/credit-sante.tsx** — Health credit module with:
-    - Create payment plan for expensive invoices
-    - Installment calculator (3, 6, 12 months)
-    - Down payment + monthly installments
-    - Progress bar
-    - Pay individual installments
-    - Late payment tracking
+### Module Integration
+- **Pharmacy** (`src/components/app/modules/pharmacy.tsx`):
+  - Added "Vérifier interactions" button in header
+  - Category color indicator dots next to medication names
 
-### Messaging UI Components (src/components/messaging/)
-17. **src/components/messaging/message-center.tsx** — Message center with:
-    - Send SMS or WhatsApp messages
-    - Quick patient search
-    - Template selector with parameter filling
-    - Message history with status icons
-    - Filter by channel and search
-    - Statistics (sent, delivered, failed, delivery rate)
+- **Consultations** (`src/components/app/modules/consultations.tsx`):
+  - "Vérifier interactions" link on prescriptions with multiple medications
+  - Navigates to AI Interactions module
 
-18. **src/components/messaging/reminder-settings.tsx** — Automated reminder config with:
-    - Toggle appointment reminders (SMS/WhatsApp/both)
-    - Toggle lab result notifications
-    - Toggle vaccination reminders
-    - Toggle payment reminders
-    - Toggle prescription reminders
-    - Set reminder timing (24h before, 2h before, both)
-    - Per-reminder channel selection
+## Sub-Phase 3.3: Intelligent Epidemiological Surveillance
 
-### Insurance UI Components (src/components/insurance/)
-19. **src/components/insurance/insurance-panel.tsx** — Insurance management with:
-    - Provider list with coverage percentages and logos
-    - Coverage verification dialog
-    - Claim submission dialog
-    - Pre-authorization request dialog
-    - Claim tracking table with status badges
-    - Patient and invoice selection from existing data
+### Backend
+- **`src/lib/epidemiological-surveillance.ts`** — Surveillance service:
+  - `analyzeTrends()` — Analyzes surveillance data for trends (hausse, stable, baisse)
+  - `detectAnomalies()` — Detects unusual symptom clusters using standard deviation
+  - `generateAlert()` — Generates epidemiological alerts
+  - `predictOutbreak()` — Predicts outbreaks based on season and trends
+  - Disease-specific predictions:
+    - Paludisme (seasonal rainy season patterns)
+    - Choléra (waterborne, rainy season)
+    - Méningite (dry season peaks)
+    - Fièvre de Lassa (forest zone)
+    - Rougeole (vaccination gaps)
+    - COVID-19/Influenza (respiratory)
+  - Alert levels: VEILLE, ALERTE, ÉPIDÉMIE
 
-### Module Pages (src/components/app/modules/)
-20. **src/components/app/modules/payments.tsx** — Payments page with tabs for Mobile Money, QR Code, Dashboard, Crédit Santé
-21. **src/components/app/modules/messaging.tsx** — Messaging page with tabs for Messages and Reminder Settings
-22. **src/components/app/modules/insurance-module.tsx** — Insurance page with header and panel
+- **`src/app/api/ai/surveillance/route.ts`** — API endpoints:
+  - GET: Returns trends, anomalies, alerts, predictions, data quality
+  - POST: Submit new case data with AI analysis
 
-### Hooks
-23. **src/hooks/api/use-payments.ts** — React Query hooks for payments (useTransactions, useInitiatePayment, useCheckPaymentStatus, useFinancialDashboard)
+### Frontend
+- **`src/components/ai/surveillance-map.tsx`** — SVG map of Guinea:
+  - 9 health zones (Conakry, Kindia, Boké, Labé, Mamou, Faranah, Kankan, N'Zérékoré, Kissidougou)
+  - Color-coded by alert level (red/amber/green)
+  - Click to filter alerts by zone
+  - Alert indicator dots
+  - Legend
 
-## Files Modified
+- **`src/components/ai/surveillance-dashboard.tsx`** — Full surveillance dashboard:
+  - KPI cards (active alerts, total cases, deaths, epidemics)
+  - 4-tab interface:
+    - **Carte**: Interactive map + alert list with zone filtering
+    - **Tendances**: Area/Line charts for Paludisme, Choléra, multi-disease comparison
+    - **Alertes**: Searchable alert cards with severity, status, case counts
+    - **Prédictions**: Risk scores, outbreak probability, preventive actions
+  - Data quality indicators
+  - DHIS2 integration placeholder
 
-### src/lib/data-store.ts
-- Added 10 new types: MobileMoneyTransaction, InsuranceProvider, InsuranceCoverage, InsuranceClaim, PreAuthorization, MessageLog, PaymentPlan, ReminderSettings, and associated enums
-- Extended Invoice type with mobileMoneyTransactions and insuranceCoverage optional fields
-- Added demo data: 5 mobile money transactions, 4 insurance providers, 3 insurance claims, 5 message logs, 1 payment plan, default reminder settings
-- Added store actions: addMobileMoneyTransaction, updateMobileMoneyTransaction, addInsuranceProvider, updateInsuranceProvider, addInsuranceClaim, updateInsuranceClaim, addMessageLog, updateMessageLog, addPaymentPlan, updatePaymentPlan, payInstallment, updateReminderSettings
+- **`src/components/ai/alert-detail.tsx`** — Alert detail view:
+  - Alert metadata and key metrics
+  - Epidemiological curve chart
+  - Timeline of events
+  - Recommended actions
+  - Affected areas
+  - Generate Ministry report button
 
-### src/lib/store.ts
-- Added 3 new AppView types: 'payments', 'messaging', 'insurance'
+## Data Store Updates
 
-### src/components/app/app-shell.tsx
-- Added 3 new navigation items in the "Gestion" group: Paiements (CreditCard icon), Messagerie (MessageSquare icon), Assurance (ShieldCheck icon)
-- Added 3 new view title mappings
+- **`src/lib/data-store.ts`** — Added Phase 3 types and demo data:
+  - Types: DiagnosticSession, PatientContext, PossibleDiagnosis, OrientationLevel, DrugInteractionAlert, DosageAdjustment, InteractionCheckResult, SurveillanceAlertLevel, EpidemiologicalAlert, SurveillanceDataPoint, OutbreakPrediction
+  - Demo data:
+    - 5 epidemiological alerts (Paludisme Conakry, Choléra Kindia, Méningite N'Zérékoré, Rougeole Conakry, Fièvre de Lassa Faranah)
+    - 18 surveillance data points across 4 diseases
+    - 6 outbreak predictions
 
-### src/app/page.tsx
-- Added imports for PaymentsPage, MessagingPage, InsurancePage
-- Added view components for 'payments', 'messaging', 'insurance'
+## Navigation Integration
 
-### src/components/app/modules/billing.tsx
-- Complete rewrite with enhanced billing module including:
-  - Mobile Money payment button on each invoice
-  - QR Code payment button on each invoice
-  - New "Assurance" payment method option
-  - Tabs for Factures, Dashboard financier, Crédit Santé, Assurance
-  - Mobile Money payment dialog integration
-  - QR Payment dialog integration
-  - Insurance panel integration
+- **`src/lib/store.ts`** — Added 3 new AppView types: 'ai-diagnostic', 'ai-interactions', 'ai-surveillance'
+- **`src/components/app/app-shell.tsx`** — Added "IA Santé" navigation group with Brain, AlertCircle, Activity icons
+- **`src/app/page.tsx`** — Mapped new views to DiagnosticAssistant, InteractionChecker, SurveillanceDashboard
 
-## Key Design Decisions
+## Technical Details
 
-1. **No new npm packages** — QR codes generated with inline SVG, no external library needed
-2. **All UI text in French** — Consistent with the Guinea-focused application
-3. **Demo/Sandbox mode** — All external API calls (Orange Money, MTN MoMo, SMS, WhatsApp) simulated with realistic delays and success rates
-4. **Guinea-specific** — Currency GNF, phone format +224, Orange (6XX) and MTN (5XX) detection
-5. **Zustand for demo data** — All transaction/claim/message data stored in Zustand with persistence
-6. **Recharts for charts** — Already installed, used for financial dashboard visualizations
-7. **Framer Motion animations** — Consistent with existing patterns for success/failure/pulsing states
-8. **Component isolation** — New features in separate directories (payments/, messaging/, insurance/) for maintainability
+- All AI calls use z-ai-web-dev-sdk in API routes only (never client-side)
+- Full offline fallback with predefined diagnostic trees and drug interaction databases
+- All UI text in French
+- Medical disclaimer on every AI feature
+- TypeScript strict typing throughout
+- Rate limiting on diagnostic API (20 req/hour)
+- Responsive design with mobile-first approach
+- Build passes successfully with no errors
 
-## Build Status
-- ✅ `next build` succeeds
-- ✅ No TypeScript errors in new files
-- ✅ Dev server running on port 3000
-- ✅ All API routes registered correctly
+## Files Created/Modified
+
+### New Files (14)
+1. `src/lib/ai-diagnostic.ts`
+2. `src/lib/drug-interactions.ts`
+3. `src/lib/epidemiological-surveillance.ts`
+4. `src/app/api/ai/diagnostic/route.ts`
+5. `src/app/api/ai/interactions/route.ts`
+6. `src/app/api/ai/surveillance/route.ts`
+7. `src/components/ai/symptom-selector.tsx`
+8. `src/components/ai/patient-context-form.tsx`
+9. `src/components/ai/diagnostic-assistant.tsx`
+10. `src/components/ai/interaction-checker.tsx`
+11. `src/components/ai/surveillance-map.tsx`
+12. `src/components/ai/surveillance-dashboard.tsx`
+13. `src/components/ai/alert-detail.tsx`
+
+### Modified Files (5)
+1. `src/lib/store.ts` — Added 3 new AppView types
+2. `src/lib/data-store.ts` — Added Phase 3 types and demo data
+3. `src/components/app/app-shell.tsx` — Added IA Santé navigation group
+4. `src/app/page.tsx` — Added new view mappings
+5. `src/components/app/modules/pharmacy.tsx` — Added interaction check button + indicators
+6. `src/components/app/modules/consultations.tsx` — Added interaction check link

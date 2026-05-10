@@ -22,6 +22,9 @@ import { AnalyticsPage } from '@/components/app/modules/analytics'
 import { AdministrationPage } from '@/components/app/modules/administration'
 import { SettingsPage } from '@/components/app/modules/settings'
 import { PatientPortalPage } from '@/components/app/modules/patient-portal'
+import { DiagnosticAssistant } from '@/components/ai/diagnostic-assistant'
+import { InteractionChecker } from '@/components/ai/interaction-checker'
+import { SurveillanceDashboard } from '@/components/ai/surveillance-dashboard'
 import { I18nProvider } from '@/i18n/provider'
 import { QueryProvider } from '@/lib/query-provider'
 import { PWARegistrar } from '@/components/app/pwa-registrar'
@@ -47,6 +50,9 @@ const viewComponents: Record<AppView, React.ComponentType> = {
   administration: AdministrationPage,
   settings: SettingsPage,
   'patient-portal': PatientPortalPage,
+  'ai-diagnostic': DiagnosticAssistant,
+  'ai-interactions': InteractionChecker,
+  'ai-surveillance': SurveillanceDashboard,
 }
 
 function AppContent() {

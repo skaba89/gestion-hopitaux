@@ -35,6 +35,9 @@ import {
   CreditCard,
   MessageSquare,
   ShieldCheck,
+  Brain,
+  AlertCircle,
+  Activity,
 } from 'lucide-react'
 import { useStore, type AppView } from '@/lib/store'
 import { useDataStore } from '@/lib/data-store'
@@ -125,6 +128,14 @@ const navGroups: { label: string; items: NavItem[] }[] = [
       { view: 'patient-portal', label: 'Portail Patient', icon: Smartphone },
     ],
   },
+  {
+    label: 'IA Santé',
+    items: [
+      { view: 'ai-diagnostic', label: 'Diagnostic IA', icon: Brain },
+      { view: 'ai-interactions', label: 'Interactions', icon: AlertCircle },
+      { view: 'ai-surveillance', label: 'Surveillance', icon: Activity },
+    ],
+  },
 ]
 
 /* ─────────── View Title Map ─────────── */
@@ -150,6 +161,9 @@ const viewTitles: Record<AppView, string> = {
   administration: 'Administration',
   settings: 'Paramètres',
   'patient-portal': 'Portail Patient',
+  'ai-diagnostic': 'Diagnostic IA',
+  'ai-interactions': 'Interactions médicamenteuses',
+  'ai-surveillance': 'Surveillance épidémiologique',
 }
 
 /* ─────────── Notification Icon Map ─────────── */

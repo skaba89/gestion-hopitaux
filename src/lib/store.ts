@@ -21,6 +21,9 @@ export type AppView =
   | 'administration'
   | 'settings'
   | 'patient-portal'
+  | 'ai-diagnostic'
+  | 'ai-interactions'
+  | 'ai-surveillance'
 
 interface User {
   name: string
