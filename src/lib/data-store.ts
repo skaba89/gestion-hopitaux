@@ -193,6 +193,21 @@ export interface Notification {
   read: boolean
 }
 
+export interface FamilyAccount {
+  id: string
+  primaryPhone: string
+  primaryName: string
+  members: FamilyMember[]
+  createdAt: string
+  verificationCode: string // for demo: last 4 digits of phone
+}
+
+export interface FamilyMember {
+  patientId: string
+  relationship: 'Moi' | 'Conjoint' | 'Enfant' | 'Parent' | 'Frère/Sœur' | 'Autre'
+  isPrimary: boolean
+}
+
 /* ─────────── Demo Data ─────────── */
 
 const demoPatients: Patient[] = [
@@ -391,6 +406,40 @@ const demoNotifications: Notification[] = [
   { id: 'NOTIF-004', title: 'Résultat labo', message: 'Résultats hémogramme disponibles pour Aminata Diallo', type: 'success', time: '09:15', read: true },
 ]
 
+const demoFamilyAccounts: FamilyAccount[] = [
+  {
+    id: 'FAM-001',
+    primaryPhone: '+224 622 11 22 33',
+    primaryName: 'Aminata Diallo',
+    members: [
+      { patientId: 'P-2024-001', relationship: 'Moi', isPrimary: true },
+      { patientId: 'P-2024-009', relationship: 'Enfant', isPrimary: false },
+    ],
+    createdAt: '2024-01-15',
+    verificationCode: '2233',
+  },
+  {
+    id: 'FAM-002',
+    primaryPhone: '+224 623 44 55 66',
+    primaryName: 'Mamadou Condé',
+    members: [
+      { patientId: 'P-2024-002', relationship: 'Moi', isPrimary: true },
+    ],
+    createdAt: '2024-02-20',
+    verificationCode: '5566',
+  },
+  {
+    id: 'FAM-003',
+    primaryPhone: '+224 624 77 88 99',
+    primaryName: 'Fatoumata Camara',
+    members: [
+      { patientId: 'P-2024-003', relationship: 'Moi', isPrimary: true },
+    ],
+    createdAt: '2024-03-10',
+    verificationCode: '8899',
+  },
+]
+
 /* ─────────── Data Store ─────────── */
 
 interface DataState {
@@ -407,6 +456,7 @@ interface DataState {
   teleconsults: TeleconsultSession[]
   notifications: Notification[]
   documentAuthorizations: DocumentAuthorization[]
+  familyAccounts: FamilyAccount[]
 
   // Actions
   addPatient: (patient: Patient) => void
@@ -462,6 +512,11 @@ interface DataState {
   addPatientDocument: (patientId: string, doc: MedicalDocument) => void
   removePatientDocument: (patientId: string, docName: string) => void
 
+  // Family account actions
+  addFamilyAccount: (account: FamilyAccount) => void
+  addFamilyMember: (accountId: string, member: FamilyMember) => void
+  removeFamilyMember: (accountId: string, patientId: string) => void
+
   resetToDemo: () => void
 }
 
@@ -479,6 +534,7 @@ const initialState = {
   teleconsults: demoTeleconsults,
   notifications: demoNotifications,
   documentAuthorizations: [] as DocumentAuthorization[],
+  familyAccounts: demoFamilyAccounts,
 }
 
 export const useDataStore = create<DataState>()(
@@ -625,6 +681,19 @@ export const useDataStore = create<DataState>()(
       removePatientDocument: (patientId, docName) => set((s) => ({
         patients: s.patients.map((p) =>
           p.id === patientId ? { ...p, documents: p.documents.filter((d) => d.name !== docName) } : p
+        ),
+      })),
+
+      // Family account actions
+      addFamilyAccount: (account) => set((s) => ({ familyAccounts: [...s.familyAccounts, account] })),
+      addFamilyMember: (accountId, member) => set((s) => ({
+        familyAccounts: s.familyAccounts.map((a) =>
+          a.id === accountId ? { ...a, members: [...a.members, member] } : a
+        ),
+      })),
+      removeFamilyMember: (accountId, patientId) => set((s) => ({
+        familyAccounts: s.familyAccounts.map((a) =>
+          a.id === accountId ? { ...a, members: a.members.filter((m) => m.patientId !== patientId) } : a
         ),
       })),
 

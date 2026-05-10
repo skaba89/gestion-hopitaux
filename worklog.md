@@ -78,3 +78,46 @@ Task: Final integration, lint check, and delivery
 Stage Summary:
 - Full platform operational with zero lint errors
 - Teal/emerald medical theme applied globally
+
+---
+Task ID: 10
+Agent: Main Agent
+Task: Interactive Demo Video + Patient Portal with Family Accounts
+
+Stage Summary:
+
+### Feature 1: Interactive Guided Demo
+- Replaced the static DemoVideoModal with an 8-step interactive guided demo
+- Steps: Welcome, Dashboard, Patients, Appointments, Lab/Pharmacy, Emergency, Patient Portal, CTA
+- Each step shows an animated UI mockup (colored divs + icons) on the left, title/description/features on the right
+- Smooth framer-motion transitions between steps (AnimatePresence, spring animations)
+- Auto-advance every 8 seconds, pausable on hover
+- Progress dots at bottom, Previous/Next buttons, Skip to close
+- Last step has a CTA button "Essayer gratuitement" that navigates to dashboard
+
+### Feature 2: Patient Portal with Family Accounts
+- **data-store.ts**: Added `FamilyAccount` and `FamilyMember` interfaces, 3 demo family accounts (Aminata Diallo with child, Mamadou Condé, Fatoumata Camara), `addFamilyAccount`, `addFamilyMember`, `removeFamilyMember` actions
+- **store.ts**: Added `'patient-portal'` to `AppView` type, `PortalUser` interface with `accountId`, `phone`, `isLoggedIn`, `setPortalUser` action
+- **patient-portal.tsx**: Full portal component (~450 lines) with:
+  - Login screen: phone number + verification code (simulated - code shown in toast)
+  - Portal dashboard: header with logout, family members sidebar, member cards with avatars
+  - Selected member detail: 4 tabs (Informations, RDV, Documents, Historique)
+  - Documents tab: view-only (no download button for patients - RBAC compliant)
+  - Book appointment dialog: select doctor, date, time, reason
+  - Add family member dialog: select from existing patients, set relationship
+- **page.tsx**: Added `PatientPortalPage` import and `'patient-portal'` route
+- **app-shell.tsx**: Added "Portail Patient" entry in sidebar (Système group) with Smartphone icon, added view title
+- **landing-page.tsx**: Added "Espace Patient" button in Navbar (desktop + mobile) and Hero section
+
+### Files Modified
+1. `/src/lib/data-store.ts` - FamilyAccount/FamilyMember types, demo data, actions
+2. `/src/lib/store.ts` - patient-portal AppView, PortalUser state, setPortalUser action
+3. `/src/components/app/modules/patient-portal.tsx` - NEW: Full patient portal
+4. `/src/components/landing/landing-page.tsx` - Replaced DemoVideoModal, added Espace Patient buttons
+5. `/src/app/page.tsx` - patient-portal route
+6. `/src/components/app/app-shell.tsx` - Sidebar entry, view title
+
+### Build Status
+- Lint: ✅ Zero errors
+- Build: ✅ Successful
+- All TypeScript types validated

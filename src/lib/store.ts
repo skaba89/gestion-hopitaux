@@ -17,6 +17,7 @@ export type AppView =
   | 'analytics'
   | 'administration'
   | 'settings'
+  | 'patient-portal'
 
 interface User {
   name: string
@@ -26,17 +27,25 @@ interface User {
   phone: string
 }
 
+interface PortalUser {
+  accountId: string | null
+  phone: string
+  isLoggedIn: boolean
+}
+
 interface AppState {
   currentView: AppView
   sidebarOpen: boolean
   user: User
   searchQuery: string
   notificationsOpen: boolean
+  portalUser: PortalUser
   setCurrentView: (view: AppView) => void
   setSidebarOpen: (open: boolean) => void
   setSearchQuery: (query: string) => void
   setNotificationsOpen: (open: boolean) => void
   updateUser: (data: Partial<User>) => void
+  setPortalUser: (data: Partial<PortalUser>) => void
 }
 
 export const useStore = create<AppState>((set) => ({
@@ -44,6 +53,7 @@ export const useStore = create<AppState>((set) => ({
   sidebarOpen: true,
   searchQuery: '',
   notificationsOpen: false,
+  portalUser: { accountId: null, phone: '', isLoggedIn: false },
   user: {
     name: 'Dr. Mamadou Diallo',
     role: 'Médecin',
@@ -56,4 +66,5 @@ export const useStore = create<AppState>((set) => ({
   setSearchQuery: (query) => set({ searchQuery: query }),
   setNotificationsOpen: (open) => set({ notificationsOpen: open }),
   updateUser: (data) => set((s) => ({ user: { ...s.user, ...data } })),
+  setPortalUser: (data) => set((s) => ({ portalUser: { ...s.portalUser, ...data } })),
 }))

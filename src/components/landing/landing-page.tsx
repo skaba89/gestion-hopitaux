@@ -202,6 +202,13 @@ function Navbar({ onDemoClick }: { onDemoClick: () => void }) {
 
             {/* CTA buttons */}
             <Button
+              variant="outline"
+              onClick={() => setCurrentView('patient-portal')}
+              className="hidden lg:inline-flex border-teal-300 dark:border-teal-700 text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/30 transition-all"
+            >
+              Espace Patient
+            </Button>
+            <Button
               onClick={() => setCurrentView('dashboard')}
               className="hidden lg:inline-flex bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white shadow-lg shadow-teal-500/25 hover:shadow-teal-500/40 transition-all"
             >
@@ -243,7 +250,14 @@ function Navbar({ onDemoClick }: { onDemoClick: () => void }) {
                   {link.label}
                 </a>
               ))}
-              <div className="pt-2">
+              <div className="pt-2 space-y-2">
+                <Button
+                  variant="outline"
+                  onClick={() => { setMobileOpen(false); setCurrentView('patient-portal') }}
+                  className="w-full border-teal-300 dark:border-teal-700 text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/30"
+                >
+                  Espace Patient
+                </Button>
                 <Button
                   onClick={() => { setMobileOpen(false); setCurrentView('dashboard') }}
                   className="w-full bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white shadow-lg"
@@ -315,6 +329,14 @@ function HeroSection({ onDemoClick }: { onDemoClick: () => void }) {
               >
                 <PlayCircle className="w-5 h-5 mr-1.5" />
                 Voir la démo
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => setCurrentView('patient-portal')}
+                className="border-teal-300 dark:border-teal-700 text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/30 text-base px-8 h-12"
+              >
+                Espace Patient
               </Button>
             </div>
 
@@ -1857,316 +1879,384 @@ function DataSpherePortfolioSection() {
   )
 }
 
-/* ─────────── Demo Video Modal ─────────── */
+/* ─────────── Interactive Guided Demo Modal ─────────── */
+
+const demoSteps = [
+  {
+    title: 'Bienvenue sur HealthFlow Guinea',
+    desc: 'Votre plateforme num\u00e9rique compl\u00e8te pour la gestion hospitali\u00e8re moderne en Guin\u00e9e. D\u00e9couvrez comment HealthFlow transforme les \u00e9tablissements de sant\u00e9.',
+    icon: Heart,
+    color: 'from-teal-500 to-emerald-600',
+    features: ['Gestion centralis\u00e9e des patients', 'Modules sp\u00e9cialis\u00e9s pour chaque service', 'Conforme aux normes OMS', 'Adapt\u00e9 au contexte guin\u00e9en'],
+    mockup: 'welcome',
+  },
+  {
+    title: 'Tableau de bord intelligent',
+    desc: 'Visualisez en temps r\u00e9el les KPIs de votre \u00e9tablissement : patients, rendez-vous, lits disponibles et urgences.',
+    icon: BarChart3,
+    color: 'from-teal-500 to-teal-600',
+    features: ['Indicateurs en temps r\u00e9el', 'Graphiques interactifs', 'Alertes automatiques', 'Rapports personnalisables'],
+    mockup: 'dashboard',
+  },
+  {
+    title: 'Gestion des patients',
+    desc: 'Dossiers m\u00e9dicaux num\u00e9riques complets avec QR code, historique, allergies et ant\u00e9c\u00e9dents centralis\u00e9s.',
+    icon: Users,
+    color: 'from-emerald-500 to-emerald-600',
+    features: ['QR code d\'identification', 'Historique m\u00e9dical complet', 'Gestion des allergies', 'Recherche avanc\u00e9e'],
+    mockup: 'patients',
+  },
+  {
+    title: 'Rendez-vous & Consultations',
+    desc: 'Planification intelligente avec agenda m\u00e9decin, rappels SMS et suivi complet des consultations.',
+    icon: Calendar,
+    color: 'from-amber-500 to-amber-600',
+    features: ['Agenda m\u00e9decin interactif', 'Rappels SMS automatiques', 'Suivi des consultations', 'Gestion des files d\'attente'],
+    mockup: 'appointments',
+  },
+  {
+    title: 'Laboratoire & Pharmacie',
+    desc: 'Gestion des demandes d\'analyses, validation des r\u00e9sultats et suivi des stocks de m\u00e9dicaments en temps r\u00e9el.',
+    icon: Microscope,
+    color: 'from-purple-500 to-purple-600',
+    features: ['Validation biologique', 'Alertes de rupture de stock', 'Tra\u00e7abilit\u00e9 des lots', 'Catalogue d\'analyses'],
+    mockup: 'lab',
+  },
+  {
+    title: 'Urgences & Hospitalisation',
+    desc: 'Triage 5 couleurs, gestion des lits et suivi hospitalier complet pour une prise en charge optimale.',
+    icon: Bed,
+    color: 'from-rose-500 to-rose-600',
+    features: ['Triage 5 couleurs (OMS)', 'Gestion des lits en temps r\u00e9el', 'Suivi des admissions', 'Plan de soins'],
+    mockup: 'emergency',
+  },
+  {
+    title: 'Portail Patient',
+    desc: 'Un espace d\u00e9di\u00e9 aux patients pour consulter leurs dossiers, prendre rendez-vous et g\u00e9rer les membres de leur famille.',
+    icon: Smartphone,
+    color: 'from-sky-500 to-sky-600',
+    features: ['Compte famille multi-membres', 'Consultation du dossier m\u00e9dical', 'Prise de rendez-vous en ligne', 'Acc\u00e8s aux documents de sant\u00e9'],
+    mockup: 'portal',
+  },
+  {
+    title: 'Pr\u00eat \u00e0 transformer votre \u00e9tablissement ?',
+    desc: 'Rejoignez les 45+ h\u00f4pitaux guin\u00e9ens qui utilisent d\u00e9j\u00e0 HealthFlow. Essai gratuit, d\u00e9ploiement en 24h.',
+    icon: Sparkles,
+    color: 'from-teal-600 to-emerald-500',
+    features: ['Essai gratuit 30 jours', 'D\u00e9ploiement en 24 heures', 'Formation incluse', 'Support 24/7'],
+    mockup: 'cta',
+  },
+]
+
+function DemoStepMockup({ type }: { type: string }) {
+  if (type === 'dashboard') {
+    return (
+      <div className="space-y-3">
+        <div className="grid grid-cols-4 gap-2">
+          {[
+            { label: 'Patients', value: '24', color: 'bg-teal-500' },
+            { label: 'RDV', value: '18', color: 'bg-emerald-500' },
+            { label: 'Lits', value: '42/120', color: 'bg-amber-500' },
+            { label: 'Urg.', value: '7', color: 'bg-rose-500' },
+          ].map((kpi) => (
+            <div key={kpi.label} className="bg-white dark:bg-slate-800 rounded-lg p-2 border border-slate-100 dark:border-slate-700">
+              <div className="flex items-center gap-1 mb-0.5"><div className={`w-1.5 h-1.5 rounded-full ${kpi.color}`} /><span className="text-[8px] text-slate-400">{kpi.label}</span></div>
+              <div className="text-sm font-bold text-slate-900 dark:text-white">{kpi.value}</div>
+            </div>
+          ))}
+        </div>
+        <div className="bg-white dark:bg-slate-800 rounded-lg p-2 border border-slate-100 dark:border-slate-700">
+          <div className="text-[9px] font-semibold text-slate-600 dark:text-slate-300 mb-1">Consultations / semaine</div>
+          <div className="flex items-end gap-1 h-12">
+            {[35, 55, 45, 70, 60, 80, 50].map((h, i) => (
+              <motion.div key={i} initial={{ height: 0 }} animate={{ height: `${h}%` }} transition={{ delay: i * 0.08, duration: 0.5, type: 'spring' as const, bounce: 0.3 }} className="flex-1 bg-gradient-to-t from-teal-500 to-emerald-400 rounded-sm" />
+            ))}
+          </div>
+        </div>
+        <div className="bg-white dark:bg-slate-800 rounded-lg p-2 border border-slate-100 dark:border-slate-700">
+          <div className="text-[9px] font-semibold text-slate-600 dark:text-slate-300 mb-1">Prochains RDV</div>
+          {[
+            { name: 'A. Diallo', time: '09:00' },
+            { name: 'M. Cond\u00e9', time: '09:30' },
+            { name: 'F. Camara', time: '10:00' },
+          ].map((apt, i) => (
+            <div key={i} className="flex items-center justify-between py-1 border-b border-slate-50 dark:border-slate-700/50 last:border-0">
+              <span className="text-[9px] font-medium text-slate-700 dark:text-slate-200">{apt.name}</span>
+              <span className="text-[9px] font-semibold text-teal-600 dark:text-teal-400">{apt.time}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+  if (type === 'patients') {
+    return (
+      <div className="space-y-3">
+        <div className="bg-white dark:bg-slate-800 rounded-lg p-3 border border-slate-100 dark:border-slate-700">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center text-white text-[10px] font-bold">AD</div>
+            <div><div className="text-xs font-semibold text-slate-900 dark:text-white">Aminata Diallo</div><div className="text-[8px] text-slate-400">F &bull; 28 ans &bull; O+</div></div>
+          </div>
+          <div className="flex flex-wrap gap-1 mb-2">{['P\u00e9nicilline', 'Sulfamides'].map((a) => <span key={a} className="px-1.5 py-0.5 bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 text-[7px] font-medium rounded-full">{a}</span>)}</div>
+          <div className="grid grid-cols-2 gap-1.5">
+            <div className="bg-slate-50 dark:bg-slate-900/50 rounded p-1.5"><div className="text-[7px] text-slate-400">Derni\u00e8re visite</div><div className="text-[9px] font-semibold text-slate-700 dark:text-slate-200">10/05/26</div></div>
+            <div className="bg-slate-50 dark:bg-slate-900/50 rounded p-1.5"><div className="text-[7px] text-slate-400">Statut</div><div className="text-[9px] font-semibold text-emerald-600">Actif</div></div>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-slate-800 rounded-lg p-2 border border-slate-100 dark:border-slate-700">
+          <div className="text-[9px] font-semibold text-slate-600 dark:text-slate-300 mb-1">Recherche patient</div>
+          <div className="h-7 bg-slate-50 dark:bg-slate-900/50 rounded border border-slate-200 dark:border-slate-700 flex items-center px-2"><span className="text-[8px] text-slate-400">Rechercher par nom, ID...</span></div>
+        </div>
+      </div>
+    )
+  }
+  if (type === 'appointments') {
+    return (
+      <div className="space-y-3">
+        <div className="grid grid-cols-7 gap-0.5">
+          {['L', 'Ma', 'Me', 'J', 'V', 'S', 'D'].map((d) => <div key={d} className="text-[7px] text-center text-slate-400 py-0.5">{d}</div>)}
+          {Array.from({ length: 35 }).map((_, i) => {
+            const day = i - 2
+            const hasEvent = [8, 12, 15, 22, 28].includes(day)
+            return <div key={i} className={`text-[8px] text-center py-1 rounded ${hasEvent ? 'bg-teal-500 text-white font-bold' : day > 0 && day <= 31 ? 'text-slate-600 dark:text-slate-300' : 'text-slate-300 dark:text-slate-600'}`}>{day > 0 && day <= 31 ? day : ''}</div>
+          })}
+        </div>
+        <div className="bg-white dark:bg-slate-800 rounded-lg p-2 border border-slate-100 dark:border-slate-700">
+          <div className="text-[9px] font-semibold text-slate-600 dark:text-slate-300 mb-1">Aujourd&apos;hui</div>
+          {[
+            { time: '09:00', name: 'A. Diallo', type: 'Consultation' },
+            { time: '10:30', name: 'F. Camara', type: 'Suivi' },
+            { time: '14:00', name: 'M. Cond\u00e9', type: 'Contr\u00f4le' },
+          ].map((apt, i) => (
+            <div key={i} className="flex items-center justify-between py-1 border-b border-slate-50 dark:border-slate-700/50 last:border-0">
+              <div className="flex items-center gap-1.5"><span className="text-[9px] font-semibold text-teal-600 dark:text-teal-400">{apt.time}</span><span className="text-[8px] text-slate-600 dark:text-slate-300">{apt.name}</span></div>
+              <span className="text-[7px] px-1.5 py-0.5 bg-teal-50 dark:bg-teal-950/30 text-teal-600 dark:text-teal-400 rounded-full">{apt.type}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+  if (type === 'lab') {
+    return (
+      <div className="space-y-3">
+        <div className="grid grid-cols-3 gap-2">
+          {[{ l: 'En attente', v: '5', c: 'bg-amber-500' }, { l: 'En cours', v: '3', c: 'bg-teal-500' }, { l: 'Valid\u00e9s', v: '12', c: 'bg-emerald-500' }].map((s) => (
+            <div key={s.l} className="bg-white dark:bg-slate-800 rounded-lg p-2 border border-slate-100 dark:border-slate-700 text-center">
+              <div className={`w-6 h-6 rounded-full ${s.c} mx-auto mb-1`} /><div className="text-sm font-bold text-slate-900 dark:text-white">{s.v}</div><div className="text-[7px] text-slate-400">{s.l}</div>
+            </div>
+          ))}
+        </div>
+        <div className="bg-white dark:bg-slate-800 rounded-lg p-2 border border-slate-100 dark:border-slate-700">
+          <div className="text-[9px] font-semibold text-slate-600 dark:text-slate-300 mb-1">Stock pharmacie</div>
+          {[
+            { name: 'Parac\u00e9tamol', pct: 85 },
+            { name: 'Amoxicilline', pct: 23 },
+            { name: 'Quinine', pct: 8 },
+          ].map((med, i) => (
+            <div key={i} className="flex items-center gap-2 py-1 border-b border-slate-50 dark:border-slate-700/50 last:border-0">
+              <span className="text-[8px] text-slate-600 dark:text-slate-300 w-16 truncate">{med.name}</span>
+              <div className="flex-1 h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                <motion.div initial={{ width: 0 }} animate={{ width: `${med.pct}%` }} transition={{ delay: i * 0.1, duration: 0.5, type: 'spring' as const, bounce: 0.2 }} className={`h-full rounded-full ${med.pct > 50 ? 'bg-emerald-500' : med.pct > 20 ? 'bg-amber-500' : 'bg-rose-500'}`} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+  if (type === 'emergency') {
+    return (
+      <div className="space-y-3">
+        <div className="flex gap-1.5">
+          {[{ c: 'Rouge', bg: 'bg-red-500' }, { c: 'Orange', bg: 'bg-orange-500' }, { c: 'Jaune', bg: 'bg-yellow-500' }, { c: 'Vert', bg: 'bg-green-500' }, { c: 'Bleu', bg: 'bg-blue-500' }].map((t) => (
+            <div key={t.c} className="flex-1"><div className={`${t.bg} rounded-lg p-1.5 text-center`}><div className="text-[7px] text-white font-bold">{t.c}</div></div></div>
+          ))}
+        </div>
+        <div className="bg-white dark:bg-slate-800 rounded-lg p-2 border border-slate-100 dark:border-slate-700">
+          <div className="text-[9px] font-semibold text-slate-600 dark:text-slate-300 mb-1">Lits disponibles</div>
+          <div className="grid grid-cols-4 gap-1">
+            {Array.from({ length: 12 }).map((_, i) => {
+              const occupied = [0, 2, 4, 7, 8].includes(i)
+              return <div key={i} className={`h-5 rounded text-[7px] flex items-center justify-center font-medium ${occupied ? 'bg-rose-100 dark:bg-rose-950/50 text-rose-600' : 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600'}`}>{occupied ? '\u25CF' : '\u25CB'}</div>
+            })}
+          </div>
+        </div>
+      </div>
+    )
+  }
+  if (type === 'portal') {
+    return (
+      <div className="space-y-3">
+        <div className="bg-white dark:bg-slate-800 rounded-lg p-2 border border-slate-100 dark:border-slate-700">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center text-white text-[9px] font-bold">AD</div>
+            <div><div className="text-[10px] font-semibold text-slate-900 dark:text-white">Aminata Diallo</div><div className="text-[8px] text-slate-400">Compte famille</div></div>
+          </div>
+          <div className="space-y-1">
+            {[
+              { name: 'Aminata Diallo', rel: 'Moi' },
+              { name: 'A\u00efssatou Bald\u00e9', rel: 'Enfant' },
+            ].map((m, i) => (
+              <div key={i} className="flex items-center justify-between py-1 px-2 bg-slate-50 dark:bg-slate-900/50 rounded">
+                <span className="text-[8px] font-medium text-slate-700 dark:text-slate-200">{m.name}</span>
+                <span className="text-[7px] text-teal-600 dark:text-teal-400">{m.rel}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="bg-white dark:bg-slate-800 rounded-lg p-2 border border-slate-100 dark:border-slate-700">
+          <div className="text-[9px] font-semibold text-slate-600 dark:text-slate-300 mb-1">Prochain rendez-vous</div>
+          <div className="flex items-center justify-between">
+            <div><div className="text-[9px] font-medium text-slate-700 dark:text-slate-200">Dr. Diallo</div><div className="text-[7px] text-slate-400">Suivi paludisme</div></div>
+            <div className="text-right"><div className="text-[9px] font-semibold text-teal-600">10/05</div><div className="text-[7px] text-slate-400">08:00</div></div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+  if (type === 'cta') {
+    return (
+      <div className="flex flex-col items-center justify-center py-6 text-center space-y-4">
+        <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 2, repeat: Infinity, type: 'spring' as const, bounce: 0.4 }} className="w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center shadow-xl shadow-teal-500/30">
+          <Sparkles className="w-8 h-8 text-white" />
+        </motion.div>
+        <div className="text-sm font-bold text-teal-700 dark:text-teal-300">D\u00e9marrer maintenant</div>
+        <div className="text-[9px] text-slate-500 dark:text-slate-400">Essai gratuit &bull; Aucune carte requise</div>
+      </div>
+    )
+  }
+  // welcome
+  return (
+    <div className="flex flex-col items-center justify-center py-8 text-center space-y-4">
+      <motion.div animate={{ rotate: [0, 360] }} transition={{ duration: 20, repeat: Infinity, ease: 'linear' }} className="w-20 h-20 rounded-full bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center shadow-2xl shadow-teal-500/30">
+        <Heart className="w-10 h-10 text-white" />
+      </motion.div>
+      <div className="space-y-1">
+        <div className="text-sm font-bold text-slate-900 dark:text-white">HealthFlow Guinea</div>
+        <div className="text-[10px] text-slate-500 dark:text-slate-400">Syst\u00e8me d&apos;Information Hospitalier</div>
+      </div>
+    </div>
+  )
+}
 
 function DemoVideoModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'patients' | 'pharmacy'>('dashboard')
+  const [step, setStep] = useState(0)
+  const [paused, setPaused] = useState(false)
   const { setCurrentView } = useStore()
+  const currentStep = demoSteps[step]
 
-  const demoScreens: Record<string, { title: string; desc: string; elements: React.ReactNode }> = {
-    dashboard: {
-      title: 'Dashboard Santé',
-      desc: 'Vue d\'ensemble en temps réel de votre établissement',
-      elements: (
-        <div className="space-y-4">
-          {/* Mini KPI Cards */}
-          <div className="grid grid-cols-4 gap-3">
-            {[
-              { label: 'Patients', value: '24', trend: '+12%', color: 'bg-teal-500' },
-              { label: 'Rendez-vous', value: '18', trend: '+5%', color: 'bg-emerald-500' },
-              { label: 'Lits dispo.', value: '42/120', trend: '-3%', color: 'bg-amber-500' },
-              { label: 'Urgences', value: '7', trend: '+2', color: 'bg-rose-500' },
-            ].map((kpi) => (
-              <div key={kpi.label} className="bg-white dark:bg-slate-800 rounded-xl p-3 border border-slate-100 dark:border-slate-700">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className={`w-2 h-2 rounded-full ${kpi.color}`} />
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400">{kpi.label}</span>
-                </div>
-                <div className="text-lg font-bold text-slate-900 dark:text-white">{kpi.value}</div>
-                <span className="text-[9px] text-emerald-500 font-medium">{kpi.trend}</span>
-              </div>
-            ))}
-          </div>
-          {/* Mini Chart */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-3 border border-slate-100 dark:border-slate-700">
-            <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 mb-2">Consultations cette semaine</div>
-            <div className="flex items-end gap-1.5 h-20">
-              {[35, 55, 45, 70, 60, 80, 50].map((h, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ height: 0 }}
-                  animate={{ height: `${h}%` }}
-                  transition={{ delay: i * 0.08, duration: 0.5 }}
-                  className="flex-1 bg-gradient-to-t from-teal-500 to-emerald-400 rounded-sm"
-                />
-              ))}
-            </div>
-            <div className="flex justify-between mt-1">
-              {['L', 'Ma', 'Me', 'J', 'V', 'S', 'D'].map((d, i) => (
-                <span key={i} className="text-[8px] text-slate-400 w-full text-center">{d}</span>
-              ))}
-            </div>
-          </div>
-          {/* Mini Appointments */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-3 border border-slate-100 dark:border-slate-700">
-            <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 mb-2">Prochains rendez-vous</div>
-            {[
-              { name: 'Aminata Diallo', time: '09:00', type: 'Consultation' },
-              { name: 'Ibrahim Touré', time: '09:30', type: 'Suivi' },
-              { name: 'Fatoumata Camara', time: '10:00', type: 'Prénatal' },
-            ].map((apt, i) => (
-              <div key={i} className="flex items-center justify-between py-1.5 border-b border-slate-50 dark:border-slate-700/50 last:border-0">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-teal-100 dark:bg-teal-900/50 flex items-center justify-center text-[9px] font-bold text-teal-700 dark:text-teal-300">
-                    {apt.name.split(' ').map(n => n[0]).join('')}
-                  </div>
-                  <span className="text-[10px] font-medium text-slate-700 dark:text-slate-200">{apt.name}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[9px] text-slate-400">{apt.type}</span>
-                  <span className="text-[10px] font-semibold text-teal-600 dark:text-teal-400">{apt.time}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ),
-    },
-    patients: {
-      title: 'Gestion des Patients',
-      desc: 'Dossier numérique complet avec QR code',
-      elements: (
-        <div className="space-y-4">
-          {/* Patient Card */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-100 dark:border-slate-700">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center text-white font-bold text-sm">AD</div>
-              <div>
-                <div className="font-semibold text-slate-900 dark:text-white text-sm">Aminata Diallo</div>
-                <div className="text-[10px] text-slate-500">F • 28 ans • +224 622 11 22 33</div>
-              </div>
-              <div className="ml-auto">
-                <div className="w-14 h-14 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center">
-                  <div className="grid grid-cols-5 gap-px">
-                    {Array.from({ length: 25 }).map((_, i) => (
-                      <div key={i} className={`w-1.5 h-1.5 rounded-sm ${Math.random() > 0.4 ? 'bg-slate-800 dark:bg-slate-200' : 'bg-slate-300 dark:bg-slate-600'}`} />
-                    ))}
-                  </div>
-                </div>
-                <div className="text-[7px] text-center text-slate-400 mt-0.5">QR Code</div>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-2">
-                <div className="text-[9px] text-slate-500 mb-0.5">Groupe sanguin</div>
-                <div className="text-xs font-bold text-rose-500">O+</div>
-              </div>
-              <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-2">
-                <div className="text-[9px] text-slate-500 mb-0.5">Dernière visite</div>
-                <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">10 Mai 2026</div>
-              </div>
-            </div>
-          </div>
-          {/* Allergies */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-3 border border-slate-100 dark:border-slate-700">
-            <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 mb-2">Allergies</div>
-            <div className="flex flex-wrap gap-1.5">
-              {['Pénicilline', 'Sulfamides', 'Iode'].map((a) => (
-                <span key={a} className="px-2 py-0.5 bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 text-[9px] font-medium rounded-full border border-red-200 dark:border-red-800">{a}</span>
-              ))}
-            </div>
-          </div>
-          {/* Medical History */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-3 border border-slate-100 dark:border-slate-700">
-            <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 mb-2">Historique médical</div>
-            {[
-              { date: '10/05/26', diag: 'Paludisme simple', doctor: 'Dr. Diallo' },
-              { date: '22/03/26', diag: 'Consultation prénatale', doctor: 'Dr. Bah' },
-              { date: '15/01/26', diag: 'Grippe saisonnière', doctor: 'Dr. Condé' },
-            ].map((h, i) => (
-              <div key={i} className="flex items-center justify-between py-1.5 border-b border-slate-50 dark:border-slate-700/50 last:border-0">
-                <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-teal-500" />
-                  <span className="text-[10px] font-medium text-slate-700 dark:text-slate-200">{h.diag}</span>
-                </div>
-                <div className="text-[9px] text-slate-400">{h.date} • {h.doctor}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ),
-    },
-    pharmacy: {
-      title: 'Pharmacie & Stock',
-      desc: 'Suivi des médicaments et alertes en temps réel',
-      elements: (
-        <div className="space-y-4">
-          {/* Stock Alerts */}
-          <div className="grid grid-cols-3 gap-2">
-            {[
-              { label: 'En stock', value: '342', color: 'bg-emerald-500' },
-              { label: 'Stock faible', value: '18', color: 'bg-amber-500' },
-              { label: 'Rupture', value: '5', color: 'bg-rose-500' },
-            ].map((s) => (
-              <div key={s.label} className="bg-white dark:bg-slate-800 rounded-xl p-3 border border-slate-100 dark:border-slate-700 text-center">
-                <div className={`w-8 h-8 rounded-lg ${s.color}/10 flex items-center justify-center mx-auto mb-1`}>
-                  <div className={`w-3 h-3 rounded-full ${s.color}`} />
-                </div>
-                <div className="text-lg font-bold text-slate-900 dark:text-white">{s.value}</div>
-                <div className="text-[9px] text-slate-500">{s.label}</div>
-              </div>
-            ))}
-          </div>
-          {/* Medication Table */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-3 border border-slate-100 dark:border-slate-700">
-            <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 mb-2">État des stocks</div>
-            {[
-              { name: 'Paracétamol 500mg', stock: 85, max: 100, status: 'ok' },
-              { name: 'Amoxicilline 250mg', stock: 23, max: 100, status: 'low' },
-              { name: 'Quinine 300mg', stock: 5, max: 100, status: 'critical' },
-              { name: 'Métformine 500mg', stock: 67, max: 100, status: 'ok' },
-              { name: 'Ondansétron 4mg', stock: 12, max: 100, status: 'low' },
-            ].map((med, i) => (
-              <div key={i} className="flex items-center gap-3 py-2 border-b border-slate-50 dark:border-slate-700/50 last:border-0">
-                <span className="text-[10px] font-medium text-slate-700 dark:text-slate-200 w-32 truncate">{med.name}</span>
-                <div className="flex-1 h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${med.stock}%` }}
-                    transition={{ delay: i * 0.1, duration: 0.6 }}
-                    className={`h-full rounded-full ${
-                      med.status === 'ok' ? 'bg-emerald-500' : med.status === 'low' ? 'bg-amber-500' : 'bg-rose-500'
-                    }`}
-                  />
-                </div>
-                <span className={`text-[9px] font-semibold w-8 text-right ${
-                  med.status === 'ok' ? 'text-emerald-600' : med.status === 'low' ? 'text-amber-600' : 'text-rose-600'
-                }`}>{med.stock}%</span>
-              </div>
-            ))}
-          </div>
-          {/* Expiration Alert */}
-          <div className="bg-rose-50 dark:bg-rose-950/20 rounded-xl p-3 border border-rose-200 dark:border-rose-800/50">
-            <div className="flex items-center gap-2 mb-1">
-              <ShieldAlert className="w-4 h-4 text-rose-500" />
-              <span className="text-xs font-semibold text-rose-700 dark:text-rose-300">Alerte expiration</span>
-            </div>
-            <div className="text-[10px] text-rose-600 dark:text-rose-400">3 médicaments expirent dans les 30 prochains jours</div>
-          </div>
-        </div>
-      ),
-    },
-  }
+  useEffect(() => {
+    if (!open || paused) return
+    const timer = setInterval(() => {
+      setStep((s) => (s + 1) % demoSteps.length)
+    }, 8000)
+    return () => clearInterval(timer)
+  }, [open, paused])
 
-  if (!open) return null
+  const goNext = () => setStep((s) => Math.min(s + 1, demoSteps.length - 1))
+  const goPrev = () => setStep((s) => Math.max(s - 1, 0))
 
   return (
     <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
-        onClick={onClose}
-      >
+      {open && (
         <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          transition={{ type: 'spring', damping: 25 }}
-          className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-4xl w-full overflow-hidden"
-          onClick={(e) => e.stopPropagation()}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+          onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
         >
-          {/* Modal Header */}
-          <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
-            <div>
-              <h3 className="font-bold text-lg text-slate-900 dark:text-white">HealthFlow Guinea — Démo interactive</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Découvrez la plateforme en action</p>
-            </div>
-            <button
-              onClick={onClose}
-              className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-            >
-              <X className="w-4 h-4 text-slate-500" />
+          <motion.div
+            initial={{ scale: 0.9, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            exit={{ scale: 0.9, y: 20 }}
+            transition={{ type: 'spring' as const, bounce: 0.2 }}
+            className="relative w-full max-w-4xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden"
+            onMouseEnter={() => setPaused(true)}
+            onMouseLeave={() => setPaused(false)}
+          >
+            <button onClick={onClose} className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white transition-colors">
+              <X className="w-4 h-4" />
             </button>
-          </div>
 
-          <div className="flex flex-col md:flex-row">
-            {/* Sidebar - Screen Selection */}
-            <div className="md:w-56 border-b md:border-b-0 md:border-r border-slate-100 dark:border-slate-800 p-3 md:p-4">
-              <div className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">Écrans</div>
-              <div className="flex md:flex-col gap-1.5 overflow-x-auto md:overflow-x-visible">
-                {Object.entries(demoScreens).map(([key, screen]) => (
-                  <button
-                    key={key}
-                    onClick={() => setActiveTab(key as 'dashboard' | 'patients' | 'pharmacy')}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
-                      activeTab === key
-                        ? 'bg-teal-50 dark:bg-teal-950/30 text-teal-700 dark:text-teal-300'
-                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
-                    }`}
+            <div className="grid md:grid-cols-2">
+              <div className="bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-950/40 dark:to-emerald-950/40 p-6 md:p-8 flex items-center justify-center min-h-[280px]">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={step}
+                    initial={{ opacity: 0, scale: 0.95, x: -20 }}
+                    animate={{ opacity: 1, scale: 1, x: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, x: 20 }}
+                    transition={{ duration: 0.4, type: 'spring' as const, bounce: 0.2 }}
+                    className="w-full max-w-xs"
                   >
-                    {key === 'dashboard' && <BarChart3 className="w-4 h-4" />}
-                    {key === 'patients' && <Users className="w-4 h-4" />}
-                    {key === 'pharmacy' && <Pill className="w-4 h-4" />}
-                    <span>{screen.title}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Main Demo Screen */}
-            <div className="flex-1 p-4 md:p-6">
-              <div className="mb-4">
-                <h4 className="font-bold text-slate-900 dark:text-white">{demoScreens[activeTab].title}</h4>
-                <p className="text-sm text-slate-500 dark:text-slate-400">{demoScreens[activeTab].desc}</p>
+                    <DemoStepMockup type={currentStep.mockup} />
+                  </motion.div>
+                </AnimatePresence>
               </div>
 
-              {/* Simulated App Screen */}
-              <div className="bg-slate-50 dark:bg-slate-950 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
-                {/* Fake app header */}
-                <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-200 dark:border-slate-700">
-                  <div className="w-6 h-6 rounded-md bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center">
-                    <Heart className="w-3.5 h-3.5 text-white" />
+              <div className="p-6 md:p-8 flex flex-col">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={step}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3, type: 'spring' as const, bounce: 0.2 }}
+                    className="flex-1"
+                  >
+                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${currentStep.color} flex items-center justify-center shadow-lg mb-4`}>
+                      <currentStep.icon className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="text-xs font-semibold text-teal-600 dark:text-teal-400 mb-1">\u00c9tape {step + 1} / {demoSteps.length}</div>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{currentStep.title}</h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-300 mb-4 leading-relaxed">{currentStep.desc}</p>
+                    <ul className="space-y-2 mb-6">
+                      {currentStep.features.map((f, i) => (
+                        <motion.li key={f} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                          <div className="w-5 h-5 rounded-full bg-teal-100 dark:bg-teal-950/50 flex items-center justify-center flex-shrink-0">
+                            <Check className="w-3 h-3 text-teal-600 dark:text-teal-400" />
+                          </div>
+                          {f}
+                        </motion.li>
+                      ))}
+                    </ul>
+                  </motion.div>
+                </AnimatePresence>
+
+                <div className="mt-auto space-y-4">
+                  {step === demoSteps.length - 1 ? (
+                    <Button onClick={() => { onClose(); setCurrentView('dashboard') }} className="w-full bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white shadow-lg h-11">
+                      Essayer gratuitement <ArrowRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={goPrev} disabled={step === 0} className="flex-1 h-10">Pr\u00e9c\u00e9dent</Button>
+                      <Button onClick={goNext} className="flex-1 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white h-10">
+                        {step === demoSteps.length - 2 ? 'Terminer' : 'Suivant'} <ChevronRight className="w-4 h-4 ml-1" />
+                      </Button>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-center gap-1.5">
+                    {demoSteps.map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setStep(i)}
+                        className={`h-2 rounded-full transition-all ${i === step ? 'w-6 bg-teal-500' : 'w-2 bg-slate-300 dark:bg-slate-600 hover:bg-slate-400'}`}
+                      />
+                    ))}
                   </div>
-                  <span className="text-xs font-bold text-teal-700 dark:text-teal-300">HealthFlow</span>
-                  <span className="text-[9px] text-teal-500">Guinea</span>
-                  <div className="ml-auto flex gap-1.5">
-                    <div className="w-2 h-2 rounded-full bg-rose-400" />
-                    <div className="w-2 h-2 rounded-full bg-amber-400" />
-                    <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                  <div className="text-center">
+                    <button onClick={onClose} className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">Passer</button>
                   </div>
                 </div>
-
-                {/* Screen Content */}
-                <motion.div
-                  key={activeTab}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  {demoScreens[activeTab].elements}
-                </motion.div>
               </div>
             </div>
-          </div>
-
-          {/* Modal Footer */}
-          <div className="flex items-center justify-between p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50">
-            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Démo interactive — Données fictives</span>
-            </div>
-            <Button
-              onClick={() => { onClose(); setCurrentView('dashboard') }}
-              className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white text-sm"
-            >
-              Essayer la plateforme
-              <ArrowRight className="w-4 h-4 ml-1" />
-            </Button>
-          </div>
+          </motion.div>
         </motion.div>
-      </motion.div>
+      )}
     </AnimatePresence>
   )
 }

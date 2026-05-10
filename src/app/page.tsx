@@ -18,6 +18,7 @@ import { TeleconsultationPage } from '@/components/app/modules/teleconsultation'
 import { AnalyticsPage } from '@/components/app/modules/analytics'
 import { AdministrationPage } from '@/components/app/modules/administration'
 import { SettingsPage } from '@/components/app/modules/settings'
+import { PatientPortalPage } from '@/components/app/modules/patient-portal'
 
 const viewComponents: Record<AppView, React.ComponentType> = {
   landing: LandingPage,
@@ -36,6 +37,7 @@ const viewComponents: Record<AppView, React.ComponentType> = {
   analytics: AnalyticsPage,
   administration: AdministrationPage,
   settings: SettingsPage,
+  'patient-portal': PatientPortalPage,
 }
 
 export default function Home() {

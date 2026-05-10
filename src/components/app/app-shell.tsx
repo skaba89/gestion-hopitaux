@@ -31,6 +31,7 @@ import {
   Info,
   CheckCircle2,
   XCircle,
+  Smartphone,
 } from 'lucide-react'
 import { useStore, type AppView } from '@/lib/store'
 import { useDataStore } from '@/lib/data-store'
@@ -113,6 +114,7 @@ const navGroups: { label: string; items: NavItem[] }[] = [
     items: [
       { view: 'administration', label: 'Administration', icon: Settings2 },
       { view: 'settings', label: 'Paramètres', icon: Cog },
+      { view: 'patient-portal', label: 'Portail Patient', icon: Smartphone },
     ],
   },
 ]
@@ -136,6 +138,7 @@ const viewTitles: Record<AppView, string> = {
   analytics: 'Analytics',
   administration: 'Administration',
   settings: 'Paramètres',
+  'patient-portal': 'Portail Patient',
 }
 
 /* ─────────── Notification Icon Map ─────────── */
