@@ -31,6 +31,8 @@ import { ASCDashboard } from '@/components/asc/asc-dashboard'
 import { AuditLogViewer } from '@/components/admin/audit-log-viewer'
 import { SecurityDashboard } from '@/components/admin/security-dashboard'
 import { PermissionMatrix } from '@/components/admin/permission-matrix'
+import { FHIRExplorer } from '@/components/fhir/fhir-explorer'
+import { IntegrationDashboard } from '@/components/integrations/integration-dashboard'
 import { I18nProvider } from '@/i18n/provider'
 import { QueryProvider } from '@/lib/query-provider'
 import { PWARegistrar } from '@/components/app/pwa-registrar'
@@ -66,6 +68,8 @@ const viewComponents: Record<AppView, React.ComponentType> = {
   'audit-log': AuditLogViewer,
   'security-dashboard': SecurityDashboard,
   'permission-matrix': PermissionMatrix,
+  'fhir-explorer': FHIRExplorer,
+  'integration-dashboard': IntegrationDashboard,
 }
 
 function AppContent() {

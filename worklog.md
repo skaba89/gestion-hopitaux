@@ -263,3 +263,127 @@ Successfully implemented Phase 4 (Telemedicine Advanced) with 4 sub-phases: Vide
 5. **Security headers are comprehensive**: CSP, X-Frame-Options, HSTS, etc.
 6. **All UI text is in French**: Consistent with the Guinea deployment context
 7. **Demo data is rich**: 10 audit entries, 2 ASC visits, 2 referrals, diagnostic guides for 6 conditions, 4 training modules
+
+---
+
+# HealthFlow Guinea — Phase 5 (HL7 FHIR Interoperability & National Integrations)
+
+## Date: 2026-05-11
+
+## Summary
+
+Successfully implemented Phase 5 (Interopérabilité HL7 FHIR & Intégrations Nationales) with 5 sub-phases: FHIR R4 Server & Resources, FHIR Mapping Engine, Health Information Exchange (HIE), National Guinea Integrations (DHIS2/SNIS/mTrac/SANTEP), and Integration Dashboard & Monitoring.
+
+## Sub-Phase 5.1: HL7 FHIR R4 Server & Resources
+
+### Files Created:
+- **`src/lib/fhir.ts`** — Complete FHIR R4 implementation:
+  - Full type definitions for Patient, Observation, DiagnosticReport, MedicationRequest, Encounter, Practitioner, Organization
+  - Base types: FHIRCoding, FHIRCodeableConcept, FHIRReference, FHIRIdentifier, FHIRHumanName, FHIRAddress, FHIRContactPoint, FHIRPeriod, FHIRQuantity
+  - Bundle type with search results, document bundles, signatures
+  - OperationOutcome for validation/error reporting
+  - CapabilityStatement for server metadata
+  - Guinea health system code systems (GUINEA_FHIR_SYSTEMS): nationalId, healthflowId, healthZone, establishment, loincGuinea, drugFormulary, insuranceProvider, mobileMoney, dhis2OrgUnit, santepCard
+  - 8 Guinea health zones with DHIS2 codes
+  - 12 Guinea establishments (CHU, Régional, CS)
+  - `patientToFHIR()` — Convert internal Patient to FHIR Patient with identifiers, telecom, address, emergency contact
+  - `fhirToPatient()` — Reverse conversion from FHIR Patient to internal model
+  - `consultationToEncounter()` — Map consultation to FHIR Encounter with status, diagnosis
+  - `labRequestToDiagnosticReport()` — Map lab request to FHIR DiagnosticReport with observations
+  - `labResultToObservation()` — Map individual lab results with valueQuantity, referenceRange, interpretation
+  - `prescriptionToMedicationRequest()` — Map prescriptions to FHIR MedicationRequest with dosageInstruction
+  - `buildPatientBundle()` — Generate complete FHIR Bundle (document type) with Patient + Encounter + Observations + MedicationRequests
+  - `getCapabilityStatement()` — Full FHIR R4 CapabilityStatement with 7 resources, search parameters, operations ($validate, $everything, $export)
+  - `validateFHIRResource()` — Validate resources against profiles with error reporting
+  - Demo data: 2 FHIR patients, 2 organizations, 2 practitioners
+
+- **`src/app/api/fhir/[...path]/route.ts`** — FHIR R4 REST API:
+  - GET /api/fhir/metadata — CapabilityStatement
+  - GET /api/fhir/Patient — Search patients (name, identifier, gender)
+  - GET /api/fhir/Patient/:id — Read patient by ID
+  - GET /api/fhir/Organization — List organizations
+  - GET /api/fhir/Practitioner — List practitioners
+  - POST /api/fhir/:resourceType — Create resource with validation
+  - Proper FHIR content-type headers (application/fhir+json)
+  - OperationOutcome error responses
+  - ETag and Location headers for created resources
+
+## Sub-Phase 5.2: Health Information Exchange (HIE)
+
+### Files Created:
+- **`src/lib/hie.ts`** — Complete HIE service:
+  - Types: PatientConsent, HIEExchange, CrossFacilityPatient, InterFacilityReferral, HIEConnection
+  - `HIEService` class with singleton instance
+  - Consent management: grantConsent, revokeConsent, checkConsent
+  - Exchange management: sendExchange, getExchanges with filters
+  - Connection management: getConnections, pingConnection with latency simulation
+  - Patient Registry: searchPatientRegistry, getPatientRecords with cross-facility match
+  - Referral management: createReferral, acceptReferral with status tracking
+  - Metrics: getHIEMetrics (success rate, uptime, latency, consent counts)
+  - Demo data: 5 connections, 4 consents, 5 exchanges, 3 referrals, 3 registry patients
+
+- **`src/app/api/hie/route.ts`** — HIE API:
+  - GET: Full HIE state (metrics, exchanges, connections, referrals, consents)
+  - POST actions: send-exchange, grant-consent, revoke-consent, accept-referral, ping-connection, search-patients
+
+## Sub-Phase 5.3: National Guinea Integrations
+
+### Files Created:
+- **`src/lib/national-integrations.ts`** — Complete national integration layer:
+  - **DHIS2**: DataValueSet generation, 25+ data elements (consultations, pathologies, maternal, child, lab, pharmacy, emergency, financial), period format helpers, `generateDHIS2Report()` from HealthFlow data
+  - **SNIS**: 10 national health indicators with targets and trends, monthly/quarterly/annual report types
+  - **mTrac**: Alert management (14 diseases), weekly reporting, response tracking
+  - **SANTEP Card**: Electronic health card with QR code, NFC, blood type, allergies, insurance, emergency contacts
+  - **National Patient Registry**: Unique national ID, health zone tracking, vaccination/insurance status
+  - **Integration Status**: 6 integration endpoints (DHIS2, SNIS, mTrac, SANTEP, Registry, HIE) with sync intervals
+  - **Sync Operations**: 6 demo sync operations with status tracking
+  - Demo data: 1 SNIS report, 4 mTrac alerts, 2 SANTEP cards, 3 registry patients
+
+- **`src/app/api/integrations/route.ts`** — Integrations API:
+  - GET: All integrations, reports, alerts, cards, registry, sync operations
+  - POST actions: generate-dhis2-report, sync, submit-snis, update-santep
+
+## Sub-Phase 5.4: UI Components
+
+### Files Created:
+- **`src/components/fhir/fhir-explorer.tsx`** — FHIR R4 Explorer:
+  - 5-tab interface: Overview, Patients, Resources, Validation, Export
+  - FHIR server stats (resources, patients, organizations, practitioners)
+  - CapabilityStatement display with supported resources and operations
+  - Interactive patient search with FHIR JSON viewer
+  - Resource browser (Organizations, Practitioners, Guinea Systems)
+  - FHIR Validator with severity-coded results
+  - FHIR Bundle export with copy-to-clipboard
+  - Guinea health zones and establishments grid
+
+- **`src/components/integrations/integration-dashboard.tsx`** — Integration Dashboard:
+  - 6-tab interface: Overview, Connections, HIE, National Systems, Referrals, Sync
+  - Key metrics: exchanges, success rate, active connections, uptime, consents, latency
+  - Integration status grid with live indicators (DHIS2, SNIS, mTrac, SANTEP, Registry, HIE)
+  - HIE exchange journal with direction/status indicators
+  - Patient consent management panel
+  - SNIS indicators with progress bars and trend arrows
+  - mTrac alerts with severity badges and response actions
+  - SANTEP cards visual display (gradient design with NFC/insurance)
+  - National Patient Registry viewer
+  - Inter-facility referral cards with urgency/status
+  - Sync operations log with status indicators
+
+### Files Updated:
+- **`src/lib/store.ts`** — Added 2 new AppView types: fhir-explorer, integration-dashboard
+- **`src/lib/rbac.ts`** — Added 'fhir' and 'integrations' resources with permissions for Administrateur and Médecin roles; updated getAccessibleViews
+- **`src/components/app/app-shell.tsx`** — Added "Interopérabilité" navigation group (FHIR Explorer, Intégrations); added FileJson and Globe icons; updated viewTitles
+- **`src/app/page.tsx`** — Added FHIRExplorer and IntegrationDashboard component imports and view mappings
+
+---
+
+## Architecture Highlights
+
+1. **Full HL7 FHIR R4 compliance**: 7 resource types with complete type definitions, mapping, validation, and CapabilityStatement
+2. **Bidirectional mapping**: Internal data ↔ FHIR resources with Guinea-specific code systems
+3. **HIE with consent-driven sharing**: No data exchange without patient consent; consent management API
+4. **6 national integration points**: DHIS2, SNIS, mTrac, SANTEP, National Registry, HIE — all with demo data
+5. **Cross-facility patient matching**: Fuzzy and identifier-based matching across multiple health facilities
+6. **SANTEP electronic health card**: QR code + NFC with emergency data, allergies, blood type, insurance
+7. **Build: 0 errors, 39 routes** (3 new: /api/fhir/[...path], /api/hie, /api/integrations)
+8. **All UI in French**: Consistent with Guinea deployment context

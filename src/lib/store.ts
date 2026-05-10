@@ -30,6 +30,8 @@ export type AppView =
   | 'audit-log'
   | 'security-dashboard'
   | 'permission-matrix'
+  | 'fhir-explorer'
+  | 'integration-dashboard'
 
 interface User {
   name: string

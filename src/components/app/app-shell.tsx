@@ -44,6 +44,8 @@ import {
   Eye,
   Shield,
   Lock,
+  FileJson,
+  Globe,
 } from 'lucide-react'
 import { useStore, type AppView } from '@/lib/store'
 import { useDataStore } from '@/lib/data-store'
@@ -145,6 +147,13 @@ const navGroups: { label: string; items: NavItem[] }[] = [
     ],
   },
   {
+    label: 'Interopérabilité',
+    items: [
+      { view: 'fhir-explorer', label: 'FHIR Explorer', icon: FileJson },
+      { view: 'integration-dashboard', label: 'Intégrations', icon: Globe },
+    ],
+  },
+  {
     label: 'Sécurité',
     items: [
       { view: 'audit-log', label: 'Journal d\'audit', icon: Eye, requiredPermission: { resource: 'admin', action: 'read' } },
@@ -194,6 +203,8 @@ const viewTitles: Record<AppView, string> = {
   'audit-log': 'Journal d\'audit',
   'security-dashboard': 'Tableau de bord sécurité',
   'permission-matrix': 'Matrice de permissions',
+  'fhir-explorer': 'FHIR R4 Explorer',
+  'integration-dashboard': 'Intégrations & Interopérabilité',
 }
 
 /* ─────────── Notification Icon Map ─────────── */

@@ -21,6 +21,8 @@ export type Resource =
   | 'messaging'
   | 'admin'
   | 'asc'
+  | 'fhir'
+  | 'integrations'
 
 export interface Permission {
   resource: Resource
@@ -65,6 +67,11 @@ export const PERMISSIONS_MATRIX: Record<HFRole, Permission[]> = {
     { resource: 'admin', action: 'read', allowed: true },
     { resource: 'admin', action: 'write', allowed: true },
     { resource: 'asc', action: 'read', allowed: true },
+    { resource: 'fhir', action: 'read', allowed: true },
+    { resource: 'fhir', action: 'write', allowed: true },
+    { resource: 'fhir', action: 'export', allowed: true },
+    { resource: 'integrations', action: 'read', allowed: true },
+    { resource: 'integrations', action: 'write', allowed: true },
   ],
   'Médecin': [
     { resource: 'patients', action: 'read', allowed: true },
@@ -91,6 +98,9 @@ export const PERMISSIONS_MATRIX: Record<HFRole, Permission[]> = {
     { resource: 'telemedicine', action: 'read', allowed: true },
     { resource: 'telemedicine', action: 'write', allowed: true },
     { resource: 'messaging', action: 'send', allowed: true },
+    { resource: 'fhir', action: 'read', allowed: true },
+    { resource: 'fhir', action: 'export', allowed: true },
+    { resource: 'integrations', action: 'read', allowed: true },
   ],
   'Infirmier': [
     { resource: 'patients', action: 'read', allowed: true },
@@ -246,6 +256,8 @@ export function getAccessibleViews(role: HFRole): string[] {
   if (hasPermission(role, 'messaging', 'send')) views.push('messaging')
   if (hasPermission(role, 'admin', 'read')) views.push('administration')
   if (hasPermission(role, 'asc', 'read')) views.push('asc-dashboard')
+  if (hasPermission(role, 'fhir', 'read')) views.push('fhir-explorer')
+  if (hasPermission(role, 'integrations', 'read')) views.push('integration-dashboard')
 
   // Always accessible
   views.push('dashboard', 'appointments', 'analytics', 'settings')
