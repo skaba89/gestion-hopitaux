@@ -4,7 +4,43 @@ import { persist } from 'zustand/middleware'
 /* ─────────── Types ─────────── */
 
 export interface Allergy { name: string; severity: 'Mineur' | 'Majeur' | 'Critique' }
-export interface MedicalDocument { name: string; date: string; type: string }
+export interface MedicalDocument {
+  name: string
+  date: string
+  type: string
+  size?: string
+  category?: 'Résultat' | 'Ordonnance' | 'Imagerie' | 'Certificat' | 'Autre'
+  confidential?: boolean
+  uploadedBy?: string
+}
+
+/* ─────────── Document Access Control ─────────── */
+
+export type UserRole = 'Administrateur' | 'Médecin' | 'Infirmier' | 'Laborantin' | 'Pharmacien' | 'Secrétaire'
+
+export const ROLE_PERMISSIONS: Record<UserRole, { canDownload: boolean; canView: boolean; canUpload: boolean; canDelete: boolean; needsAuthorization: boolean }> = {
+  'Administrateur': { canDownload: true, canView: true, canUpload: true, canDelete: true, needsAuthorization: false },
+  'Médecin': { canDownload: false, canView: true, canUpload: true, canDelete: false, needsAuthorization: true },
+  'Infirmier': { canDownload: false, canView: true, canUpload: false, canDelete: false, needsAuthorization: true },
+  'Laborantin': { canDownload: false, canView: false, canUpload: true, canDelete: false, needsAuthorization: true },
+  'Pharmacien': { canDownload: false, canView: false, canUpload: false, canDelete: false, needsAuthorization: true },
+  'Secrétaire': { canDownload: false, canView: true, canUpload: true, canDelete: false, needsAuthorization: true },
+}
+
+export interface DocumentAuthorization {
+  id: string
+  documentName: string
+  patientId: string
+  patientName: string
+  requestedBy: string
+  requestedByRole: UserRole
+  reason: string
+  status: 'En attente' | 'Approuvée' | 'Refusée'
+  requestedAt: string
+  reviewedBy?: string
+  reviewedAt?: string
+  reviewNote?: string
+}
 
 export interface Patient {
   id: string
@@ -370,6 +406,7 @@ interface DataState {
   invoices: Invoice[]
   teleconsults: TeleconsultSession[]
   notifications: Notification[]
+  documentAuthorizations: DocumentAuthorization[]
 
   // Actions
   addPatient: (patient: Patient) => void
@@ -418,6 +455,13 @@ interface DataState {
   markAllNotificationsRead: () => void
   addNotification: (notification: Notification) => void
 
+  // Document authorization actions
+  requestDocumentAccess: (auth: Omit<DocumentAuthorization, 'id' | 'status' | 'requestedAt'>) => void
+  approveDocumentAccess: (id: string, reviewedBy: string, note?: string) => void
+  refuseDocumentAccess: (id: string, reviewedBy: string, note?: string) => void
+  addPatientDocument: (patientId: string, doc: MedicalDocument) => void
+  removePatientDocument: (patientId: string, docName: string) => void
+
   resetToDemo: () => void
 }
 
@@ -434,6 +478,7 @@ const initialState = {
   invoices: demoInvoices,
   teleconsults: demoTeleconsults,
   notifications: demoNotifications,
+  documentAuthorizations: [] as DocumentAuthorization[],
 }
 
 export const useDataStore = create<DataState>()(
@@ -552,6 +597,36 @@ export const useDataStore = create<DataState>()(
         notifications: s.notifications.map((n) => ({ ...n, read: true })),
       })),
       addNotification: (notification) => set((s) => ({ notifications: [notification, ...s.notifications] })),
+
+      // Document authorization actions
+      requestDocumentAccess: (auth) => set((s) => ({
+        documentAuthorizations: [...s.documentAuthorizations, {
+          ...auth,
+          id: `AUTH-${Date.now()}`,
+          status: 'En attente' as const,
+          requestedAt: new Date().toISOString(),
+        }],
+      })),
+      approveDocumentAccess: (id, reviewedBy, note) => set((s) => ({
+        documentAuthorizations: s.documentAuthorizations.map((a) =>
+          a.id === id ? { ...a, status: 'Approuvée' as const, reviewedBy, reviewedAt: new Date().toISOString(), reviewNote: note } : a
+        ),
+      })),
+      refuseDocumentAccess: (id, reviewedBy, note) => set((s) => ({
+        documentAuthorizations: s.documentAuthorizations.map((a) =>
+          a.id === id ? { ...a, status: 'Refusée' as const, reviewedBy, reviewedAt: new Date().toISOString(), reviewNote: note } : a
+        ),
+      })),
+      addPatientDocument: (patientId, doc) => set((s) => ({
+        patients: s.patients.map((p) =>
+          p.id === patientId ? { ...p, documents: [...p.documents, doc] } : p
+        ),
+      })),
+      removePatientDocument: (patientId, docName) => set((s) => ({
+        patients: s.patients.map((p) =>
+          p.id === patientId ? { ...p, documents: p.documents.filter((d) => d.name !== docName) } : p
+        ),
+      })),
 
       // Reset
       resetToDemo: () => set(initialState),
