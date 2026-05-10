@@ -1,0 +1,168 @@
+# =============================================================================
+# HealthFlow Guinea - Docker Compose (Development Override)
+# Use with: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+# =============================================================================
+
+version: "3.9"
+
+services:
+  # ---------------------------------------------------------------------------
+  # Frontend - Hot Reload Development
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
+      target: builder
+    container_name: healthflow-frontend-dev
+    command: bun run dev
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://${POSTGRES_USER:-healthflow}:${POSTGRES_PASSWORD:-healthflow_secret}@postgres:5432/${POSTGRES_DB:-healthflow}?schema=public
+      NEXTAUTH_SECRET: dev-secret-not-for-production
+      NEXTAUTH_URL: http://localhost:3000
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-healthflow_minio}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-healthflow_minio_secret}
+      MINIO_BUCKET: ${MINIO_BUCKET:-healthflow-documents}
+      MINIO_USE_SSL: "false"
+      REDIS_URL: redis://redis:6379/0
+      # Enable Next.js development features
+      NEXT_DEBUG: "true"
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+    volumes:
+      - ../src:/app/src:ro
+      - ../public:/app/public:ro
+      - ../prisma:/app/prisma:ro
+      - ../next.config.*:/app/:ro
+      # Preserve node_modules from container
+      - frontend-node-modules:/app/node_modules
+    ports:
+      - "3000:3000"
+      # Next.js debug port
+      - "9229:9229"
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL - Development (relaxed settings)
+  # ---------------------------------------------------------------------------
+  postgres:
+    container_name: healthflow-postgres-dev
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: healthflow
+      POSTGRES_PASSWORD: healthflow_secret
+      POSTGRES_DB: healthflow
+    # No performance tuning in dev - use defaults
+    command: postgres -c log_statement=all -c log_duration=on
+
+  # ---------------------------------------------------------------------------
+  # MinIO - Development (pre-create bucket)
+  # ---------------------------------------------------------------------------
+  minio:
+    container_name: healthflow-minio-dev
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: healthflow_minio
+      MINIO_ROOT_PASSWORD: healthflow_minio_secret
+
+  # MinIO bucket creation helper
+  minio-init:
+    image: minio/mc:latest
+    container_name: healthflow-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    networks:
+      - healthflow-network
+    entrypoint: >
+      bash -c "
+        mc alias set healthflow http://minio:9000 healthflow_minio healthflow_minio_secret &&
+        mc mb healthflow/healthflow-documents 2>/dev/null || true &&
+        mc anonymous set public healthflow/healthflow-documents 2>/dev/null || true &&
+        echo 'MinIO bucket initialized successfully'
+      "
+
+  # ---------------------------------------------------------------------------
+  # Superset - Development
+  # ---------------------------------------------------------------------------
+  superset:
+    container_name: healthflow-superset-dev
+    ports:
+      - "8088:8088"
+    environment:
+      SUPERSET_SECRET_KEY: dev-superset-secret-not-for-production
+      DATABASE_URI: postgresql://healthflow:healthflow_secret@postgres:5432/superset?schema=public
+      REDIS_URL: redis://redis:6379/1
+      SUPERSET_CONFIG_PATH: /app/pythonpath/superset_config.py
+      FLASK_DEBUG: "true"
+      FLASK_ENV: development
+      SUPERSET_ADMIN_USER: ${SUPERSET_ADMIN_USER:-admin}
+      SUPERSET_ADMIN_PASSWORD: ${SUPERSET_ADMIN_PASSWORD:-admin}
+
+  # ---------------------------------------------------------------------------
+  # Redis - Development
+  # ---------------------------------------------------------------------------
+  redis:
+    container_name: healthflow-redis-dev
+    ports:
+      - "6379:6379"
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru
+
+  # ---------------------------------------------------------------------------
+  # pgAdmin - Database Management (Dev only)
+  # ---------------------------------------------------------------------------
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: healthflow-pgadmin-dev
+    restart: unless-stopped
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@healthflow.gn
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    networks:
+      - healthflow-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ---------------------------------------------------------------------------
+  # Redis Commander - Redis Management (Dev only)
+  # ---------------------------------------------------------------------------
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: healthflow-redis-commander-dev
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    networks:
+      - healthflow-network
+    depends_on:
+      redis:
+        condition: service_healthy
+
+# =============================================================================
+# Additional Volumes (Dev only)
+# =============================================================================
+volumes:
+  frontend-node-modules:
+    name: healthflow-frontend-node-modules
+  pgadmin-data:
+    name: healthflow-pgadmin-data
+
+# Network is inherited from docker-compose.yml
+networks:
+  healthflow-network:
+    external: true
+    name: healthflow-network

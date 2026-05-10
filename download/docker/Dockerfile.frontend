@@ -1,0 +1,78 @@
+# =============================================================================
+# HealthFlow Guinea - Frontend Dockerfile (Next.js)
+# Multi-stage build for optimized production image
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Stage 1: Build
+# ---------------------------------------------------------------------------
+FROM node:20-alpine AS builder
+
+# Install bun for dependency installation
+RUN npm install -g bun
+
+WORKDIR /app
+
+# Copy package manifests first for better cache utilization
+COPY package.json bun.lockb* package-lock.json* yarn.lock* ./
+
+# Install dependencies
+RUN bun install --frozen-lockfile 2>/dev/null || npm ci 2>/dev/null || yarn install --frozen-lockfile
+
+# Copy application source code
+COPY . .
+
+# Build-time environment variables (defaults, overridden at runtime)
+ARG NODE_ENV=production
+ENV NODE_ENV=${NODE_ENV}
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Build the Next.js application (standalone output mode)
+RUN bun run build 2>/dev/null || npm run build 2>/dev/null || yarn build
+
+# ---------------------------------------------------------------------------
+# Stage 2: Production
+# ---------------------------------------------------------------------------
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+# Set production environment
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Create non-root user for security
+RUN addgroup --system --gid 1001 healthflow && \
+    adduser --system --uid 1001 --ingroup healthflow appuser
+
+# Copy standalone output from builder
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+
+# Copy next.config if needed for runtime
+COPY --from=builder /app/next.config.* ./
+
+# Set ownership to non-root user
+RUN chown -R healthflow:appuser /app
+
+# Switch to non-root user
+USER appuser
+
+# Expose application port
+EXPOSE 3000
+
+# Set hostname for standalone server
+ENV HOSTNAME="0.0.0.0"
+ENV PORT=3000
+
+# Runtime environment variables (must be provided via docker-compose/env)
+# NODE_ENV, DATABASE_URL, NEXTAUTH_SECRET, NEXTAUTH_URL,
+# MINIO_ENDPOINT, MINIO_ACCESS_KEY, MINIO_SECRET_KEY
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
+
+# Start the Next.js standalone server
+CMD ["node", "server.js"]

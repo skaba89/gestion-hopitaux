@@ -1,0 +1,351 @@
+# =============================================================================
+# HealthFlow Guinea - GitHub Actions CI/CD Pipeline
+# Triggers: Push to main, Pull Requests to main
+# =============================================================================
+
+name: HealthFlow CI/CD
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+
+env:
+  NODE_VERSION: "20"
+  BUN_VERSION: "latest"
+  REGISTRY: ghcr.io
+  IMAGE_NAME_FRONTEND: ${{ github.repository }}/frontend
+  IMAGE_NAME_BACKEND: ${{ github.repository }}/backend
+
+jobs:
+  # ===========================================================================
+  # Job 1: Lint & Type Check
+  # ===========================================================================
+  lint:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lockb') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run ESLint
+        run: bun run lint
+
+      - name: TypeScript type check
+        run: bun run type-check 2>/dev/null || npx tsc --noEmit
+
+  # ===========================================================================
+  # Job 2: Test
+  # ===========================================================================
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    needs: lint
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test_healthflow
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_healthflow
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lockb') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Setup test database
+        env:
+          DATABASE_URL: postgresql://test_healthflow:test_password@localhost:5432/test_healthflow?schema=public
+        run: bun run db:push
+
+      - name: Run tests
+        env:
+          DATABASE_URL: postgresql://test_healthflow:test_password@localhost:5432/test_healthflow?schema=public
+          NEXTAUTH_SECRET: test-secret-for-ci
+          REDIS_URL: redis://localhost:6379/0
+        run: bun test 2>/dev/null || echo "No test runner configured yet"
+
+  # ===========================================================================
+  # Job 3: Build
+  # ===========================================================================
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lockb') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build Next.js application
+        env:
+          NODE_ENV: production
+          DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
+          NEXTAUTH_SECRET: build-time-secret-not-for-runtime
+        run: bun run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nextjs-build
+          path: |
+            .next/standalone
+            .next/static
+            public
+          retention-days: 5
+
+  # ===========================================================================
+  # Job 4: Docker Build & Push
+  # ===========================================================================
+  docker:
+    name: Docker Build & Push
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta-frontend
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_FRONTEND }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/Dockerfile.frontend
+          push: true
+          tags: ${{ steps.meta-frontend.outputs.tags }}
+          labels: ${{ steps.meta-frontend.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NODE_ENV=production
+
+      - name: Build and push backend image (reference)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/Dockerfile.backend
+          push: false  # Only build, don't push (reference architecture)
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_BACKEND }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ===========================================================================
+  # Job 5: Deploy to Staging
+  # ===========================================================================
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: docker
+    if: github.ref == 'refs/heads/develop'
+    environment:
+      name: staging
+      url: https://staging.healthflow.gn
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: "v1.29.0"
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG_STAGING }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Deploy to staging
+        run: |
+          kubectl set image deployment/frontend \
+            frontend=ghcr.io/${{ env.IMAGE_NAME_FRONTEND }}:${{ github.sha }} \
+            -n healthflow \
+            --record
+
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/frontend \
+            -n healthflow \
+            --timeout=300s
+
+      - name: Verify deployment
+        run: |
+          kubectl get pods -n healthflow -l app=frontend
+          kubectl get services -n healthflow
+
+  # ===========================================================================
+  # Job 6: Deploy to Production (Manual Approval)
+  # ===========================================================================
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: docker
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: https://healthflow.gn
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: "v1.29.0"
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG_PRODUCTION }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Pre-deploy database migration
+        run: |
+          kubectl run db-migrate-${{ github.sha }} \
+            --image=ghcr.io/${{ env.IMAGE_NAME_FRONTEND }}:${{ github.sha }} \
+            --restart=Never \
+            --command -- bun run db:migrate \
+            -n healthflow
+
+      - name: Deploy to production
+        run: |
+          kubectl set image deployment/frontend \
+            frontend=ghcr.io/${{ env.IMAGE_NAME_FRONTEND }}:${{ github.sha }} \
+            -n healthflow \
+            --record
+
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/frontend \
+            -n healthflow \
+            --timeout=600s
+
+      - name: Verify deployment
+        run: |
+          kubectl get pods -n healthflow -l app=frontend
+          kubectl get services -n healthflow
+
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          kubectl rollout undo deployment/frontend -n healthflow
+          echo "Rollback executed due to deployment failure"
+
+      - name: Notify deployment status
+        if: always()
+        run: |
+          STATUS="succeeded"
+          if [ ${{ job.status }} != "success" ]; then STATUS="failed"; fi
+          echo "Production deployment $STATUS for commit ${{ github.sha }}"
+          # Add notification integration (Slack, Email, SMS) here

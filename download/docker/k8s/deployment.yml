@@ -1,0 +1,638 @@
+# =============================================================================
+# HealthFlow Guinea - Kubernetes Deployment Manifests
+# Simplified deployment for hospital information system
+# =============================================================================
+
+---
+# Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: healthflow
+  labels:
+    app.kubernetes.io/name: healthflow
+    app.kubernetes.io/part-of: healthflow-guinea
+    app.kubernetes.io/managed-by: kubectl
+
+---
+# =============================================================================
+# ConfigMap - Application Configuration
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: healthflow-config
+  namespace: healthflow
+data:
+  NODE_ENV: "production"
+  MINIO_ENDPOINT: "minio-service"
+  MINIO_PORT: "9000"
+  MINIO_BUCKET: "healthflow-documents"
+  MINIO_USE_SSL: "false"
+  REDIS_URL: "redis://redis-service:6379/0"
+  POSTGRES_HOST: "postgres-service"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "healthflow"
+  ENABLE_TELECONSULTATION: "true"
+  ENABLE_BI_ANALYTICS: "true"
+  ENABLE_SMS_NOTIFICATIONS: "false"
+  ENABLE_EMAIL_NOTIFICATIONS: "true"
+  ENABLE_EPIDEMIOLOGICAL_ALERTS: "true"
+
+---
+# =============================================================================
+# Secret - Sensitive Configuration
+# NOTE: In production, use a secrets manager (Vault, AWS Secrets Manager, etc.)
+# =============================================================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: healthflow-secrets
+  namespace: healthflow
+type: Opaque
+stringData:
+  POSTGRES_USER: "healthflow"
+  POSTGRES_PASSWORD: "CHANGE_ME_STRONG_PASSWORD"
+  DATABASE_URL: "postgresql://healthflow:CHANGE_ME_STRONG_PASSWORD@postgres-service:5432/healthflow?schema=public"
+  NEXTAUTH_SECRET: "CHANGE_ME_GENERATE_WITH_OPENSSL"
+  NEXTAUTH_URL: "https://healthflow.gn"
+  MINIO_ROOT_USER: "healthflow_minio"
+  MINIO_ROOT_PASSWORD: "CHANGE_ME_MINIO_PASSWORD"
+  MINIO_ACCESS_KEY: "healthflow_minio"
+  MINIO_SECRET_KEY: "CHANGE_ME_MINIO_SECRET"
+  SUPERSET_SECRET_KEY: "CHANGE_ME_SUPERSET_SECRET"
+  REDIS_PASSWORD: "CHANGE_ME_REDIS_PASSWORD"
+
+---
+# =============================================================================
+# Frontend Deployment (Next.js)
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: healthflow
+  labels:
+    app: frontend
+    component: web
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: frontend
+        component: web
+    spec:
+      containers:
+        - name: frontend
+          image: ghcr.io/datasphere-innovation/healthflow-frontend:latest
+          ports:
+            - containerPort: 3000
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: healthflow-config
+            - secretRef:
+                name: healthflow-secrets
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 40
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+      terminationGracePeriodSeconds: 30
+
+---
+# Frontend Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  namespace: healthflow
+  labels:
+    app: frontend
+spec:
+  type: ClusterIP
+  selector:
+    app: frontend
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+      protocol: TCP
+
+---
+# Frontend HorizontalPodAutoscaler
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: frontend-hpa
+  namespace: healthflow
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: frontend
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+
+---
+# =============================================================================
+# PostgreSQL StatefulSet
+# =============================================================================
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: healthflow
+  labels:
+    app: postgres
+    component: database
+spec:
+  serviceName: postgres-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+        component: database
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          ports:
+            - containerPort: 5432
+              protocol: TCP
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: healthflow-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: healthflow-secrets
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: healthflow-config
+                  key: POSTGRES_DB
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: 2000m
+              memory: 2Gi
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - healthflow
+                - -d
+                - healthflow
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 5
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - healthflow
+                - -d
+                - healthflow
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 5
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+      terminationGracePeriodSeconds: 60
+
+---
+# PostgreSQL PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: healthflow
+  labels:
+    app: postgres
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: standard
+
+---
+# PostgreSQL Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  namespace: healthflow
+  labels:
+    app: postgres
+spec:
+  type: ClusterIP
+  selector:
+    app: postgres
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+      protocol: TCP
+
+---
+# =============================================================================
+# MinIO Deployment (Object Storage)
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+  namespace: healthflow
+  labels:
+    app: minio
+    component: storage
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+        component: storage
+    spec:
+      containers:
+        - name: minio
+          image: minio/minio:latest
+          args:
+            - server
+            - /data
+            - --console-address
+            - ":9001"
+          ports:
+            - containerPort: 9000
+              name: api
+              protocol: TCP
+            - containerPort: 9001
+              name: console
+              protocol: TCP
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: healthflow-secrets
+                  key: MINIO_ROOT_USER
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: healthflow-secrets
+                  key: MINIO_ROOT_PASSWORD
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          livenessProbe:
+            httpGet:
+              path: /minio/health/live
+              port: 9000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /minio/health/ready
+              port: 9000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+          volumeMounts:
+            - name: minio-data
+              mountPath: /data
+      volumes:
+        - name: minio-data
+          persistentVolumeClaim:
+            claimName: minio-pvc
+
+---
+# MinIO PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minio-pvc
+  namespace: healthflow
+  labels:
+    app: minio
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: standard
+
+---
+# MinIO Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio-service
+  namespace: healthflow
+  labels:
+    app: minio
+spec:
+  type: ClusterIP
+  selector:
+    app: minio
+  ports:
+    - name: api
+      port: 9000
+      targetPort: 9000
+      protocol: TCP
+    - name: console
+      port: 9001
+      targetPort: 9001
+      protocol: TCP
+
+---
+# =============================================================================
+# Redis Deployment (Caching)
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: healthflow
+  labels:
+    app: redis
+    component: cache
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+        component: cache
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          args:
+            - --maxmemory
+            - "256mb"
+            - --maxmemory-policy
+            - allkeys-lru
+            - --appendonly
+            - "yes"
+          ports:
+            - containerPort: 6379
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+      volumes:
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: redis-pvc
+
+---
+# Redis PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-pvc
+  namespace: healthflow
+  labels:
+    app: redis
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: standard
+
+---
+# Redis Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: healthflow
+  labels:
+    app: redis
+spec:
+  type: ClusterIP
+  selector:
+    app: redis
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: 6379
+      protocol: TCP
+
+---
+# =============================================================================
+# Ingress - TLS Termination & Routing
+# =============================================================================
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: healthflow-ingress
+  namespace: healthflow
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "120"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "X-Frame-Options: DENY";
+      more_set_headers "X-Content-Type-Options: nosniff";
+      more_set_headers "X-XSS-Protection: 1; mode=block";
+      more_set_headers "Referrer-Policy: strict-origin-when-cross-origin";
+      more_set_headers "Strict-Transport-Security: max-age=31536000; includeSubDomains; preload";
+    nginx.ingress.kubernetes.io/rate-limit: "60"
+    nginx.ingress.kubernetes.io/limit-rps: "30"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - healthflow.gn
+        - www.healthflow.gn
+      secretName: healthflow-tls
+  rules:
+    - host: healthflow.gn
+      http:
+        paths:
+          - path: /analytics
+            pathType: Prefix
+            backend:
+              service:
+                name: superset-service
+                port:
+                  number: 8088
+          - path: /storage
+            pathType: Prefix
+            backend:
+              service:
+                name: minio-service
+                port:
+                  number: 9000
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-service
+                port:
+                  number: 3000
+    - host: www.healthflow.gn
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-service
+                port:
+                  number: 3000
+
+---
+# =============================================================================
+# NetworkPolicy - Restrict Pod Communication
+# =============================================================================
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: healthflow-network-policy
+  namespace: healthflow
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: healthflow-guinea
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow ingress controller
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - port: 3000
+          protocol: TCP
+    # Allow internal communication within namespace
+    - from:
+        - podSelector: {}
+  egress:
+    # Allow DNS resolution
+    - to: []
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+    # Allow internal communication
+    - to:
+        - podSelector: {}
+    # Allow outbound HTTPS (for external APIs, package downloads)
+    - to: []
+      ports:
+        - port: 443
+          protocol: TCP
+        - port: 80
+          protocol: TCP

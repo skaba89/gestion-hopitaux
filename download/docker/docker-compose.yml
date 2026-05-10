@@ -1,0 +1,206 @@
+# =============================================================================
+# HealthFlow Guinea - Docker Compose (Production)
+# Full-stack hospital information system orchestration
+# =============================================================================
+
+version: "3.9"
+
+services:
+  # ---------------------------------------------------------------------------
+  # Frontend - Next.js Application
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
+    container_name: healthflow-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-healthflow}:${POSTGRES_PASSWORD:-healthflow_secret}@postgres:5432/${POSTGRES_DB:-healthflow}?schema=public
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-change-me-in-production-use-strong-secret}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-healthflow_minio}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-healthflow_minio_secret}
+      MINIO_BUCKET: ${MINIO_BUCKET:-healthflow-documents}
+      MINIO_USE_SSL: "false"
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - healthflow-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL - Primary Database
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: healthflow-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-healthflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-healthflow_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-healthflow}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - healthflow-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-healthflow} -d ${POSTGRES_DB:-healthflow}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    # Performance tuning for production
+    command: >
+      postgres
+        -c max_connections=200
+        -c shared_buffers=256MB
+        -c effective_cache_size=768MB
+        -c maintenance_work_mem=64MB
+        -c checkpoint_completion_target=0.9
+        -c wal_buffers=16MB
+        -c default_statistics_target=100
+        -c random_page_cost=1.1
+        -c effective_io_concurrency=200
+        -c work_mem=2621kB
+        -c min_wal_size=1GB
+        -c max_wal_size=4GB
+
+  # ---------------------------------------------------------------------------
+  # MinIO - S3-Compatible Object Storage
+  # ---------------------------------------------------------------------------
+  minio:
+    image: minio/minio:latest
+    container_name: healthflow-minio
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-healthflow_minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-healthflow_minio_secret}
+      MINIO_BROWSER_REDIRECT_URL: ${MINIO_BROWSER_URL:-http://localhost:9001}
+    volumes:
+      - minio-data:/data
+    networks:
+      - healthflow-network
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    command: server /data --console-address ":9001"
+
+  # ---------------------------------------------------------------------------
+  # Apache Superset - Business Intelligence & Analytics
+  # ---------------------------------------------------------------------------
+  superset:
+    image: apache/superset:latest
+    container_name: healthflow-superset
+    restart: unless-stopped
+    ports:
+      - "8088:8088"
+    environment:
+      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY:-change-me-superset-secret-key}
+      DATABASE_URI: postgresql://${POSTGRES_USER:-healthflow}:${POSTGRES_PASSWORD:-healthflow_secret}@postgres:5432/${SUPERSIST_DB:-superset}?schema=public
+      REDIS_URL: redis://redis:6379/1
+      SUPERSET_CONFIG_PATH: /app/pythonpath/superset_config.py
+      FLASK_APP: superset
+    volumes:
+      - superset-data:/app/superset_home
+      - ./superset/superset_config.py:/app/pythonpath/superset_config.py:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - healthflow-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8088/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    command: >
+      bash -c "
+        superset db upgrade &&
+        superset fab create-admin
+          --username $${SUPERSET_ADMIN_USER:-admin}
+          --firstname $${SUPERSET_ADMIN_FIRSTNAME:-Admin}
+          --lastname $${SUPERSET_ADMIN_LASTNAME:-HealthFlow}
+          --email $${SUPERSET_ADMIN_EMAIL:-admin@healthflow.gn}
+          --password $${SUPERSET_ADMIN_PASSWORD:-admin} || true &&
+        superset init &&
+        superset run -h 0.0.0.0 -p 8088 --with-threads --reload
+      "
+
+  # ---------------------------------------------------------------------------
+  # Redis - Caching & Session Store
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: healthflow-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    environment:
+      REDIS_MAXMEMORY: 256mb
+      REDIS_MAXMEMORY_POLICY: allkeys-lru
+    volumes:
+      - redis-data:/data
+    networks:
+      - healthflow-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    command: >
+      redis-server
+        --maxmemory 256mb
+        --maxmemory-policy allkeys-lru
+        --appendonly yes
+        --appendfsync everysec
+        --save 60 1000
+        --save 300 100
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  healthflow-network:
+    driver: bridge
+    name: healthflow-network
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  postgres-data:
+    name: healthflow-postgres-data
+  minio-data:
+    name: healthflow-minio-data
+  superset-data:
+    name: healthflow-superset-data
+  redis-data:
+    name: healthflow-redis-data
