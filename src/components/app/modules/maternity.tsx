@@ -13,27 +13,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { useDataStore, type Pregnancy } from '@/lib/data-store'
+import { useToast } from '@/hooks/use-toast'
 
 const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.1 } } }
-const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } } }
+const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } } }
 
-type RiskLevel = 'Faible' | 'Moyen' | 'Élevé'
-type PregnancyStatus = 'En cours' | 'Accouché' | 'Suivi post-partum'
-
-interface Pregnancy {
-  id: number; patient: string; age: number; term: number; status: PregnancyStatus; riskLevel: RiskLevel
-  lastVisit: string; nextVisit: string; weight: number; bp: string; fhr: number
-  notes: string; gravida: number; para: number
-}
-
-const demoPregnancies: Pregnancy[] = [
-  { id: 1, patient: 'Fatoumata Camara', age: 28, term: 39, status: 'En cours', riskLevel: 'Élevé', lastVisit: '03/03/2026', nextVisit: '06/03/2026', weight: 78, bp: '13/8', fhr: 140, notes: 'Pré-éclampsie surveillée. Césarienne programmée.', gravida: 2, para: 1 },
-  { id: 2, patient: 'Mariama Bah', age: 24, term: 32, status: 'En cours', riskLevel: 'Moyen', lastVisit: '01/03/2026', nextVisit: '08/03/2026', weight: 72, bp: '12/7', fhr: 145, notes: 'Anémie légère. Supplémentation fer + acide folique.', gravida: 1, para: 0 },
-  { id: 3, patient: 'Aminata Diallo', age: 31, term: 24, status: 'En cours', riskLevel: 'Faible', lastVisit: '28/02/2026', nextVisit: '14/03/2026', weight: 68, bp: '11/7', fhr: 152, notes: 'Grossesse normale. Échographie morphologique prévue.', gravida: 3, para: 2 },
-  { id: 4, patient: 'Kadiatou Sylla', age: 19, term: 16, status: 'En cours', riskLevel: 'Moyen', lastVisit: '25/02/2026', nextVisit: '11/03/2026', weight: 60, bp: '11/6', fhr: 148, notes: 'Primipare jeune. Suivi r recommandé.', gravida: 1, para: 0 },
-  { id: 5, patient: 'Aïssatou Doupour', age: 35, term: 0, status: 'Suivi post-partum', riskLevel: 'Faible', lastVisit: '25/02/2026', nextVisit: '25/03/2026', weight: 65, bp: '12/8', fhr: 0, notes: 'Accouchement eutocique le 18/02. Bébé en bonne santé.', gravida: 4, para: 4 },
-  { id: 6, patient: 'Hawa Touré', age: 27, term: 36, status: 'En cours', riskLevel: 'Élevé', lastVisit: '04/03/2026', nextVisit: '06/03/2026', weight: 82, bp: '15/9', fhr: 135, notes: 'Diabète gestationnel. Surveillance rapprochée.', gravida: 2, para: 1 },
-]
+type RiskLevel = Pregnancy['riskLevel']
+type PregnancyStatus = Pregnancy['status']
 
 const riskColors: Record<RiskLevel, string> = {
   Faible: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800',
@@ -48,16 +35,82 @@ const riskIcons: Record<RiskLevel, React.ComponentType<{ className?: string }>> 
 }
 
 export function MaternityPage() {
+  const { pregnancies, addPregnancy, addPregnancyVisit } = useDataStore()
+  const { toast } = useToast()
   const [search, setSearch] = useState('')
   const [riskFilter, setRiskFilter] = useState<string>('all')
   const [showNewDialog, setShowNewDialog] = useState(false)
+  const [showVisitDialog, setShowVisitDialog] = useState(false)
   const [selectedPregnancy, setSelectedPregnancy] = useState<Pregnancy | null>(null)
 
-  const filtered = demoPregnancies.filter(p => {
-    const matchSearch = p.patient.toLowerCase().includes(search.toLowerCase())
+  // New pregnancy form state
+  const [newMotherName, setNewMotherName] = useState('')
+  const [newMotherId, setNewMotherId] = useState('')
+  const [newTerm, setNewTerm] = useState('')
+  const [newDueDate, setNewDueDate] = useState('')
+  const [newRiskLevel, setNewRiskLevel] = useState<RiskLevel>('Faible')
+
+  // New visit form state
+  const [visitDate, setVisitDate] = useState('')
+  const [visitTerm, setVisitTerm] = useState('')
+  const [visitWeight, setVisitWeight] = useState('')
+  const [visitBp, setVisitBp] = useState('')
+  const [visitNotes, setVisitNotes] = useState('')
+
+  const filtered = pregnancies.filter(p => {
+    const matchSearch = p.motherName.toLowerCase().includes(search.toLowerCase())
     const matchRisk = riskFilter === 'all' || p.riskLevel === riskFilter
     return matchSearch && matchRisk
   })
+
+  const handleAddPregnancy = () => {
+    if (!newMotherName) {
+      toast({ title: 'Erreur', description: 'Nom de la patiente obligatoire', variant: 'destructive' })
+      return
+    }
+    addPregnancy({
+      id: `MAT-${Date.now()}`,
+      motherName: newMotherName,
+      motherId: newMotherId,
+      term: parseInt(newTerm) || 0,
+      dueDate: newDueDate,
+      riskLevel: newRiskLevel,
+      lastVisit: new Date().toISOString().split('T')[0],
+      status: 'En cours',
+      visits: [],
+    })
+    toast({ title: 'Grossesse ajoutée', description: `Suivi de ${newMotherName} enregistré` })
+    setNewMotherName('')
+    setNewMotherId('')
+    setNewTerm('')
+    setNewDueDate('')
+    setNewRiskLevel('Faible')
+    setShowNewDialog(false)
+  }
+
+  const handleAddVisit = () => {
+    if (!selectedPregnancy || !visitDate) {
+      toast({ title: 'Erreur', description: 'Date de visite obligatoire', variant: 'destructive' })
+      return
+    }
+    addPregnancyVisit(selectedPregnancy.id, {
+      date: visitDate,
+      term: parseInt(visitTerm) || selectedPregnancy.term,
+      weight: visitWeight || '—',
+      bp: visitBp || '—',
+      notes: visitNotes || '—',
+    })
+    toast({ title: 'Visite ajoutée', description: `Visite du ${visitDate} enregistrée pour ${selectedPregnancy.motherName}` })
+    setVisitDate('')
+    setVisitTerm('')
+    setVisitWeight('')
+    setVisitBp('')
+    setVisitNotes('')
+    setShowVisitDialog(false)
+    // Refresh selected pregnancy data from store
+    const updated = useDataStore.getState().pregnancies.find(p => p.id === selectedPregnancy.id)
+    if (updated) setSelectedPregnancy(updated)
+  }
 
   return (
     <motion.div className="p-4 lg:p-6 space-y-6 max-w-[1600px] mx-auto" variants={containerVariants} initial="hidden" animate="visible">
@@ -78,10 +131,10 @@ export function MaternityPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Grossesses actives', value: demoPregnancies.filter(p => p.status === 'En cours').length, color: 'from-pink-500 to-rose-600' },
-          { label: 'Risque élevé', value: demoPregnancies.filter(p => p.riskLevel === 'Élevé').length, color: 'from-rose-500 to-red-600' },
-          { label: 'Risque moyen', value: demoPregnancies.filter(p => p.riskLevel === 'Moyen').length, color: 'from-amber-500 to-orange-600' },
-          { label: 'Post-partum', value: demoPregnancies.filter(p => p.status === 'Suivi post-partum').length, color: 'from-teal-500 to-emerald-600' },
+          { label: 'Grossesses actives', value: pregnancies.filter(p => p.status === 'En cours').length, color: 'from-pink-500 to-rose-600' },
+          { label: 'Risque élevé', value: pregnancies.filter(p => p.riskLevel === 'Élevé').length, color: 'from-rose-500 to-red-600' },
+          { label: 'Risque moyen', value: pregnancies.filter(p => p.riskLevel === 'Moyen').length, color: 'from-amber-500 to-orange-600' },
+          { label: 'Post-partum', value: pregnancies.filter(p => p.status === 'Suivi post-partum').length, color: 'from-teal-500 to-emerald-600' },
         ].map(stat => (
           <motion.div key={stat.label} variants={itemVariants}>
             <Card className="relative overflow-hidden border-slate-200/60 dark:border-slate-800/60">
@@ -129,6 +182,7 @@ export function MaternityPage() {
             <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1 custom-scrollbar">
               {filtered.map((p, index) => {
                 const RiskIcon = riskIcons[p.riskLevel]
+                const lastVisit = p.visits.length > 0 ? p.visits[p.visits.length - 1] : null
                 return (
                   <motion.div key={p.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.05 }}
                     className="p-4 rounded-xl bg-slate-50/80 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
@@ -137,11 +191,11 @@ export function MaternityPage() {
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-3">
                         <div className="flex items-center justify-center size-10 rounded-full bg-pink-100 dark:bg-pink-950/40 text-pink-700 dark:text-pink-300 font-bold text-sm">
-                          {p.patient.split(' ').map(n => n[0]).join('')}
+                          {p.motherName.split(' ').map(n => n[0]).join('')}
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-slate-900 dark:text-white">{p.patient}</p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">{p.age} ans • G{p.gravida}P{p.para} • {p.status}</p>
+                          <p className="text-sm font-medium text-slate-900 dark:text-white">{p.motherName}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">{p.motherId} • {p.status}</p>
                         </div>
                       </div>
                       <span className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium ${riskColors[p.riskLevel]}`}>
@@ -155,20 +209,20 @@ export function MaternityPage() {
                       </div>
                       <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800">
                         <p className="text-[10px] text-slate-500">Poids</p>
-                        <p className="text-sm font-bold text-slate-900 dark:text-white">{p.weight} kg</p>
+                        <p className="text-sm font-bold text-slate-900 dark:text-white">{lastVisit?.weight || '—'} kg</p>
                       </div>
                       <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800">
                         <p className="text-[10px] text-slate-500">TA</p>
-                        <p className="text-sm font-bold text-slate-900 dark:text-white">{p.bp}</p>
+                        <p className="text-sm font-bold text-slate-900 dark:text-white">{lastVisit?.bp || '—'}</p>
                       </div>
                       <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800">
-                        <p className="text-[10px] text-slate-500">FCF</p>
-                        <p className="text-sm font-bold text-slate-900 dark:text-white">{p.fhr > 0 ? `${p.fhr} bpm` : '—'}</p>
+                        <p className="text-[10px] text-slate-500">Accouchement</p>
+                        <p className="text-sm font-bold text-slate-900 dark:text-white">{p.dueDate || '—'}</p>
                       </div>
                     </div>
                     <div className="flex items-center justify-between mt-3 text-xs text-slate-500">
                       <span>Dernière visite: {p.lastVisit}</span>
-                      <span>Prochaine: <span className="font-medium text-teal-600 dark:text-teal-400">{p.nextVisit}</span></span>
+                      <span>Visites: <span className="font-medium text-teal-600 dark:text-teal-400">{p.visits.length}</span></span>
                     </div>
                   </motion.div>
                 )
@@ -179,11 +233,11 @@ export function MaternityPage() {
       </motion.div>
 
       {/* Detail Dialog */}
-      <Dialog open={!!selectedPregnancy} onOpenChange={() => setSelectedPregnancy(null)}>
+      <Dialog open={!!selectedPregnancy && !showVisitDialog} onOpenChange={() => setSelectedPregnancy(null)}>
         <DialogContent className="sm:max-w-[520px]">
           {selectedPregnancy && (
             <>
-              <DialogHeader><DialogTitle className="flex items-center gap-2"><Baby className="size-5 text-pink-600" /> {selectedPregnancy.patient}</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle className="flex items-center gap-2"><Baby className="size-5 text-pink-600" /> {selectedPregnancy.motherName}</DialogTitle></DialogHeader>
               <div className="space-y-4 py-2">
                 <div className="flex items-center gap-2">
                   <span className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium ${riskColors[selectedPregnancy.riskLevel]}`}>
@@ -192,18 +246,57 @@ export function MaternityPage() {
                   <span className="text-xs text-slate-500">{selectedPregnancy.status}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div><span className="text-xs text-slate-500">Âge</span><p className="font-medium">{selectedPregnancy.age} ans</p></div>
-                  <div><span className="text-xs text-slate-500">Parité</span><p className="font-medium">G{selectedPregnancy.gravida}P{selectedPregnancy.para}</p></div>
                   <div><span className="text-xs text-slate-500">Terme</span><p className="font-medium">{selectedPregnancy.term > 0 ? `${selectedPregnancy.term} SA` : 'Accouché'}</p></div>
-                  <div><span className="text-xs text-slate-500">FCF</span><p className="font-medium">{selectedPregnancy.fhr > 0 ? `${selectedPregnancy.fhr} bpm` : '—'}</p></div>
-                  <div><span className="text-xs text-slate-500">Poids / TA</span><p className="font-medium">{selectedPregnancy.weight} kg / {selectedPregnancy.bp}</p></div>
-                  <div><span className="text-xs text-slate-500">Prochaine visite</span><p className="font-medium text-teal-600 dark:text-teal-400">{selectedPregnancy.nextVisit}</p></div>
+                  <div><span className="text-xs text-slate-500">Date prévue</span><p className="font-medium text-teal-600 dark:text-teal-400">{selectedPregnancy.dueDate || '—'}</p></div>
+                  <div><span className="text-xs text-slate-500">ID</span><p className="font-medium">{selectedPregnancy.motherId || '—'}</p></div>
+                  <div><span className="text-xs text-slate-500">Dernière visite</span><p className="font-medium">{selectedPregnancy.lastVisit}</p></div>
                 </div>
-                <div><span className="text-xs text-slate-500">Notes</span><p className="text-sm text-slate-700 dark:text-slate-300 mt-0.5">{selectedPregnancy.notes}</p></div>
+                {selectedPregnancy.visits.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">Historique des visites</p>
+                    <div className="space-y-2 max-h-[200px] overflow-y-auto custom-scrollbar">
+                      {selectedPregnancy.visits.slice().reverse().map((v, i) => (
+                        <div key={i} className="flex items-start gap-3">
+                          <div className="flex flex-col items-center">
+                            <div className={`size-3 rounded-full ${i === 0 ? 'bg-pink-500' : 'bg-slate-300 dark:bg-slate-600'}`} />
+                            {i < selectedPregnancy.visits.length - 1 && <div className="w-px h-6 bg-slate-200 dark:bg-slate-700" />}
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-slate-400">{v.date} — {v.term} SA</span>
+                            <p className="text-xs text-slate-700 dark:text-slate-300">{v.weight} kg • TA {v.bp} • {v.notes}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-              <DialogFooter><Button variant="outline" onClick={() => setSelectedPregnancy(null)}>Fermer</Button></DialogFooter>
+              <DialogFooter className="flex gap-2">
+                <Button className="bg-pink-600 hover:bg-pink-700 text-white" onClick={() => setShowVisitDialog(true)}>Ajouter visite</Button>
+                <Button variant="outline" onClick={() => setSelectedPregnancy(null)}>Fermer</Button>
+              </DialogFooter>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* New Visit Dialog */}
+      <Dialog open={showVisitDialog} onOpenChange={setShowVisitDialog}>
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Plus className="size-5 text-pink-600" /> Ajouter visite</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2"><Label>Date *</Label><Input type="date" value={visitDate} onChange={e => setVisitDate(e.target.value)} /></div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"><Label className="text-xs">Terme (SA)</Label><Input type="number" placeholder="32" value={visitTerm} onChange={e => setVisitTerm(e.target.value)} /></div>
+              <div className="space-y-2"><Label className="text-xs">Poids (kg)</Label><Input placeholder="72" value={visitWeight} onChange={e => setVisitWeight(e.target.value)} /></div>
+            </div>
+            <div className="space-y-2"><Label className="text-xs">Tension artérielle</Label><Input placeholder="12/8" value={visitBp} onChange={e => setVisitBp(e.target.value)} /></div>
+            <div className="space-y-2"><Label>Notes</Label><Textarea placeholder="Observations..." rows={2} value={visitNotes} onChange={e => setVisitNotes(e.target.value)} /></div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowVisitDialog(false)}>Annuler</Button>
+            <Button className="bg-gradient-to-r from-pink-500 to-rose-600 text-white" onClick={handleAddVisit}>Enregistrer</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -212,21 +305,27 @@ export function MaternityPage() {
         <DialogContent className="sm:max-w-[480px]">
           <DialogHeader><DialogTitle className="flex items-center gap-2"><Plus className="size-5 text-pink-600" /> Nouvelle grossesse</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="space-y-2"><Label>Patiente *</Label><Select><SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger><SelectContent><SelectItem value="1">Aminata Diallo</SelectItem><SelectItem value="2">Mariama Bah</SelectItem></SelectContent></Select></div>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="space-y-2"><Label className="text-xs">Gravidité</Label><Input type="number" placeholder="1" /></div>
-              <div className="space-y-2"><Label className="text-xs">Parité</Label><Input type="number" placeholder="0" /></div>
-              <div className="space-y-2"><Label className="text-xs">Terme (SA)</Label><Input type="number" placeholder="12" /></div>
-            </div>
+            <div className="space-y-2"><Label>Nom patiente *</Label><Input placeholder="Nom complet..." value={newMotherName} onChange={e => setNewMotherName(e.target.value)} /></div>
+            <div className="space-y-2"><Label>ID Patient</Label><Input placeholder="ID patiente..." value={newMotherId} onChange={e => setNewMotherId(e.target.value)} /></div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label className="text-xs">DDR</Label><Input type="date" /></div>
-              <div className="space-y-2"><Label>Niveau de risque</Label><Select defaultValue="Faible"><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Faible">Faible</SelectItem><SelectItem value="Moyen">Moyen</SelectItem><SelectItem value="Élevé">Élevé</SelectItem></SelectContent></Select></div>
+              <div className="space-y-2"><Label className="text-xs">Terme (SA)</Label><Input type="number" placeholder="12" value={newTerm} onChange={e => setNewTerm(e.target.value)} /></div>
+              <div className="space-y-2"><Label className="text-xs">Date prévue accouchement</Label><Input type="date" value={newDueDate} onChange={e => setNewDueDate(e.target.value)} /></div>
             </div>
-            <div className="space-y-2"><Label>Notes</Label><Textarea placeholder="Antécédents, observations..." rows={2} /></div>
+            <div className="space-y-2">
+              <Label>Niveau de risque</Label>
+              <Select value={newRiskLevel} onValueChange={(v) => setNewRiskLevel(v as RiskLevel)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Faible">Faible</SelectItem>
+                  <SelectItem value="Moyen">Moyen</SelectItem>
+                  <SelectItem value="Élevé">Élevé</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowNewDialog(false)}>Annuler</Button>
-            <Button className="bg-gradient-to-r from-pink-500 to-rose-600 text-white" onClick={() => setShowNewDialog(false)}>Enregistrer</Button>
+            <Button className="bg-gradient-to-r from-pink-500 to-rose-600 text-white" onClick={handleAddPregnancy}>Enregistrer</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -14,11 +14,23 @@ import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useStore } from '@/lib/store'
+import { useTheme } from 'next-themes'
+import { useToast } from '@/hooks/use-toast'
 
 const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.1 } } }
-const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } } }
+const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } } }
 
 export function SettingsPage() {
+  const { user, updateUser } = useStore()
+  const { resolvedTheme, setTheme } = useTheme()
+  const { toast } = useToast()
+
+  // Profile form state - initialized from store
+  const [profileName, setProfileName] = useState(user.name)
+  const [profileEmail, setProfileEmail] = useState(user.email)
+  const [profilePhone, setProfilePhone] = useState(user.phone)
+
   const [notifications, setNotifications] = useState({
     appointments: true,
     labResults: true,
@@ -30,13 +42,30 @@ export function SettingsPage() {
   })
   const [mfaEnabled, setMfaEnabled] = useState(false)
   const [language, setLanguage] = useState('fr')
-  const [theme, setTheme] = useState('system')
 
   const sessions = [
     { device: 'Chrome — Windows', ip: '192.168.1.45', time: 'Actif', current: true },
     { device: 'Safari — iPhone', ip: '192.168.1.102', time: 'Il y a 2h', current: false },
     { device: 'Firefox — MacOS', ip: '192.168.1.88', time: 'Hier', current: false },
   ]
+
+  const handleSaveProfile = () => {
+    updateUser({
+      name: profileName,
+      email: profileEmail,
+      phone: profilePhone,
+    })
+    toast({
+      title: 'Profil mis à jour',
+      description: 'Vos informations personnelles ont été enregistrées.',
+    })
+  }
+
+  // Derive initials from user name
+  const nameParts = user.name.split(' ')
+  const initials = nameParts.length >= 2
+    ? nameParts[0][0] + nameParts[nameParts.length - 1][0]
+    : nameParts[0].substring(0, 2)
 
   return (
     <motion.div className="p-4 lg:p-6 space-y-6 max-w-[1000px] mx-auto" variants={containerVariants} initial="hidden" animate="visible">
@@ -68,26 +97,26 @@ export function SettingsPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-4 mb-6">
-                  <div className="flex items-center justify-center size-16 rounded-full bg-gradient-to-br from-teal-500 to-emerald-600 text-white font-bold text-xl">MB</div>
+                  <div className="flex items-center justify-center size-16 rounded-full bg-gradient-to-br from-teal-500 to-emerald-600 text-white font-bold text-xl">{initials.toUpperCase()}</div>
                   <div>
-                    <p className="font-medium text-slate-900 dark:text-white">Dr. Mamadou Bah</p>
-                    <p className="text-xs text-slate-500">Médecin — Médecine Interne</p>
+                    <p className="font-medium text-slate-900 dark:text-white">{user.name}</p>
+                    <p className="text-xs text-slate-500">{user.role} — {user.establishment}</p>
                     <Button variant="outline" size="sm" className="text-xs mt-1">Changer la photo</Button>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2"><Label>Nom complet</Label><Input defaultValue="Dr. Mamadou Bah" /></div>
-                  <div className="space-y-2"><Label>Email</Label><Input type="email" defaultValue="m.bah@healthflow.gn" /></div>
-                  <div className="space-y-2"><Label>Téléphone</Label><Input defaultValue="+224 621 00 00 01" /></div>
+                  <div className="space-y-2"><Label>Nom complet</Label><Input value={profileName} onChange={e => setProfileName(e.target.value)} /></div>
+                  <div className="space-y-2"><Label>Email</Label><Input type="email" value={profileEmail} onChange={e => setProfileEmail(e.target.value)} /></div>
+                  <div className="space-y-2"><Label>Téléphone</Label><Input value={profilePhone} onChange={e => setProfilePhone(e.target.value)} /></div>
                   <div className="space-y-2"><Label>Identifiant professionnel</Label><Input defaultValue="MED-GN-2018-0452" disabled className="bg-slate-50 dark:bg-slate-800" /></div>
                 </div>
-                <div className="space-y-2"><Label>Département</Label><Input defaultValue="Médecine Interne — Hôpital Donka" disabled className="bg-slate-50 dark:bg-slate-800" /></div>
+                <div className="space-y-2"><Label>Département</Label><Input defaultValue={`${user.role} — ${user.establishment}`} disabled className="bg-slate-50 dark:bg-slate-800" /></div>
                 <Separator />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2"><Label>Ancien mot de passe</Label><Input type="password" placeholder="••••••••" /></div>
                   <div className="space-y-2"><Label>Nouveau mot de passe</Label><Input type="password" placeholder="••••••••" /></div>
                 </div>
-                <div className="flex justify-end"><Button className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white">Sauvegarder</Button></div>
+                <div className="flex justify-end"><Button className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white" onClick={handleSaveProfile}>Enregistrer</Button></div>
               </CardContent>
             </Card>
           </motion.div>
@@ -157,11 +186,11 @@ export function SettingsPage() {
                       { value: 'system', label: 'Système', icon: Monitor },
                     ].map(opt => (
                       <button key={opt.value} onClick={() => setTheme(opt.value)}
-                        className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-colors ${theme === opt.value ? 'border-teal-500 bg-teal-50 dark:bg-teal-950/30' : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'}`}
+                        className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-colors ${resolvedTheme === opt.value || (opt.value === 'system' && resolvedTheme !== 'light' && resolvedTheme !== 'dark') ? 'border-teal-500 bg-teal-50 dark:bg-teal-950/30' : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'}`}
                       >
-                        <opt.icon className={`size-6 ${theme === opt.value ? 'text-teal-600 dark:text-teal-400' : 'text-slate-400'}`} />
-                        <span className={`text-xs font-medium ${theme === opt.value ? 'text-teal-700 dark:text-teal-300' : 'text-slate-500'}`}>{opt.label}</span>
-                        {theme === opt.value && <Check className="size-4 text-teal-500" />}
+                        <opt.icon className={`size-6 ${resolvedTheme === opt.value || (opt.value === 'system' && resolvedTheme !== 'light' && resolvedTheme !== 'dark') ? 'text-teal-600 dark:text-teal-400' : 'text-slate-400'}`} />
+                        <span className={`text-xs font-medium ${resolvedTheme === opt.value || (opt.value === 'system' && resolvedTheme !== 'light' && resolvedTheme !== 'dark') ? 'text-teal-700 dark:text-teal-300' : 'text-slate-500'}`}>{opt.label}</span>
+                        {resolvedTheme === opt.value && <Check className="size-4 text-teal-500" />}
                       </button>
                     ))}
                   </div>
@@ -254,12 +283,14 @@ export function SettingsPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {[
-                  { label: 'Version', value: '1.0.0-beta' },
+                  { label: 'Version', value: '1.0.0' },
                   { label: 'Build', value: '2026.03.05' },
                   { label: 'Licence', value: 'DataSphere Innovation — Licence commerciale' },
                   { label: 'Base de données', value: 'SQLite (Prisma ORM)' },
                   { label: 'Framework', value: 'Next.js 16 + TypeScript' },
                   { label: 'UI', value: 'Tailwind CSS + shadcn/ui' },
+                  { label: 'Établissement', value: user.establishment },
+                  { label: 'Utilisateur', value: `${user.name} (${user.role})` },
                   { label: 'Support', value: 'support@datasphere-gn.com' },
                 ].map(item => (
                   <div key={item.label} className="flex items-center justify-between py-1.5">

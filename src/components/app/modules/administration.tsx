@@ -13,9 +13,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useDataStore } from '@/lib/data-store'
+import { useStore } from '@/lib/store'
 
 const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.1 } } }
-const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } } }
+const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } } }
 
 type UserRole = 'Administrateur' | 'Médecin' | 'Infirmier' | 'Pharmacien' | 'Laborantin' | 'Réceptionniste' | 'Comptable' | 'Direction'
 
@@ -63,6 +65,15 @@ export function AdministrationPage() {
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [selectedUser, setSelectedUser] = useState<UserRecord | null>(null)
 
+  const { patients, appointments, medications, beds, emergencies, invoices } = useDataStore()
+  const { user } = useStore()
+
+  // Real stats from data store
+  const activePatients = patients.filter(p => p.status === 'Actif').length
+  const occupiedBeds = beds.filter(b => b.status === 'Occupé').length
+  const paidInvoices = invoices.filter(i => i.status === 'Payée').length
+  const pendingEmergencies = emergencies.filter(e => e.status === 'En attente').length
+
   const filtered = demoUsers.filter(u => {
     const matchSearch = u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase())
     const matchRole = roleFilter === 'all' || u.role === roleFilter
@@ -88,10 +99,10 @@ export function AdministrationPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Utilisateurs', value: demoUsers.length, color: 'from-teal-500 to-emerald-600' },
-          { label: 'Actifs', value: demoUsers.filter(u => u.status === 'Actif').length, color: 'from-emerald-500 to-green-600' },
-          { label: 'Rôles', value: Object.keys(roleColors).length, color: 'from-cyan-500 to-teal-600' },
-          { label: 'Médecins', value: demoUsers.filter(u => u.role === 'Médecin').length, color: 'from-purple-500 to-violet-600' },
+          { label: 'Patients actifs', value: activePatients, color: 'from-teal-500 to-emerald-600' },
+          { label: 'Lits occupés', value: occupiedBeds, color: 'from-emerald-500 to-green-600' },
+          { label: 'Factures payées', value: paidInvoices, color: 'from-cyan-500 to-teal-600' },
+          { label: 'Urgences en attente', value: pendingEmergencies, color: 'from-rose-500 to-red-600' },
         ].map(stat => (
           <motion.div key={stat.label} variants={itemVariants}>
             <Card className="relative overflow-hidden border-slate-200/60 dark:border-slate-800/60">
@@ -191,18 +202,18 @@ export function AdministrationPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Building2 className="size-5 text-teal-600" />
-                <CardTitle className="text-base">Hôpital National Donka</CardTitle>
+                <CardTitle className="text-base">{user.establishment}</CardTitle>
               </div>
               <CardDescription>Configuration de l&apos;établissement</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2"><Label className="text-xs text-slate-500">Nom</Label><Input defaultValue="Hôpital National Donka" /></div>
+                <div className="space-y-2"><Label className="text-xs text-slate-500">Nom</Label><Input defaultValue={user.establishment} /></div>
                 <div className="space-y-2"><Label className="text-xs text-slate-500">Type</Label><Select defaultValue="hospital"><SelectTrigger /><SelectContent><SelectItem value="hospital">Hôpital</SelectItem><SelectItem value="clinic">Clinique</SelectItem><SelectItem value="center">Centre de santé</SelectItem></SelectContent></Select></div>
                 <div className="space-y-2"><Label className="text-xs text-slate-500">Adresse</Label><Input defaultValue="Avenue de la République, Conakry" /></div>
                 <div className="space-y-2"><Label className="text-xs text-slate-500">Région</Label><Select defaultValue="conakry"><SelectTrigger /><SelectContent><SelectItem value="conakry">Conakry</SelectItem><SelectItem value="kankan">Kankan</SelectItem><SelectItem value="nzer">Nzérékoré</SelectItem></SelectContent></Select></div>
-                <div className="space-y-2"><Label className="text-xs text-slate-500">Téléphone</Label><Input defaultValue="+224 30 00 00 00" /></div>
-                <div className="space-y-2"><Label className="text-xs text-slate-500">Email</Label><Input defaultValue="contact@hopital-donka.gn" /></div>
+                <div className="space-y-2"><Label className="text-xs text-slate-500">Téléphone</Label><Input defaultValue={user.phone} /></div>
+                <div className="space-y-2"><Label className="text-xs text-slate-500">Email</Label><Input defaultValue={user.email} /></div>
               </div>
               <div className="mt-4 flex justify-end">
                 <Button className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white">Sauvegarder</Button>

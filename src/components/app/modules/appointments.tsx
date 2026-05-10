@@ -15,6 +15,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useDataStore, type Appointment } from '@/lib/data-store'
+import { useToast } from '@/hooks/use-toast'
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -22,47 +24,26 @@ const containerVariants = {
 }
 const itemVariants = {
   hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } },
+  visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } },
 }
 
-type AppointmentStatus = 'Confirmé' | 'En attente' | 'Annulé' | 'Terminé'
-type AppointmentType = 'Consultation' | 'Suivi' | 'Urgence' | 'Contrôle'
-
-interface Appointment {
-  id: number
-  patient: string
-  doctor: string
-  date: string
-  time: string
-  duration: number
-  type: AppointmentType
-  status: AppointmentStatus
-  reason: string
-}
-
-const demoAppointments: Appointment[] = [
-  { id: 1, patient: 'Aminata Diallo', doctor: 'Dr. Mamadou Bah', date: '2026-03-05', time: '08:00', duration: 30, type: 'Consultation', status: 'Confirmé', reason: 'Fièvre et maux de tête depuis 3 jours' },
-  { id: 2, patient: 'Ibrahim Touré', doctor: 'Dr. Aissatou Sylla', date: '2026-03-05', time: '08:30', duration: 30, type: 'Suivi', status: 'Confirmé', reason: 'Suivi hypertension artérielle' },
-  { id: 3, patient: 'Fatoumata Camara', doctor: 'Dr. Mamadou Bah', date: '2026-03-05', time: '09:00', duration: 45, type: 'Consultation', status: 'En attente', reason: 'Douleurs abdominales récurrentes' },
-  { id: 4, patient: 'Moussa Condé', doctor: 'Dr. Kadiatou Souaré', date: '2026-03-05', time: '09:30', duration: 30, type: 'Urgence', status: 'Confirmé', reason: 'Crise de paludisme sévère' },
-  { id: 5, patient: 'Mariama Bah', doctor: 'Dr. Aissatou Sylla', date: '2026-03-05', time: '10:00', duration: 30, type: 'Contrôle', status: 'En attente', reason: 'Contrôle prénatal 3ème trimestre' },
-  { id: 6, patient: 'Abdoulaye Keita', doctor: 'Dr. Mamadou Bah', date: '2026-03-05', time: '10:30', duration: 30, type: 'Suivi', status: 'Annulé', reason: 'Suivi diabète type 2' },
-  { id: 7, patient: 'Kadiatou Sylla', doctor: 'Dr. Kadiatou Souaré', date: '2026-03-05', time: '11:00', duration: 30, type: 'Consultation', status: 'Confirmé', reason: 'Infection respiratoire aiguë' },
-  { id: 8, patient: 'Lamine Kaba', doctor: 'Dr. Aissatou Sylla', date: '2026-03-05', time: '11:30', duration: 30, type: 'Contrôle', status: 'Terminé', reason: 'Vaccination DTC rappel' },
-]
+type AppointmentStatus = Appointment['status']
 
 const statusConfig: Record<AppointmentStatus, { icon: React.ComponentType<{ className?: string }>; color: string }> = {
+  'Planifié': { icon: AlertCircle, color: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800' },
   'Confirmé': { icon: CheckCircle2, color: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800' },
-  'En attente': { icon: AlertCircle, color: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800' },
-  'Annulé': { icon: XCircle, color: 'bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-950/40 dark:text-slate-400 dark:border-slate-700' },
+  'En cours': { icon: Clock, color: 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800' },
   'Terminé': { icon: CircleDot, color: 'bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-800' },
+  'Annulé': { icon: XCircle, color: 'bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-950/40 dark:text-slate-400 dark:border-slate-700' },
+  'Non honoré': { icon: XCircle, color: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800' },
 }
 
-const typeColors: Record<AppointmentType, string> = {
+const typeColors: Record<string, string> = {
   'Consultation': 'bg-teal-100 text-teal-700 dark:bg-teal-950/40 dark:text-teal-300',
   'Suivi': 'bg-cyan-100 text-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-300',
   'Urgence': 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300',
   'Contrôle': 'bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300',
+  'Prénatal': 'bg-pink-100 text-pink-700 dark:bg-pink-950/40 dark:text-pink-300',
 }
 
 const timeSlots = ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '14:00', '14:30', '15:00', '15:30', '16:00']
@@ -79,24 +60,110 @@ function StatusBadge({ status }: { status: AppointmentStatus }) {
 }
 
 export function AppointmentsPage() {
+  const { appointments, addAppointment, confirmAppointment, cancelAppointment, updateAppointment, patients } = useDataStore()
+  const { toast } = useToast()
+
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [view, setView] = useState<'list' | 'calendar'>('list')
   const [showNewDialog, setShowNewDialog] = useState(false)
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
 
-  const filtered = demoAppointments.filter(a => {
-    const matchSearch = a.patient.toLowerCase().includes(search.toLowerCase()) || a.doctor.toLowerCase().includes(search.toLowerCase()) || a.reason.toLowerCase().includes(search.toLowerCase())
+  // New appointment form state
+  const [newPatientId, setNewPatientId] = useState('')
+  const [newDoctor, setNewDoctor] = useState('')
+  const [newDate, setNewDate] = useState('2026-05-10')
+  const [newTime, setNewTime] = useState('')
+  const [newType, setNewType] = useState('')
+  const [newDuration, setNewDuration] = useState('30')
+  const [newReason, setNewReason] = useState('')
+
+  const filtered = appointments.filter(a => {
+    const matchSearch = a.patientName.toLowerCase().includes(search.toLowerCase()) || a.doctor.toLowerCase().includes(search.toLowerCase()) || a.reason.toLowerCase().includes(search.toLowerCase())
     const matchStatus = statusFilter === 'all' || a.status === statusFilter
     return matchSearch && matchStatus
   })
 
   const statusCounts = {
-    total: demoAppointments.length,
-    confirmed: demoAppointments.filter(a => a.status === 'Confirmé').length,
-    pending: demoAppointments.filter(a => a.status === 'En attente').length,
-    completed: demoAppointments.filter(a => a.status === 'Terminé').length,
+    total: appointments.length,
+    confirmed: appointments.filter(a => a.status === 'Confirmé').length,
+    planned: appointments.filter(a => a.status === 'Planifié').length,
+    completed: appointments.filter(a => a.status === 'Terminé').length,
   }
+
+  const handleConfirm = (id: string) => {
+    confirmAppointment(id)
+    toast({ title: 'Rendez-vous confirmé', description: 'Le rendez-vous a été confirmé avec succès.' })
+    setSelectedAppointment(null)
+  }
+
+  const handleCancel = (id: string) => {
+    cancelAppointment(id)
+    toast({ title: 'Rendez-vous annulé', description: 'Le rendez-vous a été annulé.' })
+    setSelectedAppointment(null)
+  }
+
+  const handleStartConsultation = (id: string) => {
+    updateAppointment(id, { status: 'En cours' })
+    toast({ title: 'Consultation démarrée', description: 'La consultation est maintenant en cours.' })
+    setSelectedAppointment(null)
+  }
+
+  const handleComplete = (id: string) => {
+    updateAppointment(id, { status: 'Terminé' })
+    toast({ title: 'Consultation terminée', description: 'La consultation a été marquée comme terminée.' })
+    setSelectedAppointment(null)
+  }
+
+  const handleMarkNoShow = (id: string) => {
+    updateAppointment(id, { status: 'Non honoré' })
+    toast({ title: 'Non honoré', description: 'Le rendez-vous a été marqué comme non honoré.' })
+    setSelectedAppointment(null)
+  }
+
+  const resetNewForm = () => {
+    setNewPatientId('')
+    setNewDoctor('')
+    setNewDate('2026-05-10')
+    setNewTime('')
+    setNewType('')
+    setNewDuration('30')
+    setNewReason('')
+  }
+
+  const handleAddAppointment = () => {
+    const patient = patients.find(p => p.id === newPatientId)
+    if (!patient || !newDoctor || !newDate || !newTime) {
+      toast({ title: 'Champs requis', description: 'Veuillez remplir tous les champs obligatoires.', variant: 'destructive' })
+      return
+    }
+
+    const newAppointment: Appointment = {
+      id: `RDV-${Date.now()}`,
+      patientName: `${patient.firstName} ${patient.lastName}`,
+      patientId: patient.id,
+      doctor: newDoctor,
+      date: newDate,
+      time: newTime,
+      duration: parseInt(newDuration),
+      type: newType || 'Consultation',
+      status: 'Planifié',
+      reason: newReason,
+      notes: '',
+    }
+
+    addAppointment(newAppointment)
+    toast({ title: 'Rendez-vous créé', description: `Rendez-vous pour ${newAppointment.patientName} le ${newDate} à ${newTime}.` })
+    resetNewForm()
+    setShowNewDialog(false)
+  }
+
+  const doctors = [
+    { id: 'dr-diallo', name: 'Dr. Diallo' },
+    { id: 'dr-toure', name: 'Dr. Touré' },
+    { id: 'dr-bah', name: 'Dr. Bah' },
+    { id: 'dr-keita', name: 'Dr. Keita' },
+  ]
 
   return (
     <motion.div className="p-4 lg:p-6 space-y-6 max-w-[1600px] mx-auto" variants={containerVariants} initial="hidden" animate="visible">
@@ -121,7 +188,7 @@ export function AppointmentsPage() {
         {[
           { label: "Aujourd'hui", value: statusCounts.total, color: 'from-teal-500 to-emerald-600' },
           { label: 'Confirmés', value: statusCounts.confirmed, color: 'from-emerald-500 to-green-600' },
-          { label: 'En attente', value: statusCounts.pending, color: 'from-amber-500 to-orange-600' },
+          { label: 'Planifiés', value: statusCounts.planned, color: 'from-amber-500 to-orange-600' },
           { label: 'Terminés', value: statusCounts.completed, color: 'from-cyan-500 to-teal-600' },
         ].map((stat) => (
           <motion.div key={stat.label} variants={itemVariants}>
@@ -149,10 +216,12 @@ export function AppointmentsPage() {
                 <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Statut" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tous les statuts</SelectItem>
+                  <SelectItem value="Planifié">Planifié</SelectItem>
                   <SelectItem value="Confirmé">Confirmé</SelectItem>
-                  <SelectItem value="En attente">En attente</SelectItem>
-                  <SelectItem value="Annulé">Annulé</SelectItem>
+                  <SelectItem value="En cours">En cours</SelectItem>
                   <SelectItem value="Terminé">Terminé</SelectItem>
+                  <SelectItem value="Annulé">Annulé</SelectItem>
+                  <SelectItem value="Non honoré">Non honoré</SelectItem>
                 </SelectContent>
               </Select>
               <Tabs value={view} onValueChange={(v) => setView(v as 'list' | 'calendar')}>
@@ -191,8 +260,8 @@ export function AppointmentsPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{apt.patient}</p>
-                        <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium ${typeColors[apt.type]}`}>{apt.type}</span>
+                        <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{apt.patientName}</p>
+                        <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium ${typeColors[apt.type] || 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'}`}>{apt.type}</span>
                       </div>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{apt.doctor} • {apt.duration} min</p>
                       <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 truncate">{apt.reason}</p>
@@ -215,7 +284,7 @@ export function AppointmentsPage() {
           <Card className="border-slate-200/60 dark:border-slate-800/60">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">Vue calendrier — 5 Mars 2026</CardTitle>
+                <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">Vue calendrier — 10 Mai 2026</CardTitle>
                 <div className="flex items-center gap-1">
                   <Button variant="outline" size="icon" className="size-8"><ChevronLeft className="size-4" /></Button>
                   <Button variant="outline" size="sm" className="text-xs">Aujourd&apos;hui</Button>
@@ -226,7 +295,7 @@ export function AppointmentsPage() {
             <CardContent className="pt-0">
               <div className="grid grid-cols-1 gap-0.5">
                 {timeSlots.map(slot => {
-                  const apt = demoAppointments.find(a => a.time === slot)
+                  const apt = appointments.find(a => a.time === slot && a.date === '2026-05-10')
                   return (
                     <div key={slot} className="flex items-center gap-3 min-h-[48px] py-1 border-b border-slate-100 dark:border-slate-800 last:border-0">
                       <span className="text-xs font-mono text-slate-500 dark:text-slate-400 w-12 shrink-0">{slot}</span>
@@ -240,10 +309,10 @@ export function AppointmentsPage() {
                           onClick={() => setSelectedAppointment(apt)}
                         >
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-medium text-slate-900 dark:text-white">{apt.patient}</span>
+                            <span className="text-xs font-medium text-slate-900 dark:text-white">{apt.patientName}</span>
                             <StatusBadge status={apt.status} />
                           </div>
-                          <span className="text-[10px] text-slate-500 dark:text-slate-400">{apt.doctor} — {apt.reason.slice(0, 40)}...</span>
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400">{apt.doctor} — {apt.reason.length > 40 ? apt.reason.slice(0, 40) + '...' : apt.reason}</span>
                         </div>
                       ) : (
                         <div className="flex-1 rounded-lg border border-dashed border-slate-200 dark:border-slate-700 py-2 px-3 text-xs text-slate-300 dark:text-slate-600">Disponible</div>
@@ -270,21 +339,33 @@ export function AppointmentsPage() {
               </DialogHeader>
               <div className="space-y-4 py-2">
                 <div className="grid grid-cols-2 gap-4">
-                  <div><Label className="text-xs text-slate-500">Patient</Label><p className="text-sm font-medium text-slate-900 dark:text-white">{selectedAppointment.patient}</p></div>
+                  <div><Label className="text-xs text-slate-500">Patient</Label><p className="text-sm font-medium text-slate-900 dark:text-white">{selectedAppointment.patientName}</p></div>
                   <div><Label className="text-xs text-slate-500">Médecin</Label><p className="text-sm font-medium text-slate-900 dark:text-white">{selectedAppointment.doctor}</p></div>
                   <div><Label className="text-xs text-slate-500">Date & Heure</Label><p className="text-sm font-medium text-slate-900 dark:text-white">{selectedAppointment.date} à {selectedAppointment.time}</p></div>
                   <div><Label className="text-xs text-slate-500">Durée</Label><p className="text-sm font-medium text-slate-900 dark:text-white">{selectedAppointment.duration} minutes</p></div>
-                  <div><Label className="text-xs text-slate-500">Type</Label><p><span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${typeColors[selectedAppointment.type]}`}>{selectedAppointment.type}</span></p></div>
+                  <div><Label className="text-xs text-slate-500">Type</Label><p><span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${typeColors[selectedAppointment.type] || 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'}`}>{selectedAppointment.type}</span></p></div>
                   <div><Label className="text-xs text-slate-500">Statut</Label><div className="mt-0.5"><StatusBadge status={selectedAppointment.status} /></div></div>
                 </div>
                 <div><Label className="text-xs text-slate-500">Motif</Label><p className="text-sm text-slate-700 dark:text-slate-300 mt-0.5">{selectedAppointment.reason}</p></div>
+                {selectedAppointment.notes && (
+                  <div><Label className="text-xs text-slate-500">Notes</Label><p className="text-sm text-slate-700 dark:text-slate-300 mt-0.5">{selectedAppointment.notes}</p></div>
+                )}
               </div>
               <DialogFooter className="flex gap-2">
-                {selectedAppointment.status === 'En attente' && (
-                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white">Confirmer</Button>
+                {(selectedAppointment.status === 'Planifié') && (
+                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => handleConfirm(selectedAppointment.id)}>Confirmer</Button>
                 )}
-                {selectedAppointment.status === 'Confirmé' && (
-                  <Button className="bg-teal-600 hover:bg-teal-700 text-white">Démarrer consultation</Button>
+                {(selectedAppointment.status === 'Confirmé') && (
+                  <Button className="bg-teal-600 hover:bg-teal-700 text-white" onClick={() => handleStartConsultation(selectedAppointment.id)}>Démarrer consultation</Button>
+                )}
+                {(selectedAppointment.status === 'En cours') && (
+                  <Button className="bg-cyan-600 hover:bg-cyan-700 text-white" onClick={() => handleComplete(selectedAppointment.id)}>Terminer</Button>
+                )}
+                {(selectedAppointment.status === 'Planifié' || selectedAppointment.status === 'Confirmé') && (
+                  <Button variant="outline" className="text-rose-600 border-rose-200 hover:bg-rose-50 dark:text-rose-400 dark:border-rose-800 dark:hover:bg-rose-950/30" onClick={() => handleCancel(selectedAppointment.id)}>Annuler</Button>
+                )}
+                {(selectedAppointment.status === 'Planifié' || selectedAppointment.status === 'Confirmé') && (
+                  <Button variant="outline" className="text-amber-600 border-amber-200 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-800 dark:hover:bg-amber-950/30" onClick={() => handleMarkNoShow(selectedAppointment.id)}>Non honoré</Button>
                 )}
                 <Button variant="outline" onClick={() => setSelectedAppointment(null)}>Fermer</Button>
               </DialogFooter>
@@ -294,7 +375,7 @@ export function AppointmentsPage() {
       </Dialog>
 
       {/* New Appointment Dialog */}
-      <Dialog open={showNewDialog} onOpenChange={setShowNewDialog}>
+      <Dialog open={showNewDialog} onOpenChange={(open) => { setShowNewDialog(open); if (!open) resetNewForm() }}>
         <DialogContent className="sm:max-w-[520px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -306,22 +387,23 @@ export function AppointmentsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Patient *</Label>
-                <Select><SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger>
+                <Select value={newPatientId} onValueChange={setNewPatientId}>
+                  <SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1">Aminata Diallo</SelectItem>
-                    <SelectItem value="2">Ibrahim Touré</SelectItem>
-                    <SelectItem value="3">Fatoumata Camara</SelectItem>
-                    <SelectItem value="4">Moussa Condé</SelectItem>
+                    {patients.filter(p => p.status === 'Actif').map(p => (
+                      <SelectItem key={p.id} value={p.id}>{p.firstName} {p.lastName}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label>Médecin *</Label>
-                <Select><SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger>
+                <Select value={newDoctor} onValueChange={setNewDoctor}>
+                  <SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1">Dr. Mamadou Bah</SelectItem>
-                    <SelectItem value="2">Dr. Aissatou Sylla</SelectItem>
-                    <SelectItem value="3">Dr. Kadiatou Souaré</SelectItem>
+                    {doctors.map(d => (
+                      <SelectItem key={d.id} value={d.name}>{d.name}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -329,11 +411,12 @@ export function AppointmentsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Date *</Label>
-                <Input type="date" defaultValue="2026-03-05" />
+                <Input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label>Heure *</Label>
-                <Select><SelectTrigger><SelectValue placeholder="Choisir..." /></SelectTrigger>
+                <Select value={newTime} onValueChange={setNewTime}>
+                  <SelectTrigger><SelectValue placeholder="Choisir..." /></SelectTrigger>
                   <SelectContent>
                     {timeSlots.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                   </SelectContent>
@@ -343,18 +426,21 @@ export function AppointmentsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Type</Label>
-                <Select><SelectTrigger><SelectValue placeholder="Type..." /></SelectTrigger>
+                <Select value={newType} onValueChange={setNewType}>
+                  <SelectTrigger><SelectValue placeholder="Type..." /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Consultation">Consultation</SelectItem>
                     <SelectItem value="Suivi">Suivi</SelectItem>
                     <SelectItem value="Urgence">Urgence</SelectItem>
                     <SelectItem value="Contrôle">Contrôle</SelectItem>
+                    <SelectItem value="Prénatal">Prénatal</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label>Durée (min)</Label>
-                <Select defaultValue="30"><SelectTrigger><SelectValue /></SelectTrigger>
+                <Select value={newDuration} onValueChange={setNewDuration}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="15">15 min</SelectItem>
                     <SelectItem value="30">30 min</SelectItem>
@@ -366,12 +452,12 @@ export function AppointmentsPage() {
             </div>
             <div className="space-y-2">
               <Label>Motif</Label>
-              <Textarea placeholder="Décrire le motif du rendez-vous..." rows={3} />
+              <Textarea placeholder="Décrire le motif du rendez-vous..." rows={3} value={newReason} onChange={(e) => setNewReason(e.target.value)} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowNewDialog(false)}>Annuler</Button>
-            <Button className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white" onClick={() => setShowNewDialog(false)}>Enregistrer</Button>
+            <Button variant="outline" onClick={() => { setShowNewDialog(false); resetNewForm() }}>Annuler</Button>
+            <Button className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white" onClick={handleAddAppointment}>Enregistrer</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

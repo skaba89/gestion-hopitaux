@@ -80,6 +80,8 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
+import { useDataStore, type Patient } from '@/lib/data-store'
+import { useToast } from '@/hooks/use-toast'
 
 /* ─────────── Animation Variants ─────────── */
 
@@ -96,7 +98,7 @@ const itemVariants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { type: 'spring', stiffness: 300, damping: 24 },
+    transition: { type: 'spring' as const, stiffness: 300, damping: 24 },
   },
 }
 
@@ -105,324 +107,15 @@ const rowVariants = {
   visible: (i: number) => ({
     opacity: 1,
     x: 0,
-    transition: { delay: i * 0.04, type: 'spring', stiffness: 300, damping: 24 },
+    transition: { delay: i * 0.04, type: 'spring' as const, stiffness: 300, damping: 24 },
   }),
 }
 
 /* ─────────── Types ─────────── */
 
-type PatientStatus = 'Actif' | 'Inactif' | 'Archivé'
+type PatientStatus = Patient['status']
 type SortField = 'name' | 'age' | 'phone' | 'lastVisit' | 'status'
 type SortDir = 'asc' | 'desc'
-
-interface Allergy {
-  name: string
-  severity: 'Mineur' | 'Majeur' | 'Critique'
-}
-
-interface MedicalDocument {
-  name: string
-  date: string
-  type: string
-}
-
-interface Patient {
-  id: string
-  qrCode: string
-  firstName: string
-  lastName: string
-  dateOfBirth: string
-  gender: 'M' | 'F'
-  phone: string
-  address: string
-  nationalId: string
-  bloodType: string
-  emergencyContact: string
-  emergencyPhone: string
-  lastVisit: string
-  status: PatientStatus
-  reason: string
-  allergies: Allergy[]
-  medicalHistory: string[]
-  surgicalHistory: string[]
-  familyHistory: string[]
-  documents: MedicalDocument[]
-  registrationDate: string
-}
-
-/* ─────────── Demo Data ─────────── */
-
-const demoPatients: Patient[] = [
-  {
-    id: 'P-2024-001',
-    qrCode: 'QR-AD-281998',
-    firstName: 'Aminata',
-    lastName: 'Diallo',
-    dateOfBirth: '1998-03-15',
-    gender: 'F',
-    phone: '+224 622 11 22 33',
-    address: 'Conakry, Kaloum',
-    nationalId: 'GN-1998-0315-FD',
-    bloodType: 'O+',
-    emergencyContact: 'Mamadou Diallo',
-    emergencyPhone: '+224 622 99 88 77',
-    lastVisit: '2026-03-01',
-    status: 'Actif',
-    reason: 'Paludisme',
-    allergies: [
-      { name: 'Pénicilline', severity: 'Critique' },
-      { name: 'Sulfamides', severity: 'Majeur' },
-    ],
-    medicalHistory: ['Paludisme sévère (2024)', 'Anémie ferriprive'],
-    surgicalHistory: [],
-    familyHistory: ['Hypertension (mère)'],
-    documents: [
-      { name: 'Résultats laboratoire', date: '2026-03-01', type: 'PDF' },
-      { name: 'Ordonnance', date: '2026-03-01', type: 'PDF' },
-    ],
-    registrationDate: '2024-01-15',
-  },
-  {
-    id: 'P-2024-002',
-    qrCode: 'QR-MC-121980',
-    firstName: 'Mamadou',
-    lastName: 'Condé',
-    dateOfBirth: '1980-07-22',
-    gender: 'M',
-    phone: '+224 623 44 55 66',
-    address: 'Conakry, Dixinn',
-    nationalId: 'GN-1980-0722-MC',
-    bloodType: 'A+',
-    emergencyContact: 'Fatoumata Condé',
-    emergencyPhone: '+224 623 55 66 77',
-    lastVisit: '2026-03-03',
-    status: 'Actif',
-    reason: 'Hypertension',
-    allergies: [{ name: 'Aspirine', severity: 'Mineur' }],
-    medicalHistory: ['Hypertension artérielle', 'Hypercholestérolémie'],
-    surgicalHistory: ['Appendicectomie (2015)'],
-    familyHistory: ['Diabète type 2 (père)', 'Hypertension (mère)'],
-    documents: [
-      { name: 'ECG rapport', date: '2026-03-03', type: 'PDF' },
-      { name: 'Bilan lipidique', date: '2026-02-15', type: 'PDF' },
-      { name: 'Ordonnance Amlodipine', date: '2026-03-03', type: 'PDF' },
-    ],
-    registrationDate: '2024-02-20',
-  },
-  {
-    id: 'P-2024-003',
-    qrCode: 'QR-FC-091993',
-    firstName: 'Fatoumata',
-    lastName: 'Camara',
-    dateOfBirth: '1993-09-10',
-    gender: 'F',
-    phone: '+224 624 77 88 99',
-    address: 'Conakry, Matam',
-    nationalId: 'GN-1993-0910-FC',
-    bloodType: 'B+',
-    emergencyContact: 'Ibrahima Camara',
-    emergencyPhone: '+224 624 88 99 00',
-    lastVisit: '2026-03-04',
-    status: 'Actif',
-    reason: 'Grossesse',
-    allergies: [],
-    medicalHistory: ['Grossesse suivie (3e trimestre)', 'Césarienne (2023)'],
-    surgicalHistory: ['Césarienne (2023)'],
-    familyHistory: [],
-    documents: [
-      { name: 'Échographie obstétricale', date: '2026-03-04', type: 'PDF' },
-      { name: 'Carnet de maternité', date: '2026-01-10', type: 'PDF' },
-    ],
-    registrationDate: '2024-03-05',
-  },
-  {
-    id: 'P-2024-004',
-    qrCode: 'QR-IT-051958',
-    firstName: 'Ibrahim',
-    lastName: 'Touré',
-    dateOfBirth: '1958-05-20',
-    gender: 'M',
-    phone: '+224 625 00 11 22',
-    address: 'Kindia, Centre',
-    nationalId: 'GN-1958-0520-MT',
-    bloodType: 'AB+',
-    emergencyContact: 'Aminata Touré',
-    emergencyPhone: '+224 625 11 22 33',
-    lastVisit: '2026-02-28',
-    status: 'Actif',
-    reason: 'Diabète',
-    allergies: [
-      { name: 'Iode', severity: 'Majeur' },
-      { name: 'Metformine', severity: 'Mineur' },
-    ],
-    medicalHistory: ['Diabète type 2', 'Rétinopathie diabétique', 'Neuropathie périphérique'],
-    surgicalHistory: ['Cataracte œil gauche (2022)'],
-    familyHistory: ['Diabète (père et frère)'],
-    documents: [
-      { name: 'Hémoglobine glyquée', date: '2026-02-28', type: 'PDF' },
-      { name: 'Fond d\'œil', date: '2026-02-10', type: 'PDF' },
-    ],
-    registrationDate: '2024-04-10',
-  },
-  {
-    id: 'P-2024-005',
-    qrCode: 'QR-MB-022021',
-    firstName: 'Mariama',
-    lastName: 'Bah',
-    dateOfBirth: '2021-02-14',
-    gender: 'F',
-    phone: '+224 626 33 44 55',
-    address: 'Conakry, Ratoma',
-    nationalId: 'GN-2021-0214-FB',
-    bloodType: 'O-',
-    emergencyContact: 'Kadiatou Bah',
-    emergencyPhone: '+224 626 44 55 66',
-    lastVisit: '2026-03-02',
-    status: 'Actif',
-    reason: 'Vaccination',
-    allergies: [],
-    medicalHistory: ['Prématurée (32 sem.)'],
-    surgicalHistory: [],
-    familyHistory: [],
-    documents: [
-      { name: 'Carnet de vaccination', date: '2026-03-02', type: 'PDF' },
-      { name: 'Certificat de naissance', date: '2021-02-14', type: 'PDF' },
-    ],
-    registrationDate: '2024-05-01',
-  },
-  {
-    id: 'P-2024-006',
-    qrCode: 'QR-AS-081970',
-    firstName: 'Abdoulaye',
-    lastName: 'Souaré',
-    dateOfBirth: '1970-08-30',
-    gender: 'M',
-    phone: '+224 627 66 77 88',
-    address: 'N\'Zérékoré, Centre',
-    nationalId: 'GN-1970-0830-MS',
-    bloodType: 'A-',
-    emergencyContact: 'Mariama Souaré',
-    emergencyPhone: '+224 627 77 88 99',
-    lastVisit: '2026-03-05',
-    status: 'Actif',
-    reason: 'Chirurgie',
-    allergies: [{ name: 'Latex', severity: 'Critique' }],
-    medicalHistory: ['Hernie inguinale', 'Hypertrophie bénigne de la prostate'],
-    surgicalHistory: ['Herniorraphie (2019)', 'Prostatectomie (2026)'],
-    familyHistory: ['Cancer de la prostate (père)'],
-    documents: [
-      { name: 'Bilan pré-opératoire', date: '2026-03-05', type: 'PDF' },
-      { name: 'Consentement chirurgical', date: '2026-03-04', type: 'PDF' },
-    ],
-    registrationDate: '2024-06-12',
-  },
-  {
-    id: 'P-2024-007',
-    qrCode: 'QR-KS-042007',
-    firstName: 'Kadiatou',
-    lastName: 'Sylla',
-    dateOfBirth: '2007-04-18',
-    gender: 'F',
-    phone: '+224 628 99 00 11',
-    address: 'Conakry, Matoto',
-    nationalId: 'GN-2007-0418-FS',
-    bloodType: 'B-',
-    emergencyContact: 'Moussa Sylla',
-    emergencyPhone: '+224 628 00 11 22',
-    lastVisit: '2026-02-20',
-    status: 'Actif',
-    reason: 'Consultation',
-    allergies: [{ name: 'Arachides', severity: 'Majeur' }],
-    medicalHistory: ['Asthme allergique'],
-    surgicalHistory: [],
-    familyHistory: ['Asthme (mère)'],
-    documents: [
-      { name: 'Spirométrie', date: '2026-02-20', type: 'PDF' },
-    ],
-    registrationDate: '2024-07-18',
-  },
-  {
-    id: 'P-2024-008',
-    qrCode: 'QR-MK-111985',
-    firstName: 'Moussa',
-    lastName: 'Keita',
-    dateOfBirth: '1985-11-05',
-    gender: 'M',
-    phone: '+224 629 22 33 44',
-    address: 'Kankan, Centre',
-    nationalId: 'GN-1985-1105-MK',
-    bloodType: 'O+',
-    emergencyContact: 'Aïssatou Keita',
-    emergencyPhone: '+224 629 33 44 55',
-    lastVisit: '2026-03-03',
-    status: 'Actif',
-    reason: 'IRA',
-    allergies: [],
-    medicalHistory: ['Infection respiratoire aiguë récurrente', 'Tabagisme actif'],
-    surgicalHistory: [],
-    familyHistory: [],
-    documents: [
-      { name: 'Radiographie thoracique', date: '2026-03-03', type: 'PDF' },
-      { name: 'CRP résultat', date: '2026-03-03', type: 'PDF' },
-    ],
-    registrationDate: '2024-08-22',
-  },
-  {
-    id: 'P-2024-009',
-    qrCode: 'QR-AD-061953',
-    firstName: 'Aïssatou',
-    lastName: 'Doupour',
-    dateOfBirth: '1953-06-12',
-    gender: 'F',
-    phone: '+224 620 55 66 77',
-    address: 'Labé, Centre',
-    nationalId: 'GN-1953-0612-FD',
-    bloodType: 'AB-',
-    emergencyContact: 'Lamine Doupour',
-    emergencyPhone: '+224 620 66 77 88',
-    lastVisit: '2026-01-15',
-    status: 'Inactif',
-    reason: 'Arthrite',
-    allergies: [
-      { name: 'AINS', severity: 'Majeur' },
-      { name: 'Codéine', severity: 'Mineur' },
-    ],
-    medicalHistory: ['Arthrose genoux', 'Hypertension', 'Ostéoporose'],
-    surgicalHistory: ['Prothèse genou droit (2020)'],
-    familyHistory: ['Arthrose (mère)'],
-    documents: [
-      { name: 'Radiographie genoux', date: '2026-01-15', type: 'PDF' },
-      { name: 'Densitométrie osseuse', date: '2025-11-20', type: 'PDF' },
-    ],
-    registrationDate: '2024-09-05',
-  },
-  {
-    id: 'P-2024-010',
-    qrCode: 'QR-LK-032023',
-    firstName: 'Lamine',
-    lastName: 'Kaba',
-    dateOfBirth: '2023-03-28',
-    gender: 'M',
-    phone: '+224 621 88 99 00',
-    address: 'Conakry, Kaloum',
-    nationalId: 'GN-2023-0328-MK',
-    bloodType: 'A+',
-    emergencyContact: 'Fatoumata Kaba',
-    emergencyPhone: '+224 621 99 00 11',
-    lastVisit: '2026-03-04',
-    status: 'Actif',
-    reason: 'Paludisme',
-    allergies: [],
-    medicalHistory: ['Paludisme simple'],
-    surgicalHistory: [],
-    familyHistory: [],
-    documents: [
-      { name: 'Test de diagnostic rapide', date: '2026-03-04', type: 'PDF' },
-      { name: 'Carnet de vaccination', date: '2026-01-15', type: 'PDF' },
-    ],
-    registrationDate: '2024-10-15',
-  },
-]
 
 /* ─────────── Helper: Calculate Age ─────────── */
 
@@ -500,9 +193,30 @@ function SortIcon({ field, currentField, direction }: { field: SortField; curren
   )
 }
 
+/* ─────────── Default form state helper ─────────── */
+
+const defaultFormState = {
+  firstName: '',
+  lastName: '',
+  dateOfBirth: '',
+  gender: 'M' as 'M' | 'F',
+  phone: '',
+  address: '',
+  nationalId: '',
+  bloodType: '',
+  emergencyContact: '',
+  emergencyPhone: '',
+  allergies: '',
+  antecedents: '',
+}
+
 /* ─────────── Main Component ─────────── */
 
 export function PatientsPage() {
+  // Store
+  const { patients, addPatient, updatePatient, archivePatient } = useDataStore()
+  const { toast } = useToast()
+
   // State
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -516,25 +230,18 @@ export function PatientsPage() {
   const [showNewPatientDialog, setShowNewPatientDialog] = useState(false)
   const [datePopoverOpen, setDatePopoverOpen] = useState(false)
 
-  // New patient form state
-  const [newPatient, setNewPatient] = useState({
-    firstName: '',
-    lastName: '',
-    dateOfBirth: '',
-    gender: 'M' as 'M' | 'F',
-    phone: '',
-    address: '',
-    nationalId: '',
-    bloodType: '',
-    emergencyContact: '',
-    emergencyPhone: '',
-    allergies: '',
-    antecedents: '',
-  })
+  // Edit state
+  const [editingPatient, setEditingPatient] = useState<Patient | null>(null)
+
+  // Form state (used for both new and edit)
+  const [formData, setFormData] = useState({ ...defaultFormState })
+
+  // Whether the dialog is open (new or edit)
+  const isDialogOpen = showNewPatientDialog || !!editingPatient
 
   // Filtered & sorted patients
   const filteredPatients = useMemo(() => {
-    let result = [...demoPatients]
+    let result = [...patients]
 
     // Search
     if (searchQuery.trim()) {
@@ -590,7 +297,7 @@ export function PatientsPage() {
     })
 
     return result
-  }, [searchQuery, statusFilter, genderFilter, dateFrom, dateTo, sortField, sortDir])
+  }, [patients, searchQuery, statusFilter, genderFilter, dateFrom, dateTo, sortField, sortDir])
 
   // Selection helpers
   const toggleSelect = (id: string) => {
@@ -632,24 +339,166 @@ export function PatientsPage() {
   const hasActiveFilters = searchQuery || statusFilter !== 'all' || genderFilter !== 'all' || dateFrom || dateTo
 
   // Active patient count
-  const activePatientCount = demoPatients.filter((p) => p.status === 'Actif').length
+  const activePatientCount = patients.filter((p) => p.status === 'Actif').length
 
-  // Handle new patient submit
-  const handleNewPatient = () => {
+  // Open new patient dialog
+  const openNewPatientDialog = () => {
+    setEditingPatient(null)
+    setFormData({ ...defaultFormState })
+    setShowNewPatientDialog(true)
+  }
+
+  // Open edit patient dialog
+  const openEditPatientDialog = (patient: Patient) => {
+    setEditingPatient(patient)
+    setFormData({
+      firstName: patient.firstName,
+      lastName: patient.lastName,
+      dateOfBirth: patient.dateOfBirth,
+      gender: patient.gender,
+      phone: patient.phone,
+      address: patient.address,
+      nationalId: patient.nationalId,
+      bloodType: patient.bloodType,
+      emergencyContact: patient.emergencyContact,
+      emergencyPhone: patient.emergencyPhone,
+      allergies: patient.allergies.map((a) => a.name).join(', '),
+      antecedents: patient.medicalHistory.join('\n'),
+    })
     setShowNewPatientDialog(false)
-    setNewPatient({
-      firstName: '',
-      lastName: '',
-      dateOfBirth: '',
-      gender: 'M',
-      phone: '',
-      address: '',
-      nationalId: '',
-      bloodType: '',
-      emergencyContact: '',
-      emergencyPhone: '',
-      allergies: '',
-      antecedents: '',
+  }
+
+  // Close dialog
+  const closeDialog = () => {
+    setShowNewPatientDialog(false)
+    setEditingPatient(null)
+    setFormData({ ...defaultFormState })
+  }
+
+  // Handle form submit (new or edit)
+  const handleFormSubmit = () => {
+    if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.dateOfBirth || !formData.phone.trim()) {
+      toast({
+        title: 'Champs obligatoires manquants',
+        description: 'Veuillez remplir le nom, le prénom, la date de naissance et le téléphone.',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    const parsedAllergies = formData.allergies
+      .split(',')
+      .map((a) => a.trim())
+      .filter(Boolean)
+      .map((name) => ({ name, severity: 'Majeur' as const }))
+
+    const parsedMedicalHistory = formData.antecedents
+      .split('\n')
+      .map((a) => a.trim())
+      .filter(Boolean)
+
+    const today = new Date().toISOString().split('T')[0]
+
+    if (editingPatient) {
+      // Update existing patient
+      updatePatient(editingPatient.id, {
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        dateOfBirth: formData.dateOfBirth,
+        gender: formData.gender,
+        phone: formData.phone.trim(),
+        address: formData.address.trim(),
+        nationalId: formData.nationalId.trim(),
+        bloodType: formData.bloodType,
+        emergencyContact: formData.emergencyContact.trim(),
+        emergencyPhone: formData.emergencyPhone.trim(),
+        allergies: parsedAllergies,
+        medicalHistory: parsedMedicalHistory,
+      })
+
+      // Update detail view if open
+      if (detailPatient?.id === editingPatient.id) {
+        setDetailPatient({
+          ...editingPatient,
+          firstName: formData.firstName.trim(),
+          lastName: formData.lastName.trim(),
+          dateOfBirth: formData.dateOfBirth,
+          gender: formData.gender,
+          phone: formData.phone.trim(),
+          address: formData.address.trim(),
+          nationalId: formData.nationalId.trim(),
+          bloodType: formData.bloodType,
+          emergencyContact: formData.emergencyContact.trim(),
+          emergencyPhone: formData.emergencyPhone.trim(),
+          allergies: parsedAllergies,
+          medicalHistory: parsedMedicalHistory,
+        })
+      }
+
+      toast({
+        title: 'Patient modifié',
+        description: `${formData.lastName} ${formData.firstName} a été mis à jour avec succès.`,
+      })
+    } else {
+      // Add new patient
+      const newId = `P-${Date.now()}`
+      const initials = `${formData.firstName[0]}${formData.lastName[0]}`.toUpperCase()
+      const qrCode = `QR-${initials}-${Date.now().toString().slice(-6)}`
+
+      const newPatientData: Patient = {
+        id: newId,
+        qrCode,
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        dateOfBirth: formData.dateOfBirth,
+        gender: formData.gender,
+        phone: formData.phone.trim(),
+        address: formData.address.trim(),
+        nationalId: formData.nationalId.trim(),
+        bloodType: formData.bloodType,
+        emergencyContact: formData.emergencyContact.trim(),
+        emergencyPhone: formData.emergencyPhone.trim(),
+        lastVisit: today,
+        status: 'Actif',
+        reason: 'Nouveau patient',
+        allergies: parsedAllergies,
+        medicalHistory: parsedMedicalHistory,
+        surgicalHistory: [],
+        familyHistory: [],
+        documents: [],
+        registrationDate: today,
+      }
+
+      addPatient(newPatientData)
+
+      toast({
+        title: 'Patient ajouté',
+        description: `${formData.lastName} ${formData.firstName} a été enregistré avec succès. QR code: ${qrCode}`,
+      })
+    }
+
+    closeDialog()
+  }
+
+  // Handle archive patient
+  const handleArchivePatient = (id: string, patientName: string) => {
+    archivePatient(id)
+
+    // Close detail panel if viewing this patient
+    if (detailPatient?.id === id) {
+      setDetailPatient(null)
+    }
+
+    // Remove from selection
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      next.delete(id)
+      return next
+    })
+
+    toast({
+      title: 'Patient archivé',
+      description: `${patientName} a été archivé.`,
     })
   }
 
@@ -679,7 +528,7 @@ export function PatientsPage() {
           </Badge>
         </div>
         <Button
-          onClick={() => setShowNewPatientDialog(true)}
+          onClick={openNewPatientDialog}
           className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white shadow-lg shadow-teal-500/20 gap-2"
         >
           <Plus className="size-4" />
@@ -972,12 +821,15 @@ export function PatientsPage() {
                                   <Eye className="size-4" />
                                   Voir dossier
                                 </DropdownMenuItem>
-                                <DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => openEditPatientDialog(patient)}>
                                   <Pencil className="size-4" />
                                   Modifier
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem variant="destructive">
+                                <DropdownMenuItem
+                                  variant="destructive"
+                                  onClick={() => handleArchivePatient(patient.id, `${patient.lastName} ${patient.firstName}`)}
+                                >
                                   <Archive className="size-4" />
                                   Archiver
                                 </DropdownMenuItem>
@@ -1264,18 +1116,20 @@ export function PatientsPage() {
         </SheetContent>
       </Sheet>
 
-      {/* ───── New Patient Dialog ───── */}
-      <Dialog open={showNewPatientDialog} onOpenChange={setShowNewPatientDialog}>
+      {/* ───── New / Edit Patient Dialog ───── */}
+      <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) closeDialog() }}>
         <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <div className="flex items-center justify-center size-8 rounded-lg bg-gradient-to-br from-teal-500 to-emerald-600">
-                <Plus className="size-4 text-white" />
+                {editingPatient ? <Pencil className="size-4 text-white" /> : <Plus className="size-4 text-white" />}
               </div>
-              Nouveau Patient
+              {editingPatient ? 'Modifier le Patient' : 'Nouveau Patient'}
             </DialogTitle>
             <DialogDescription>
-              Remplissez les informations du patient. Les champs marqués * sont obligatoires.
+              {editingPatient
+                ? `Modifiez les informations de ${editingPatient.lastName} ${editingPatient.firstName}.`
+                : 'Remplissez les informations du patient. Les champs marqués * sont obligatoires.'}
             </DialogDescription>
           </DialogHeader>
 
@@ -1289,8 +1143,8 @@ export function PatientsPage() {
                 <Input
                   id="lastName"
                   placeholder="Diallo"
-                  value={newPatient.lastName}
-                  onChange={(e) => setNewPatient({ ...newPatient, lastName: e.target.value })}
+                  value={formData.lastName}
+                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                 />
               </div>
               <div className="space-y-1.5">
@@ -1300,8 +1154,8 @@ export function PatientsPage() {
                 <Input
                   id="firstName"
                   placeholder="Aminata"
-                  value={newPatient.firstName}
-                  onChange={(e) => setNewPatient({ ...newPatient, firstName: e.target.value })}
+                  value={formData.firstName}
+                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                 />
               </div>
             </div>
@@ -1314,15 +1168,15 @@ export function PatientsPage() {
                 <Input
                   id="dob"
                   type="date"
-                  value={newPatient.dateOfBirth}
-                  onChange={(e) => setNewPatient({ ...newPatient, dateOfBirth: e.target.value })}
+                  value={formData.dateOfBirth}
+                  onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
                 />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="gender" className="text-xs font-medium">
                   Genre <span className="text-rose-500">*</span>
                 </Label>
-                <Select value={newPatient.gender} onValueChange={(v) => setNewPatient({ ...newPatient, gender: v as 'M' | 'F' })}>
+                <Select value={formData.gender} onValueChange={(v) => setFormData({ ...formData, gender: v as 'M' | 'F' })}>
                   <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
@@ -1341,8 +1195,8 @@ export function PatientsPage() {
               <Input
                 id="phone"
                 placeholder="+224 6XX XX XX XX"
-                value={newPatient.phone}
-                onChange={(e) => setNewPatient({ ...newPatient, phone: e.target.value })}
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               />
             </div>
 
@@ -1358,8 +1212,8 @@ export function PatientsPage() {
               <Input
                 id="address"
                 placeholder="Conakry, Kaloum"
-                value={newPatient.address}
-                onChange={(e) => setNewPatient({ ...newPatient, address: e.target.value })}
+                value={formData.address}
+                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               />
             </div>
 
@@ -1369,13 +1223,13 @@ export function PatientsPage() {
                 <Input
                   id="nationalId"
                   placeholder="GN-XXXX-XXXX-XX"
-                  value={newPatient.nationalId}
-                  onChange={(e) => setNewPatient({ ...newPatient, nationalId: e.target.value })}
+                  value={formData.nationalId}
+                  onChange={(e) => setFormData({ ...formData, nationalId: e.target.value })}
                 />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="bloodType" className="text-xs font-medium">Groupe sanguin</Label>
-                <Select value={newPatient.bloodType || '_none'} onValueChange={(v) => setNewPatient({ ...newPatient, bloodType: v === '_none' ? '' : v })}>
+                <Select value={formData.bloodType || '_none'} onValueChange={(v) => setFormData({ ...formData, bloodType: v === '_none' ? '' : v })}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Sélectionner" />
                   </SelectTrigger>
@@ -1400,8 +1254,8 @@ export function PatientsPage() {
                 <Input
                   id="emergencyName"
                   placeholder="Nom du contact"
-                  value={newPatient.emergencyContact}
-                  onChange={(e) => setNewPatient({ ...newPatient, emergencyContact: e.target.value })}
+                  value={formData.emergencyContact}
+                  onChange={(e) => setFormData({ ...formData, emergencyContact: e.target.value })}
                 />
               </div>
               <div className="space-y-1.5">
@@ -1409,8 +1263,8 @@ export function PatientsPage() {
                 <Input
                   id="emergencyPhone"
                   placeholder="+224 6XX XX XX XX"
-                  value={newPatient.emergencyPhone}
-                  onChange={(e) => setNewPatient({ ...newPatient, emergencyPhone: e.target.value })}
+                  value={formData.emergencyPhone}
+                  onChange={(e) => setFormData({ ...formData, emergencyPhone: e.target.value })}
                 />
               </div>
             </div>
@@ -1420,8 +1274,8 @@ export function PatientsPage() {
               <Input
                 id="allergies"
                 placeholder="Pénicilline, Sulfamides, Latex..."
-                value={newPatient.allergies}
-                onChange={(e) => setNewPatient({ ...newPatient, allergies: e.target.value })}
+                value={formData.allergies}
+                onChange={(e) => setFormData({ ...formData, allergies: e.target.value })}
               />
               <p className="text-[10px] text-slate-400 dark:text-slate-500">Séparez les allergies par des virgules</p>
             </div>
@@ -1432,8 +1286,8 @@ export function PatientsPage() {
                 id="antecedents"
                 placeholder="Décrivez les antécédents médicaux, chirurgicaux et familiaux..."
                 rows={3}
-                value={newPatient.antecedents}
-                onChange={(e) => setNewPatient({ ...newPatient, antecedents: e.target.value })}
+                value={formData.antecedents}
+                onChange={(e) => setFormData({ ...formData, antecedents: e.target.value })}
               />
             </div>
           </div>
@@ -1441,16 +1295,25 @@ export function PatientsPage() {
           <DialogFooter className="gap-2">
             <Button
               variant="outline"
-              onClick={() => setShowNewPatientDialog(false)}
+              onClick={closeDialog}
             >
               Annuler
             </Button>
             <Button
-              onClick={handleNewPatient}
+              onClick={handleFormSubmit}
               className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white gap-2"
             >
-              <QrCode className="size-4" />
-              Enregistrer & Générer QR
+              {editingPatient ? (
+                <>
+                  <Pencil className="size-4" />
+                  Mettre à jour
+                </>
+              ) : (
+                <>
+                  <QrCode className="size-4" />
+                  Enregistrer & Générer QR
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

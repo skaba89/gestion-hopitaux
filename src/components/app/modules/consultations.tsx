@@ -14,27 +14,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useDataStore, type Consultation } from '@/lib/data-store'
+import { useToast } from '@/hooks/use-toast'
 
 const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.1 } } }
-const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } } }
+const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } } }
 
-type ConsultStatus = 'En cours' | 'Terminée' | 'En attente'
-
-interface Vitals { ta: string; fc: number; temp: number; spo2: number; poids: number }
-interface Prescription { medication: string; dosage: string; duration: string }
-interface Consultation {
-  id: number; patient: string; doctor: string; date: string; time: string; motif: string
-  status: ConsultStatus; vitals: Vitals; diagnosis: string; prescriptions: Prescription[]
-}
-
-const demoConsultations: Consultation[] = [
-  { id: 1, patient: 'Aminata Diallo', doctor: 'Dr. Mamadou Bah', date: '05/03/2026', time: '08:15', motif: 'Fièvre et céphalées', status: 'En cours', vitals: { ta: '12/8', fc: 88, temp: 38.5, spo2: 96, poids: 62 }, diagnosis: 'Paludisme simple', prescriptions: [{ medication: 'Artéméther/Luméfantrine', dosage: '4 comprimés x 2/jour', duration: '3 jours' }, { medication: 'Paracétamol 500mg', dosage: '1 comprimé x 3/jour', duration: '3 jours' }] },
-  { id: 2, patient: 'Ibrahim Touré', doctor: 'Dr. Aissatou Sylla', date: '05/03/2026', time: '09:00', motif: 'Suivi HTA', status: 'Terminée', vitals: { ta: '16/9.5', fc: 72, temp: 36.8, spo2: 98, poids: 85 }, diagnosis: 'Hypertension artérielle contrôlée', prescriptions: [{ medication: 'Amlodipine 5mg', dosage: '1 comprimé/jour', duration: '30 jours' }] },
-  { id: 3, patient: 'Fatoumata Camara', doctor: 'Dr. Mamadou Bah', date: '05/03/2026', time: '09:45', motif: 'Douleurs abdominales', status: 'En attente', vitals: { ta: '11/7', fc: 92, temp: 37.2, spo2: 97, poids: 58 }, diagnosis: '', prescriptions: [] },
-  { id: 4, patient: 'Moussa Condé', doctor: 'Dr. Kadiatou Souaré', date: '05/03/2026', time: '10:30', motif: 'Toux et difficulté respiratoire', status: 'En cours', vitals: { ta: '13/8', fc: 95, temp: 37.8, spo2: 93, poids: 70 }, diagnosis: 'Infection respiratoire aiguë', prescriptions: [{ medication: 'Amoxicilline 500mg', dosage: '1 gélule x 3/jour', duration: '7 jours' }, { medication: 'Salbutamol inhalé', dosage: '2 bouffées x 3/jour', duration: '5 jours' }] },
-  { id: 5, patient: 'Kadiatou Sylla', doctor: 'Dr. Aissatou Sylla', date: '04/03/2026', time: '14:00', motif: 'Céphalées chroniques', status: 'Terminée', vitals: { ta: '14/9', fc: 78, temp: 36.6, spo2: 99, poids: 65 }, diagnosis: 'Céphalée de tension', prescriptions: [{ medication: 'Ibuprofène 400mg', dosage: '1 comprimé si douleur', duration: '5 jours' }] },
-  { id: 6, patient: 'Abdoulaye Keita', doctor: 'Dr. Mamadou Bah', date: '04/03/2026', time: '15:30', motif: 'Blessure au pied droit', status: 'Terminée', vitals: { ta: '12/8', fc: 80, temp: 36.9, spo2: 98, poids: 78 }, diagnosis: 'Plaie simple pied droit', prescriptions: [{ medication: 'Amoxicilline/Acide clavulanique', dosage: '1 comprimé x 2/jour', duration: '7 jours' }, { medication: 'Doliprane 1g', dosage: '1 comprimé x 3/jour', duration: '3 jours' }] },
-]
+type ConsultStatus = Consultation['status']
 
 const statusColors: Record<ConsultStatus, string> = {
   'En cours': 'bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-800',
@@ -60,14 +46,79 @@ export function ConsultationsPage() {
   const [showNewDialog, setShowNewDialog] = useState(false)
   const [selectedConsult, setSelectedConsult] = useState<Consultation | null>(null)
 
-  const filtered = demoConsultations.filter(c => {
-    const matchSearch = c.patient.toLowerCase().includes(search.toLowerCase()) || c.motif.toLowerCase().includes(search.toLowerCase())
+  const { consultations, addConsultation, updateConsultation } = useDataStore()
+  const { toast } = useToast()
+
+  // New consultation form state
+  const [newPatient, setNewPatient] = useState('')
+  const [newDoctor, setNewDoctor] = useState('')
+  const [newMotif, setNewMotif] = useState('')
+  const [newDate, setNewDate] = useState('')
+  const [newTime, setNewTime] = useState('')
+  const [newDiagnosis, setNewDiagnosis] = useState('')
+  const [newTa, setNewTa] = useState('')
+  const [newFc, setNewFc] = useState('')
+  const [newTemp, setNewTemp] = useState('')
+  const [newSpo2, setNewSpo2] = useState('')
+  const [newPoids, setNewPoids] = useState('')
+  const [newMedication, setNewMedication] = useState('')
+  const [newDosage, setNewDosage] = useState('')
+  const [newDuration, setNewDuration] = useState('')
+
+  const filtered = consultations.filter(c => {
+    const matchSearch = c.patientName.toLowerCase().includes(search.toLowerCase()) || c.reason.toLowerCase().includes(search.toLowerCase())
     const matchStatus = statusFilter === 'all' || c.status === statusFilter
     return matchSearch && matchStatus
   })
 
-  const activeCount = demoConsultations.filter(c => c.status === 'En cours').length
-  const completedCount = demoConsultations.filter(c => c.status === 'Terminée').length
+  const activeCount = consultations.filter(c => c.status === 'En cours').length
+  const completedCount = consultations.filter(c => c.status === 'Terminée').length
+
+  const handleNewConsultation = () => {
+    if (!newPatient || !newDoctor || !newMotif) return
+    addConsultation({
+      id: `CONS-${Date.now()}`,
+      patientName: newPatient,
+      patientId: '',
+      doctor: newDoctor,
+      date: newDate || new Date().toISOString().split('T')[0],
+      time: newTime || new Date().toTimeString().slice(0, 5),
+      reason: newMotif,
+      diagnosis: newDiagnosis,
+      status: 'En attente',
+      vitals: { ta: newTa || '—', fc: newFc || '—', temp: newTemp || '—', spo2: newSpo2 || '—', poids: newPoids || '—' },
+      prescriptions: newMedication ? [{ medication: newMedication, dosage: newDosage, duration: newDuration, instructions: '' }] : [],
+    })
+    toast({ title: 'Consultation créée', description: `Consultation pour ${newPatient} enregistrée.` })
+    setShowNewDialog(false)
+    setNewPatient('')
+    setNewDoctor('')
+    setNewMotif('')
+    setNewDate('')
+    setNewTime('')
+    setNewDiagnosis('')
+    setNewTa('')
+    setNewFc('')
+    setNewTemp('')
+    setNewSpo2('')
+    setNewPoids('')
+    setNewMedication('')
+    setNewDosage('')
+    setNewDuration('')
+  }
+
+  const handleStartConsultation = (id: string) => {
+    updateConsultation(id, { status: 'En cours' })
+    toast({ title: 'Consultation démarrée', description: 'La consultation est maintenant en cours.' })
+  }
+
+  const handleEndConsultation = (id: string) => {
+    updateConsultation(id, { status: 'Terminée' })
+    toast({ title: 'Consultation terminée', description: 'La consultation a été marquée comme terminée.' })
+    if (selectedConsult?.id === id) {
+      setSelectedConsult(useDataStore.getState().consultations.find(c => c.id === id) || null)
+    }
+  }
 
   return (
     <motion.div className="p-4 lg:p-6 space-y-6 max-w-[1600px] mx-auto" variants={containerVariants} initial="hidden" animate="visible">
@@ -90,10 +141,10 @@ export function ConsultationsPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Total', value: demoConsultations.length, color: 'from-teal-500 to-emerald-600' },
+          { label: 'Total', value: consultations.length, color: 'from-teal-500 to-emerald-600' },
           { label: 'En cours', value: activeCount, color: 'from-cyan-500 to-teal-600' },
           { label: 'Terminées', value: completedCount, color: 'from-emerald-500 to-green-600' },
-          { label: 'En attente', value: demoConsultations.filter(c => c.status === 'En attente').length, color: 'from-amber-500 to-orange-600' },
+          { label: 'En attente', value: consultations.filter(c => c.status === 'En attente').length, color: 'from-amber-500 to-orange-600' },
         ].map(stat => (
           <motion.div key={stat.label} variants={itemVariants}>
             <Card className="relative overflow-hidden border-slate-200/60 dark:border-slate-800/60">
@@ -151,18 +202,30 @@ export function ConsultationsPage() {
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
                       <div className="flex items-center justify-center size-10 rounded-full bg-teal-100 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 font-bold text-sm">
-                        {consult.patient.split(' ').map(n => n[0]).join('')}
+                        {consult.patientName.split(' ').map(n => n[0]).join('')}
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-slate-900 dark:text-white">{consult.patient}</p>
+                        <p className="text-sm font-medium text-slate-900 dark:text-white">{consult.patientName}</p>
                         <p className="text-xs text-slate-500 dark:text-slate-400">{consult.doctor} • {consult.date} {consult.time}</p>
                       </div>
                     </div>
-                    <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${statusColors[consult.status]}`}>{consult.status}</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${statusColors[consult.status]}`}>{consult.status}</span>
+                      {consult.status === 'En attente' && (
+                        <Button size="sm" className="bg-teal-600 hover:bg-teal-700 text-white text-xs h-7" onClick={(e) => { e.stopPropagation(); handleStartConsultation(consult.id) }}>
+                          Démarrer
+                        </Button>
+                      )}
+                      {consult.status === 'En cours' && (
+                        <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-7" onClick={(e) => { e.stopPropagation(); handleEndConsultation(consult.id) }}>
+                          Terminer
+                        </Button>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center gap-2 mb-3">
                     <span className="text-xs text-slate-500 dark:text-slate-400">Motif:</span>
-                    <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{consult.motif}</span>
+                    <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{consult.reason}</span>
                     {consult.diagnosis && <><span className="text-slate-300 dark:text-slate-600">•</span><span className="text-xs text-teal-600 dark:text-teal-400">{consult.diagnosis}</span></>}
                   </div>
                   <div className="grid grid-cols-5 gap-2">
@@ -198,14 +261,14 @@ export function ConsultationsPage() {
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <Stethoscope className="size-5 text-teal-600" />
-                  Consultation — {selectedConsult.patient}
+                  Consultation — {selectedConsult.patientName}
                 </DialogTitle>
               </DialogHeader>
               <div className="space-y-4 py-2">
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div><span className="text-xs text-slate-500">Médecin</span><p className="font-medium text-slate-900 dark:text-white">{selectedConsult.doctor}</p></div>
                   <div><span className="text-xs text-slate-500">Date/Heure</span><p className="font-medium text-slate-900 dark:text-white">{selectedConsult.date} {selectedConsult.time}</p></div>
-                  <div><span className="text-xs text-slate-500">Motif</span><p className="font-medium text-slate-900 dark:text-white">{selectedConsult.motif}</p></div>
+                  <div><span className="text-xs text-slate-500">Motif</span><p className="font-medium text-slate-900 dark:text-white">{selectedConsult.reason}</p></div>
                   <div><span className="text-xs text-slate-500">Diagnostic</span><p className="font-medium text-teal-700 dark:text-teal-300">{selectedConsult.diagnosis || '—'}</p></div>
                 </div>
                 <div>
@@ -233,7 +296,19 @@ export function ConsultationsPage() {
                   </div>
                 )}
               </div>
-              <DialogFooter><Button variant="outline" onClick={() => setSelectedConsult(null)}>Fermer</Button></DialogFooter>
+              <DialogFooter>
+                {selectedConsult.status === 'En attente' && (
+                  <Button className="bg-teal-600 hover:bg-teal-700 text-white" onClick={() => { handleStartConsultation(selectedConsult.id); setSelectedConsult(useDataStore.getState().consultations.find(c => c.id === selectedConsult.id) || null) }}>
+                    Démarrer consultation
+                  </Button>
+                )}
+                {selectedConsult.status === 'En cours' && (
+                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => { handleEndConsultation(selectedConsult.id) }}>
+                    Terminer
+                  </Button>
+                )}
+                <Button variant="outline" onClick={() => setSelectedConsult(null)}>Fermer</Button>
+              </DialogFooter>
             </>
           )}
         </DialogContent>
@@ -247,33 +322,37 @@ export function ConsultationsPage() {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Patient *</Label><Select><SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger><SelectContent><SelectItem value="1">Aminata Diallo</SelectItem><SelectItem value="2">Ibrahim Touré</SelectItem><SelectItem value="3">Fatoumata Camara</SelectItem></SelectContent></Select></div>
-              <div className="space-y-2"><Label>Médecin *</Label><Select><SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger><SelectContent><SelectItem value="1">Dr. Mamadou Bah</SelectItem><SelectItem value="2">Dr. Aissatou Sylla</SelectItem></SelectContent></Select></div>
+              <div className="space-y-2"><Label>Patient *</Label><Input placeholder="Nom du patient" value={newPatient} onChange={e => setNewPatient(e.target.value)} /></div>
+              <div className="space-y-2"><Label>Médecin *</Label><Input placeholder="Nom du médecin" value={newDoctor} onChange={e => setNewDoctor(e.target.value)} /></div>
             </div>
-            <div className="space-y-2"><Label>Motif de consultation *</Label><Textarea placeholder="Décrire le motif..." rows={2} /></div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"><Label>Date</Label><Input type="date" value={newDate} onChange={e => setNewDate(e.target.value)} /></div>
+              <div className="space-y-2"><Label>Heure</Label><Input type="time" value={newTime} onChange={e => setNewTime(e.target.value)} /></div>
+            </div>
+            <div className="space-y-2"><Label>Motif de consultation *</Label><Textarea placeholder="Décrire le motif..." rows={2} value={newMotif} onChange={e => setNewMotif(e.target.value)} /></div>
             <div>
               <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Constantes vitales</p>
               <div className="grid grid-cols-3 gap-3">
-                <div className="space-y-1"><Label className="text-xs">TA (cmHg)</Label><Input placeholder="12/8" /></div>
-                <div className="space-y-1"><Label className="text-xs">FC (bpm)</Label><Input placeholder="80" type="number" /></div>
-                <div className="space-y-1"><Label className="text-xs">T° (°C)</Label><Input placeholder="37.0" type="number" step="0.1" /></div>
-                <div className="space-y-1"><Label className="text-xs">SpO2 (%)</Label><Input placeholder="98" type="number" /></div>
-                <div className="space-y-1"><Label className="text-xs">Poids (kg)</Label><Input placeholder="65" type="number" /></div>
+                <div className="space-y-1"><Label className="text-xs">TA (cmHg)</Label><Input placeholder="12/8" value={newTa} onChange={e => setNewTa(e.target.value)} /></div>
+                <div className="space-y-1"><Label className="text-xs">FC (bpm)</Label><Input placeholder="80" value={newFc} onChange={e => setNewFc(e.target.value)} /></div>
+                <div className="space-y-1"><Label className="text-xs">T° (°C)</Label><Input placeholder="37.0" value={newTemp} onChange={e => setNewTemp(e.target.value)} /></div>
+                <div className="space-y-1"><Label className="text-xs">SpO2 (%)</Label><Input placeholder="98" value={newSpo2} onChange={e => setNewSpo2(e.target.value)} /></div>
+                <div className="space-y-1"><Label className="text-xs">Poids (kg)</Label><Input placeholder="65" value={newPoids} onChange={e => setNewPoids(e.target.value)} /></div>
               </div>
             </div>
-            <div className="space-y-2"><Label>Diagnostic</Label><Input placeholder="Diagnostic..." /></div>
+            <div className="space-y-2"><Label>Diagnostic</Label><Input placeholder="Diagnostic..." value={newDiagnosis} onChange={e => setNewDiagnosis(e.target.value)} /></div>
             <div>
               <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Prescription</p>
               <div className="grid grid-cols-3 gap-3">
-                <div className="space-y-1"><Label className="text-xs">Médicament</Label><Input placeholder="Nom..." /></div>
-                <div className="space-y-1"><Label className="text-xs">Posologie</Label><Input placeholder="Dosage..." /></div>
-                <div className="space-y-1"><Label className="text-xs">Durée</Label><Input placeholder="7 jours" /></div>
+                <div className="space-y-1"><Label className="text-xs">Médicament</Label><Input placeholder="Nom..." value={newMedication} onChange={e => setNewMedication(e.target.value)} /></div>
+                <div className="space-y-1"><Label className="text-xs">Posologie</Label><Input placeholder="Dosage..." value={newDosage} onChange={e => setNewDosage(e.target.value)} /></div>
+                <div className="space-y-1"><Label className="text-xs">Durée</Label><Input placeholder="7 jours" value={newDuration} onChange={e => setNewDuration(e.target.value)} /></div>
               </div>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowNewDialog(false)}>Annuler</Button>
-            <Button className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white" onClick={() => setShowNewDialog(false)}>Enregistrer</Button>
+            <Button className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white" onClick={handleNewConsultation}>Enregistrer</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

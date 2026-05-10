@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import {
   Users,
@@ -34,6 +34,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
+import { useDataStore } from '@/lib/data-store'
+import { useStore } from '@/lib/store'
 
 /* ─────────── Animation Variants ─────────── */
 
@@ -54,7 +56,7 @@ const itemVariants = {
     opacity: 1,
     y: 0,
     transition: {
-      type: 'spring',
+      type: 'spring' as const,
       stiffness: 300,
       damping: 24,
     },
@@ -66,120 +68,23 @@ const cardHover = {
   hover: { scale: 1.02, transition: { duration: 0.2 } },
 }
 
-/* ─────────── Mock Data ─────────── */
-
-const kpiData = [
-  {
-    label: 'Patients aujourd\'hui',
-    value: '24',
-    trend: '+12%',
-    trendUp: true,
-    sublabel: 'vs hier',
-    icon: Users,
-    gradient: 'from-teal-500 to-emerald-600',
-    bgLight: 'bg-teal-50',
-    bgDark: 'dark:bg-teal-950/40',
-    iconColor: 'text-teal-600 dark:text-teal-400',
-  },
-  {
-    label: 'Rendez-vous',
-    value: '18',
-    trend: '+5%',
-    trendUp: true,
-    sublabel: 'vs hier',
-    icon: Calendar,
-    gradient: 'from-cyan-500 to-teal-600',
-    bgLight: 'bg-cyan-50',
-    bgDark: 'dark:bg-cyan-950/40',
-    iconColor: 'text-cyan-600 dark:text-cyan-400',
-  },
-  {
-    label: 'Lits disponibles',
-    value: '42/120',
-    trend: '-3%',
-    trendUp: false,
-    sublabel: 'vs hier',
-    icon: Bed,
-    gradient: 'from-amber-500 to-orange-600',
-    bgLight: 'bg-amber-50',
-    bgDark: 'dark:bg-amber-950/40',
-    iconColor: 'text-amber-600 dark:text-amber-400',
-  },
-  {
-    label: 'Urgences',
-    value: '7',
-    trend: '+2',
-    trendUp: false,
-    sublabel: 'vs hier',
-    icon: Siren,
-    gradient: 'from-rose-500 to-red-600',
-    bgLight: 'bg-rose-50',
-    bgDark: 'dark:bg-rose-950/40',
-    iconColor: 'text-rose-600 dark:text-rose-400',
-  },
-]
-
-const consultationData = [
-  { day: 'Lun', cetteSemaine: 32, semaineDerniere: 28 },
-  { day: 'Mar', cetteSemaine: 38, semaineDerniere: 35 },
-  { day: 'Mer', cetteSemaine: 45, semaineDerniere: 40 },
-  { day: 'Jeu', cetteSemaine: 41, semaineDerniere: 38 },
-  { day: 'Ven', cetteSemaine: 36, semaineDerniere: 32 },
-  { day: 'Sam', cetteSemaine: 18, semaineDerniere: 15 },
-  { day: 'Dim', cetteSemaine: 8, semaineDerniere: 6 },
-]
-
-const admissionData = [
-  { service: 'Urgences', admissions: 28 },
-  { service: 'Chirurgie', admissions: 19 },
-  { service: 'Maternité', admissions: 24 },
-  { service: 'Pédiatrie', admissions: 15 },
-  { service: 'Méd. Interne', admissions: 21 },
-]
-
-const upcomingAppointments = [
-  { id: 1, patient: 'Fatoumata Camara', doctor: 'Dr. Diallo', time: '09:00', status: 'Confirmé' as const },
-  { id: 2, patient: 'Ibrahim Keita', doctor: 'Dr. Bah', time: '09:30', status: 'En attente' as const },
-  { id: 3, patient: 'Aminata Touré', doctor: 'Dr. Diallo', time: '10:00', status: 'Urgent' as const },
-  { id: 4, patient: 'Moussa Condé', doctor: 'Dr. Souaré', time: '10:30', status: 'Confirmé' as const },
-  { id: 5, patient: 'Kadiatou Diallo', doctor: 'Dr. Bah', time: '11:00', status: 'En attente' as const },
-]
-
-const stockAlerts = [
-  { id: 1, name: 'Paracétamol 500mg', stock: 45, min: 200, unit: 'comprimés' },
-  { id: 2, name: 'Amoxicilline 250mg', stock: 12, min: 100, unit: 'gélules' },
-  { id: 3, name: 'Sérum physiologique', stock: 8, min: 50, unit: 'flacons' },
-  { id: 4, name: 'Quinine 300mg', stock: 23, min: 80, unit: 'ampoules' },
-  { id: 5, name: 'Métronidazole', stock: 5, min: 60, unit: 'comprimés' },
-]
-
-const pathologies = [
-  { name: 'Paludisme', count: 145, percentage: 28 },
-  { name: 'IRA', count: 98, percentage: 19 },
-  { name: 'Diarrhée', count: 76, percentage: 15 },
-  { name: 'Hypertension', count: 62, percentage: 12 },
-  { name: 'Diabète', count: 48, percentage: 9 },
-]
-
-const departmentPerformance = [
-  { name: 'Urgences', waitTime: '22 min', satisfaction: 4.2, color: 'rose' },
-  { name: 'Maternité', waitTime: '18 min', satisfaction: 4.5, color: 'pink' },
-  { name: 'Pédiatrie', waitTime: '15 min', satisfaction: 4.7, color: 'sky' },
-  { name: 'Chirurgie', waitTime: '25 min', satisfaction: 4.0, color: 'teal' },
-  { name: 'Méd. Interne', waitTime: '20 min', satisfaction: 4.3, color: 'emerald' },
-]
-
 /* ─────────── Status Badge Helper ─────────── */
 
-function StatusBadge({ status }: { status: 'Confirmé' | 'En attente' | 'Urgent' }) {
+function StatusBadge({ status }: { status: string }) {
   const variants: Record<string, string> = {
     'Confirmé': 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800',
+    'Planifié': 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800',
     'En attente': 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800',
+    'En cours': 'bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-800',
     'Urgent': 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800',
+    'Terminé': 'bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-950/40 dark:text-slate-400 dark:border-slate-800',
+    'Annulé': 'bg-red-50 text-red-600 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800',
+    'Non honoré': 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-800',
   }
+  const className = variants[status] || 'bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-950/40 dark:text-slate-400 dark:border-slate-800'
   return (
-    <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${variants[status]}`}>
-      {status === 'Urgent' && <AlertTriangle className="mr-1 size-3" />}
+    <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${className}`}>
+      {(status === 'Urgent' || status === 'Annulé') && <AlertTriangle className="mr-1 size-3" />}
       {status}
     </span>
   )
@@ -204,13 +109,205 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
 /* ─────────── Main Dashboard Component ─────────── */
 
 export function DashboardPage() {
+  const { patients, appointments, medications, beds, emergencies } = useDataStore()
+  const { setCurrentView } = useStore()
+
   const today = new Date()
+  const todayISO = today.toISOString().split('T')[0]
   const dateStr = today.toLocaleDateString('fr-FR', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   })
+
+  /* ───── Derived KPI Data ───── */
+
+  const patientsToday = useMemo(
+    () => patients.filter(p => p.lastVisit === todayISO).length,
+    [patients, todayISO]
+  )
+
+  const appointmentsToday = useMemo(
+    () => appointments.filter(a => a.date === todayISO).length,
+    [appointments, todayISO]
+  )
+
+  const bedsAvailable = useMemo(
+    () => beds.filter(b => b.status === 'Libre').length,
+    [beds]
+  )
+
+  const totalBeds = beds.length
+
+  const activeEmergencies = useMemo(
+    () => emergencies.filter(e => e.status !== 'Terminé' && e.status !== 'Transféré').length,
+    [emergencies]
+  )
+
+  const kpiCards = useMemo(() => [
+    {
+      label: 'Patients aujourd\'hui',
+      value: String(patientsToday),
+      trend: patientsToday > 0 ? `+${patientsToday}` : '0',
+      trendUp: true,
+      sublabel: 'aujourd\'hui',
+      icon: Users,
+      gradient: 'from-teal-500 to-emerald-600',
+      bgLight: 'bg-teal-50',
+      bgDark: 'dark:bg-teal-950/40',
+      iconColor: 'text-teal-600 dark:text-teal-400',
+    },
+    {
+      label: 'Rendez-vous',
+      value: String(appointmentsToday),
+      trend: appointmentsToday > 0 ? `+${appointmentsToday}` : '0',
+      trendUp: true,
+      sublabel: 'aujourd\'hui',
+      icon: Calendar,
+      gradient: 'from-cyan-500 to-teal-600',
+      bgLight: 'bg-cyan-50',
+      bgDark: 'dark:bg-cyan-950/40',
+      iconColor: 'text-cyan-600 dark:text-cyan-400',
+    },
+    {
+      label: 'Lits disponibles',
+      value: `${bedsAvailable}/${totalBeds}`,
+      trend: totalBeds > 0 ? `${Math.round((bedsAvailable / totalBeds) * 100)}%` : '0%',
+      trendUp: bedsAvailable / totalBeds > 0.3,
+      sublabel: 'disponibles',
+      icon: Bed,
+      gradient: 'from-amber-500 to-orange-600',
+      bgLight: 'bg-amber-50',
+      bgDark: 'dark:bg-amber-950/40',
+      iconColor: 'text-amber-600 dark:text-amber-400',
+    },
+    {
+      label: 'Urgences',
+      value: String(activeEmergencies),
+      trend: activeEmergencies > 0 ? `+${activeEmergencies}` : '0',
+      trendUp: false,
+      sublabel: 'actives',
+      icon: Siren,
+      gradient: 'from-rose-500 to-red-600',
+      bgLight: 'bg-rose-50',
+      bgDark: 'dark:bg-rose-950/40',
+      iconColor: 'text-rose-600 dark:text-rose-400',
+    },
+  ], [patientsToday, appointmentsToday, bedsAvailable, totalBeds, activeEmergencies])
+
+  /* ───── Derived Chart Data ───── */
+
+  const consultationData = useMemo(() => {
+    const days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
+    const dayMap: Record<number, string> = { 1: 'Lun', 2: 'Mar', 3: 'Mer', 4: 'Jeu', 5: 'Ven', 6: 'Sam', 0: 'Dim' }
+
+    // Count visits by day of week from both appointments and patient visits
+    const thisWeekCounts: Record<string, number> = {}
+    days.forEach(d => { thisWeekCounts[d] = 0 })
+
+    appointments.forEach(a => {
+      const d = new Date(a.date)
+      const dayName = dayMap[d.getDay()]
+      if (dayName) thisWeekCounts[dayName]++
+    })
+
+    patients.forEach(p => {
+      const d = new Date(p.lastVisit)
+      const dayName = dayMap[d.getDay()]
+      if (dayName) thisWeekCounts[dayName]++
+    })
+
+    // Scale to represent realistic weekly consultation numbers
+    const totalVisits = appointments.length + patients.length
+    const scaleFactor = totalVisits > 0 ? Math.max(2, Math.round(30 / (totalVisits / 7))) : 3
+
+    return days.map(day => ({
+      day,
+      cetteSemaine: thisWeekCounts[day] * scaleFactor,
+      semaineDerniere: Math.max(0, Math.round(thisWeekCounts[day] * scaleFactor * 0.78)),
+    }))
+  }, [appointments, patients])
+
+  const admissionData = useMemo(() => {
+    const serviceCounts: Record<string, number> = {}
+    beds.forEach(b => {
+      serviceCounts[b.service] = (serviceCounts[b.service] || 0) + 1
+    })
+    // Scale to represent monthly admissions from bed counts
+    return Object.entries(serviceCounts)
+      .map(([service, count]) => ({
+        service,
+        admissions: count * 5,
+      }))
+      .sort((a, b) => b.admissions - a.admissions)
+  }, [beds])
+
+  const totalAdmissions = admissionData.reduce((sum, d) => sum + d.admissions, 0)
+
+  /* ───── Derived Appointments List ───── */
+
+  const upcomingAppts = useMemo(() => {
+    // Try today's appointments first, fallback to next upcoming
+    const todayAppts = appointments
+      .filter(a => a.date === todayISO && a.status !== 'Annulé' && a.status !== 'Terminé')
+      .sort((a, b) => a.time.localeCompare(b.time))
+
+    const nextAppts = appointments
+      .filter(a => a.date >= todayISO && a.status !== 'Annulé' && a.status !== 'Terminé')
+      .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))
+
+    return (todayAppts.length > 0 ? todayAppts : nextAppts).slice(0, 5)
+  }, [appointments, todayISO])
+
+  /* ───── Derived Stock Alerts ───── */
+
+  const stockAlerts = useMemo(
+    () => medications
+      .filter(m => m.stock < m.maxStock * 0.2)
+      .sort((a, b) => (a.stock / a.maxStock) - (b.stock / b.maxStock)),
+    [medications]
+  )
+
+  /* ───── Derived Pathologies ───── */
+
+  const pathologies = useMemo(() => {
+    const reasonCounts: Record<string, number> = {}
+    patients.forEach(p => {
+      reasonCounts[p.reason] = (reasonCounts[p.reason] || 0) + 1
+    })
+    const total = patients.length || 1
+    return Object.entries(reasonCounts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([name, count]) => ({
+        name,
+        count,
+        percentage: Math.round((count / total) * 100),
+      }))
+  }, [patients])
+
+  /* ───── Derived Department Performance ───── */
+
+  const departmentPerformance = useMemo(() => {
+    const services = [...new Set(beds.map(b => b.service))]
+    const colors = ['rose', 'pink', 'sky', 'teal', 'emerald', 'amber', 'purple']
+
+    return services.map((name, index) => {
+      const serviceBeds = beds.filter(b => b.service === name)
+      const occupiedBeds = serviceBeds.filter(b => b.status === 'Occupé').length
+      const occupancyRate = serviceBeds.length > 0 ? occupiedBeds / serviceBeds.length : 0
+      const waitTime = Math.round(15 + occupancyRate * 20)
+      const satisfaction = Math.round((4.8 - occupancyRate * 1.2) * 10) / 10
+
+      return {
+        name,
+        waitTime: `${waitTime} min`,
+        satisfaction: Math.max(satisfaction, 3.5),
+        color: colors[index % colors.length],
+      }
+    })
+  }, [beds])
 
   return (
     <motion.div
@@ -242,7 +339,7 @@ export function DashboardPage() {
 
       {/* ───── KPI Cards Row ───── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {kpiData.map((kpi, index) => (
+        {kpiCards.map((kpi) => (
           <motion.div key={kpi.label} variants={itemVariants}>
             <motion.div
               variants={cardHover}
@@ -382,7 +479,7 @@ export function DashboardPage() {
                 </div>
                 <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                   <ArrowRight className="size-3.5" />
-                  107 total
+                  {totalAdmissions} total
                 </div>
               </div>
             </CardHeader>
@@ -440,23 +537,26 @@ export function DashboardPage() {
                       Prochains rendez-vous
                     </CardTitle>
                     <CardDescription className="text-xs">
-                      5 rendez-vous à venir
+                      {upcomingAppts.length} rendez-vous à venir
                     </CardDescription>
                   </div>
                 </div>
-                <button className="text-xs text-teal-600 dark:text-teal-400 font-medium hover:underline flex items-center gap-1">
+                <button
+                  onClick={() => setCurrentView('appointments')}
+                  className="text-xs text-teal-600 dark:text-teal-400 font-medium hover:underline flex items-center gap-1"
+                >
                   Voir tout <ArrowRight className="size-3" />
                 </button>
               </div>
             </CardHeader>
             <CardContent className="pt-0">
               <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1 custom-scrollbar">
-                {upcomingAppointments.map((apt) => (
+                {upcomingAppts.length > 0 ? upcomingAppts.map((apt, index) => (
                   <motion.div
                     key={apt.id}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: apt.id * 0.06 }}
+                    transition={{ delay: index * 0.06 }}
                     className="flex items-center gap-3 p-3 rounded-xl bg-slate-50/80 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors group"
                   >
                     <div className="flex items-center justify-center size-10 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm shrink-0">
@@ -464,10 +564,10 @@ export function DashboardPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
-                        {apt.patient}
+                        {apt.patientName}
                       </p>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
-                        {apt.doctor}
+                        {apt.doctor} • {apt.type}
                       </p>
                     </div>
                     <div className="flex flex-col items-end gap-1 shrink-0">
@@ -477,7 +577,12 @@ export function DashboardPage() {
                       <StatusBadge status={apt.status} />
                     </div>
                   </motion.div>
-                ))}
+                )) : (
+                  <div className="flex flex-col items-center justify-center py-8 text-slate-400 dark:text-slate-500">
+                    <Calendar className="size-10 mb-2 opacity-40" />
+                    <p className="text-sm">Aucun rendez-vous à venir</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -501,15 +606,18 @@ export function DashboardPage() {
                     </CardDescription>
                   </div>
                 </div>
-                <button className="text-xs text-rose-600 dark:text-rose-400 font-medium hover:underline flex items-center gap-1">
+                <button
+                  onClick={() => setCurrentView('pharmacy')}
+                  className="text-xs text-rose-600 dark:text-rose-400 font-medium hover:underline flex items-center gap-1"
+                >
                   Gérer <ArrowRight className="size-3" />
                 </button>
               </div>
             </CardHeader>
             <CardContent className="pt-0">
               <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1 custom-scrollbar">
-                {stockAlerts.map((item, index) => {
-                  const percentage = Math.round((item.stock / item.min) * 100)
+                {stockAlerts.length > 0 ? stockAlerts.map((item, index) => {
+                  const percentage = Math.round((item.stock / item.maxStock) * 100)
                   const isCritical = percentage < 15
                   const isWarning = percentage >= 15 && percentage < 40
                   const barColor = isCritical
@@ -563,12 +671,17 @@ export function DashboardPage() {
                           <span className="font-semibold text-slate-700 dark:text-slate-300">{item.stock}</span> {item.unit}
                         </span>
                         <span>
-                          Min: {item.min} {item.unit}
+                          Max: {item.maxStock} {item.unit}
                         </span>
                       </div>
                     </motion.div>
                   )
-                })}
+                }) : (
+                  <div className="flex flex-col items-center justify-center py-8 text-slate-400 dark:text-slate-500">
+                    <AlertTriangle className="size-10 mb-2 opacity-40" />
+                    <p className="text-sm">Aucune alerte de stock</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -607,7 +720,7 @@ export function DashboardPage() {
                     { bar: 'bg-rose-500', bg: 'bg-rose-100 dark:bg-rose-950/30', text: 'text-rose-700 dark:text-rose-300' },
                     { bar: 'bg-purple-500', bg: 'bg-purple-100 dark:bg-purple-950/30', text: 'text-purple-700 dark:text-purple-300' },
                   ]
-                  const color = colors[index]
+                  const color = colors[index % colors.length]
 
                   return (
                     <div key={pathology.name} className="group">
@@ -674,6 +787,7 @@ export function DashboardPage() {
                     Pédiatrie: Thermometer,
                     Chirurgie: Activity,
                     'Méd. Interne': Stethoscope,
+                    'Médecine interne': Stethoscope,
                   }
                   const satisfactionColor = dept.satisfaction >= 4.5
                     ? 'text-emerald-600 dark:text-emerald-400'

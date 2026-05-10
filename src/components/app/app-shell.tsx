@@ -26,14 +26,20 @@ import {
   LogOut,
   User,
   Settings,
-  Menu,
+  CheckCheck,
+  AlertTriangle,
+  Info,
+  CheckCircle2,
+  XCircle,
 } from 'lucide-react'
 import { useStore, type AppView } from '@/lib/store'
+import { useDataStore } from '@/lib/data-store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,6 +48,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
 import {
   Sidebar,
   SidebarContent,
@@ -127,6 +138,22 @@ const viewTitles: Record<AppView, string> = {
   settings: 'Paramètres',
 }
 
+/* ─────────── Notification Icon Map ─────────── */
+
+const notifIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+  info: Info,
+  warning: AlertTriangle,
+  success: CheckCircle2,
+  error: XCircle,
+}
+
+const notifColors: Record<string, string> = {
+  info: 'text-blue-500',
+  warning: 'text-amber-500',
+  success: 'text-emerald-500',
+  error: 'text-red-500',
+}
+
 /* ─────────── App Sidebar ─────────── */
 
 function AppSidebar() {
@@ -134,7 +161,6 @@ function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-slate-200 dark:border-slate-800">
-      {/* Logo Area */}
       <SidebarHeader className="p-3">
         <SidebarMenu>
           <SidebarMenuItem>
@@ -159,7 +185,6 @@ function AppSidebar() {
 
       <SidebarSeparator />
 
-      {/* Navigation */}
       <SidebarContent>
         {navGroups.map((group) => (
           <SidebarGroup key={group.label}>
@@ -197,7 +222,6 @@ function AppSidebar() {
 
       <SidebarSeparator />
 
-      {/* User Info at Bottom */}
       <SidebarFooter className="p-3">
         <SidebarMenu>
           <SidebarMenuItem>
@@ -253,55 +277,154 @@ function AppSidebar() {
   )
 }
 
+/* ─────────── Notifications Popover ─────────── */
+
+function NotificationsPanel() {
+  const { notifications, markNotificationRead, markAllNotificationsRead } = useDataStore()
+  const unreadCount = notifications.filter(n => !n.read).length
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="icon" className="relative text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
+          <Bell className="size-5" />
+          {unreadCount > 0 && (
+            <Badge className="absolute -top-1 -right-1 size-5 p-0 flex items-center justify-center bg-red-500 text-white text-[10px] border-2 border-white dark:border-slate-950">
+              {unreadCount}
+            </Badge>
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-80 p-0">
+        <div className="flex items-center justify-between p-4 border-b">
+          <h4 className="font-semibold text-sm">Notifications</h4>
+          {unreadCount > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs h-7 text-teal-600 hover:text-teal-700"
+              onClick={markAllNotificationsRead}
+            >
+              <CheckCheck className="w-3.5 h-3.5 mr-1" />
+              Tout marquer lu
+            </Button>
+          )}
+        </div>
+        <ScrollArea className="max-h-80">
+          {notifications.length === 0 ? (
+            <div className="p-6 text-center text-sm text-slate-500">Aucune notification</div>
+          ) : (
+            <div className="divide-y">
+              {notifications.map((notif) => {
+                const Icon = notifIcons[notif.type] || Info
+                return (
+                  <button
+                    key={notif.id}
+                    onClick={() => markNotificationRead(notif.id)}
+                    className={`w-full text-left p-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${!notif.read ? 'bg-teal-50/50 dark:bg-teal-950/20' : ''}`}
+                  >
+                    <div className="flex gap-3">
+                      <Icon className={`w-4 h-4 mt-0.5 flex-shrink-0 ${notifColors[notif.type]}`} />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className={`text-xs font-medium ${!notif.read ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>
+                            {notif.title}
+                          </p>
+                          <span className="text-[10px] text-slate-400 flex-shrink-0">{notif.time}</span>
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">{notif.message}</p>
+                      </div>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </ScrollArea>
+      </PopoverContent>
+    </Popover>
+  )
+}
+
+/* ─────────── Global Search ─────────── */
+
+function GlobalSearch() {
+  const { searchQuery, setSearchQuery, setCurrentView } = useStore()
+  const { patients, appointments } = useDataStore()
+  const [focused, setFocused] = React.useState(false)
+
+  const results = React.useMemo(() => {
+    if (!searchQuery.trim()) return []
+    const q = searchQuery.toLowerCase()
+    const patientResults = patients
+      .filter(p => p.firstName.toLowerCase().includes(q) || p.lastName.toLowerCase().includes(q) || p.id.toLowerCase().includes(q))
+      .slice(0, 3)
+      .map(p => ({ type: 'patient' as const, label: `${p.firstName} ${p.lastName}`, sub: p.id, view: 'patients' as AppView }))
+    const apptResults = appointments
+      .filter(a => a.patientName.toLowerCase().includes(q) || a.reason.toLowerCase().includes(q))
+      .slice(0, 3)
+      .map(a => ({ type: 'appointment' as const, label: a.patientName, sub: a.reason, view: 'appointments' as AppView }))
+    return [...patientResults, ...apptResults]
+  }, [searchQuery, patients, appointments])
+
+  return (
+    <div className="hidden md:flex items-center relative max-w-sm flex-1">
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400 z-10" />
+      <Input
+        placeholder="Rechercher patients, RDV..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setTimeout(() => setFocused(false), 200)}
+        className="pl-9 h-9 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-sm focus-visible:ring-teal-500"
+      />
+      {focused && searchQuery.trim() && results.length > 0 && (
+        <div className="absolute top-full mt-1 left-0 right-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl z-50 overflow-hidden">
+          {results.map((r, i) => (
+            <button
+              key={i}
+              className="w-full text-left px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 transition-colors"
+              onClick={() => { setCurrentView(r.view); setSearchQuery(''); setFocused(false) }}
+            >
+              <div className={`w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold text-white ${r.type === 'patient' ? 'bg-teal-500' : 'bg-blue-500'}`}>
+                {r.type === 'patient' ? <Users className="w-3 h-3" /> : <Calendar className="w-3 h-3" />}
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-slate-900 dark:text-white truncate">{r.label}</p>
+                <p className="text-[10px] text-slate-500 truncate">{r.sub}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 /* ─────────── Top Header Bar ─────────── */
 
 function TopHeader() {
-  const { currentView, setCurrentView } = useStore()
+  const { currentView, setCurrentView, user } = useStore()
   const { resolvedTheme, setTheme } = useTheme()
 
   const title = viewTitles[currentView] || 'HealthFlow Guinea'
 
   return (
     <header className="flex h-14 items-center gap-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 lg:px-6">
-      {/* Sidebar trigger (mobile) */}
       <SidebarTrigger className="-ml-1 md:hidden" />
-
-      {/* Sidebar trigger (desktop) */}
       <SidebarTrigger className="-ml-1 hidden md:flex" />
-
       <Separator orientation="vertical" className="h-6" />
-
-      {/* Current page title */}
-      <h1 className="text-base font-semibold text-slate-900 dark:text-white truncate">
-        {title}
-      </h1>
-
-      {/* Spacer */}
+      <h1 className="text-base font-semibold text-slate-900 dark:text-white truncate">{title}</h1>
       <div className="flex-1" />
 
-      {/* Search bar */}
-      <div className="hidden md:flex items-center relative max-w-sm flex-1">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-        <Input
-          placeholder="Rechercher..."
-          className="pl-9 h-9 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-sm focus-visible:ring-teal-500"
-        />
-      </div>
+      <GlobalSearch />
 
-      {/* Mobile search button */}
       <Button variant="ghost" size="icon" className="md:hidden text-slate-500 dark:text-slate-400">
         <Search className="size-5" />
       </Button>
 
-      {/* Notification bell */}
-      <Button variant="ghost" size="icon" className="relative text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
-        <Bell className="size-5" />
-        <Badge className="absolute -top-1 -right-1 size-5 p-0 flex items-center justify-center bg-red-500 text-white text-[10px] border-2 border-white dark:border-slate-950">
-          3
-        </Badge>
-      </Button>
+      <NotificationsPanel />
 
-      {/* Dark/Light mode toggle */}
       <Button
         variant="ghost"
         size="icon"
@@ -313,13 +436,12 @@ function TopHeader() {
         <Moon className="absolute size-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
       </Button>
 
-      {/* User avatar dropdown */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-9 w-9 rounded-full">
             <Avatar className="size-9">
               <AvatarFallback className="bg-gradient-to-br from-teal-500 to-emerald-600 text-white text-xs font-bold">
-                MD
+                {user.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
               </AvatarFallback>
             </Avatar>
           </Button>
@@ -327,12 +449,12 @@ function TopHeader() {
         <DropdownMenuContent align="end" className="w-56">
           <DropdownMenuLabel>
             <div className="flex flex-col gap-1">
-              <p className="text-sm font-medium">Dr. Mamadou Diallo</p>
-              <p className="text-xs text-muted-foreground">Médecin - Hôpital Donka</p>
+              <p className="text-sm font-medium">{user.name}</p>
+              <p className="text-xs text-muted-foreground">{user.role} — {user.establishment}</p>
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setCurrentView('settings')}>
             <User className="mr-2 size-4" />
             Profil
           </DropdownMenuItem>

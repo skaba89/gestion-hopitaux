@@ -12,59 +12,99 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
+import { useDataStore, type Invoice } from '@/lib/data-store'
+import { useToast } from '@/hooks/use-toast'
 
 const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.1 } } }
-const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } } }
+const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } } }
 
-type InvoiceStatus = 'Payée' | 'En attente' | 'En retard' | 'Annulée'
-type PaymentMethod = 'Cash' | 'Mobile Money' | 'Virement'
-
-interface Invoice {
-  id: number; number: string; patient: string; date: string; amount: number; status: InvoiceStatus
-  items: { description: string; amount: number }[]; payments: { method: PaymentMethod; amount: number; date: string }[]
-}
-
-const demoInvoices: Invoice[] = [
-  { id: 1, number: 'FAC-2026-0401', patient: 'Aminata Diallo', date: '05/03/2026', amount: 75000, status: 'Payée', items: [{ description: 'Consultation', amount: 15000 }, { description: 'NFS + CRP', amount: 35000 }, { description: 'Médicaments', amount: 25000 }], payments: [{ method: 'Mobile Money', amount: 75000, date: '05/03/2026' }] },
-  { id: 2, number: 'FAC-2026-0402', patient: 'Ibrahim Touré', date: '05/03/2026', amount: 150000, status: 'En attente', items: [{ description: 'Consultation spécialiste', amount: 25000 }, { description: 'ECG + Échographie', amount: 75000 }, { description: 'Bilan lipidique', amount: 50000 }], payments: [] },
-  { id: 3, number: 'FAC-2026-0403', patient: 'Fatoumata Camara', date: '04/03/2026', amount: 350000, status: 'En attente', items: [{ description: 'Accouchement (césarienne)', amount: 250000 }, { description: 'Hospitalisation 3 jours', amount: 75000 }, { description: 'Médicaments + consommables', amount: 25000 }], payments: [{ method: 'Cash', amount: 100000, date: '04/03/2026' }] },
-  { id: 4, number: 'FAC-2026-0404', patient: 'Moussa Condé', date: '03/03/2026', amount: 45000, status: 'Payée', items: [{ description: 'Consultation urgence', amount: 20000 }, { description: 'Traitement paludisme', amount: 25000 }], payments: [{ method: 'Cash', amount: 45000, date: '03/03/2026' }] },
-  { id: 5, number: 'FAC-2026-0405', patient: 'Mariama Bah', date: '01/03/2026', amount: 60000, status: 'En retard', items: [{ description: 'Consultation prénatale', amount: 15000 }, { description: 'Échographie obstétricale', amount: 45000 }], payments: [] },
-  { id: 6, number: 'FAC-2026-0406', patient: 'Abdoulaye Keita', date: '28/02/2026', amount: 120000, status: 'Payée', items: [{ description: 'Consultation + radiographie', amount: 40000 }, { description: 'Plâtre + immobilisation', amount: 35000 }, { description: 'Médicaments', amount: 45000 }], payments: [{ method: 'Virement', amount: 120000, date: '01/03/2026' }] },
-  { id: 7, number: 'FAC-2026-0407', patient: 'Kadiatou Sylla', date: '25/02/2026', amount: 30000, status: 'Annulée', items: [{ description: 'Consultation', amount: 15000 }, { description: 'TSH + T4', amount: 15000 }], payments: [] },
-  { id: 8, number: 'FAC-2026-0408', patient: 'Lamine Kaba', date: '05/03/2026', amount: 20000, status: 'En attente', items: [{ description: 'Vaccination DTC', amount: 10000 }, { description: 'Vaccination VPO', amount: 10000 }], payments: [] },
-]
+type InvoiceStatus = Invoice['status']
 
 const statusColors: Record<InvoiceStatus, { icon: React.ComponentType<{ className?: string }>; color: string }> = {
   'Payée': { icon: CheckCircle2, color: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800' },
   'En attente': { icon: Clock, color: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800' },
-  'En retard': { icon: AlertTriangle, color: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800' },
+  'Partielle': { icon: AlertTriangle, color: 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-800' },
   'Annulée': { icon: XCircle, color: 'bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700' },
 }
 
-const methodIcons: Record<PaymentMethod, React.ComponentType<{ className?: string }>> = {
-  'Cash': Banknote,
+const methodIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+  'Espèces': Banknote,
   'Mobile Money': Smartphone,
   'Virement': CreditCard,
+  'Cash': Banknote,
 }
 
 export function BillingPage() {
+  const { toast } = useToast()
+  const { invoices, addInvoice, payInvoice } = useDataStore()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [showNewDialog, setShowNewDialog] = useState(false)
   const [showPaymentDialog, setShowPaymentDialog] = useState(false)
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
 
-  const filtered = demoInvoices.filter(i => {
-    const matchSearch = i.patient.toLowerCase().includes(search.toLowerCase()) || i.number.toLowerCase().includes(search.toLowerCase())
+  // Payment form state
+  const [paymentAmount, setPaymentAmount] = useState('')
+  const [paymentMethod, setPaymentMethod] = useState('Espèces')
+
+  // New invoice form state
+  const [newPatientName, setNewPatientName] = useState('')
+  const [newPatientId, setNewPatientId] = useState('')
+  const [newItemDesc, setNewItemDesc] = useState('')
+  const [newItemQty, setNewItemQty] = useState('1')
+  const [newItemPrice, setNewItemPrice] = useState('')
+
+  const filtered = invoices.filter(i => {
+    const matchSearch = i.patientName.toLowerCase().includes(search.toLowerCase()) || i.id.toLowerCase().includes(search.toLowerCase())
     const matchStatus = statusFilter === 'all' || i.status === statusFilter
     return matchSearch && matchStatus
   })
 
-  const todayRevenue = demoInvoices.filter(i => i.status === 'Payée' && i.date === '05/03/2026').reduce((s, i) => s + i.amount, 0)
-  const monthRevenue = demoInvoices.filter(i => i.status === 'Payée').reduce((s, i) => s + i.amount, 0)
-  const pendingAmount = demoInvoices.filter(i => i.status === 'En attente' || i.status === 'En retard').reduce((s, i) => s + i.amount - i.payments.reduce((ps, p) => ps + p.amount, 0), 0)
-  const overdueCount = demoInvoices.filter(i => i.status === 'En retard').length
+  const todayStr = new Date().toISOString().split('T')[0]
+  const todayRevenue = invoices.filter(i => (i.status === 'Payée' || i.status === 'Partielle') && i.date === todayStr).reduce((s, i) => s + i.paidAmount, 0)
+  const monthRevenue = invoices.filter(i => i.status === 'Payée').reduce((s, i) => s + i.total, 0)
+  const pendingAmount = invoices.filter(i => i.status === 'En attente' || i.status === 'Partielle').reduce((s, i) => s + i.total - i.paidAmount, 0)
+  const overdueCount = invoices.filter(i => i.status === 'Partielle').length
+
+  const handlePay = () => {
+    if (!selectedInvoice || !paymentAmount || Number(paymentAmount) <= 0) return
+    payInvoice(selectedInvoice.id, paymentMethod, Number(paymentAmount))
+    setShowPaymentDialog(false)
+    setPaymentAmount('')
+    setPaymentMethod('Espèces')
+    toast({ title: 'Paiement enregistré', description: `${Number(paymentAmount).toLocaleString()} GNF payé pour ${selectedInvoice.id}.` })
+  }
+
+  const handleAddInvoice = () => {
+    if (!newPatientName || !newItemDesc || !newItemPrice) return
+    const qty = Number(newItemQty) || 1
+    const unitPrice = Number(newItemPrice)
+    const total = qty * unitPrice
+    addInvoice({
+      id: `FAC-${Date.now()}`,
+      patientName: newPatientName,
+      patientId: newPatientId,
+      date: todayStr,
+      items: [{ description: newItemDesc, quantity: qty, unitPrice, total }],
+      total,
+      status: 'En attente',
+      paymentMethod: null,
+      paidAmount: 0,
+    })
+    setShowNewDialog(false)
+    setNewPatientName('')
+    setNewPatientId('')
+    setNewItemDesc('')
+    setNewItemQty('1')
+    setNewItemPrice('')
+    toast({ title: 'Facture créée', description: 'La nouvelle facture a été enregistrée.' })
+  }
+
+  const openPaymentDialog = (invoice: Invoice) => {
+    setSelectedInvoice(invoice)
+    setPaymentAmount(String(invoice.total - invoice.paidAmount))
+    setShowPaymentDialog(true)
+  }
 
   return (
     <motion.div className="p-4 lg:p-6 space-y-6 max-w-[1600px] mx-auto" variants={containerVariants} initial="hidden" animate="visible">
@@ -88,7 +128,7 @@ export function BillingPage() {
           { label: "Revenu aujourd'hui", value: `${(todayRevenue / 1000).toFixed(0)}K`, sub: 'GNF', color: 'from-teal-500 to-emerald-600' },
           { label: 'Ce mois', value: `${(monthRevenue / 1000).toFixed(0)}K`, sub: 'GNF', color: 'from-cyan-500 to-teal-600' },
           { label: 'En attente', value: `${(pendingAmount / 1000).toFixed(0)}K`, sub: 'GNF', color: 'from-amber-500 to-orange-600' },
-          { label: 'En retard', value: overdueCount, sub: 'factures', color: 'from-rose-500 to-red-600' },
+          { label: 'Paiements partiels', value: overdueCount, sub: 'factures', color: 'from-rose-500 to-red-600' },
         ].map(stat => (
           <motion.div key={stat.label} variants={itemVariants}>
             <Card className="relative overflow-hidden border-slate-200/60 dark:border-slate-800/60">
@@ -117,7 +157,7 @@ export function BillingPage() {
                   <SelectItem value="all">Tous</SelectItem>
                   <SelectItem value="Payée">Payée</SelectItem>
                   <SelectItem value="En attente">En attente</SelectItem>
-                  <SelectItem value="En retard">En retard</SelectItem>
+                  <SelectItem value="Partielle">Partielle</SelectItem>
                   <SelectItem value="Annulée">Annulée</SelectItem>
                 </SelectContent>
               </Select>
@@ -151,31 +191,30 @@ export function BillingPage() {
                   {filtered.map((inv, index) => {
                     const cfg = statusColors[inv.status]
                     const StatusIcon = cfg.icon
-                    const paid = inv.payments.reduce((s, p) => s + p.amount, 0)
-                    const lastPayment = inv.payments[inv.payments.length - 1]
+                    const MethodIcon = inv.paymentMethod ? (methodIcons[inv.paymentMethod] ?? CreditCard) : null
                     return (
                       <motion.tr key={inv.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: index * 0.03 }}
                         className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
                         onClick={() => setSelectedInvoice(inv)}
                       >
-                        <td className="py-3 px-2 font-mono text-xs font-medium text-teal-700 dark:text-teal-400">{inv.number}</td>
-                        <td className="py-3 px-2 font-medium text-slate-900 dark:text-white">{inv.patient}</td>
+                        <td className="py-3 px-2 font-mono text-xs font-medium text-teal-700 dark:text-teal-400">{inv.id}</td>
+                        <td className="py-3 px-2 font-medium text-slate-900 dark:text-white">{inv.patientName}</td>
                         <td className="py-3 px-2 text-slate-500 dark:text-slate-400">{inv.date}</td>
-                        <td className="py-3 px-2 text-right font-bold text-slate-900 dark:text-white">{inv.amount.toLocaleString()} <span className="text-xs font-normal text-slate-400">GNF</span></td>
+                        <td className="py-3 px-2 text-right font-bold text-slate-900 dark:text-white">{inv.total.toLocaleString()} <span className="text-xs font-normal text-slate-400">GNF</span></td>
                         <td className="py-3 px-2 text-center">
                           <span className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium ${cfg.color}`}><StatusIcon className="size-3" />{inv.status}</span>
                         </td>
                         <td className="py-3 px-2 text-center">
-                          {lastPayment ? (
+                          {inv.paymentMethod && inv.paidAmount > 0 ? (
                             <span className="inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400">
-                              {React.createElement(methodIcons[lastPayment.method], { className: 'size-3' })}
-                              {paid.toLocaleString()} GNF
+                              {MethodIcon && <MethodIcon className="size-3" />}
+                              {inv.paidAmount.toLocaleString()} GNF
                             </span>
                           ) : <span className="text-xs text-slate-300 dark:text-slate-600">—</span>}
                         </td>
                         <td className="py-3 px-2 text-right">
-                          {(inv.status === 'En attente' || inv.status === 'En retard') && (
-                            <Button size="sm" variant="outline" className="text-xs h-7" onClick={(e) => { e.stopPropagation(); setShowPaymentDialog(true) }}>Payer</Button>
+                          {(inv.status === 'En attente' || inv.status === 'Partielle') && (
+                            <Button size="sm" variant="outline" className="text-xs h-7" onClick={(e) => { e.stopPropagation(); openPaymentDialog(inv) }}>Payer</Button>
                           )}
                         </td>
                       </motion.tr>
@@ -193,41 +232,56 @@ export function BillingPage() {
         <DialogContent className="sm:max-w-[500px]">
           {selectedInvoice && (
             <>
-              <DialogHeader><DialogTitle className="flex items-center gap-2"><Receipt className="size-5 text-teal-600" /> {selectedInvoice.number}</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle className="flex items-center gap-2"><Receipt className="size-5 text-teal-600" /> {selectedInvoice.id}</DialogTitle></DialogHeader>
               <div className="space-y-4 py-2">
                 <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div><span className="text-xs text-slate-500">Patient</span><p className="font-medium">{selectedInvoice.patient}</p></div>
+                  <div><span className="text-xs text-slate-500">Patient</span><p className="font-medium">{selectedInvoice.patientName}</p></div>
                   <div><span className="text-xs text-slate-500">Date</span><p className="font-medium">{selectedInvoice.date}</p></div>
                 </div>
                 <div>
                   <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">Détail</p>
                   {selectedInvoice.items.map((item, i) => (
                     <div key={i} className="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800 last:border-0">
-                      <span className="text-xs text-slate-600 dark:text-slate-400">{item.description}</span>
-                      <span className="text-xs font-medium text-slate-900 dark:text-white">{item.amount.toLocaleString()} GNF</span>
+                      <span className="text-xs text-slate-600 dark:text-slate-400">{item.description} {item.quantity > 1 ? `×${item.quantity}` : ''}</span>
+                      <span className="text-xs font-medium text-slate-900 dark:text-white">{item.total.toLocaleString()} GNF</span>
                     </div>
                   ))}
                   <div className="flex justify-between pt-2 mt-1 border-t-2 border-slate-200 dark:border-slate-700">
                     <span className="text-sm font-bold text-slate-900 dark:text-white">Total</span>
-                    <span className="text-sm font-bold text-teal-600 dark:text-teal-400">{selectedInvoice.amount.toLocaleString()} GNF</span>
+                    <span className="text-sm font-bold text-teal-600 dark:text-teal-400">{selectedInvoice.total.toLocaleString()} GNF</span>
                   </div>
+                  {selectedInvoice.paidAmount > 0 && (
+                    <div className="flex justify-between pt-1">
+                      <span className="text-xs text-slate-500">Payé</span>
+                      <span className="text-xs font-medium text-emerald-600">{selectedInvoice.paidAmount.toLocaleString()} GNF</span>
+                    </div>
+                  )}
+                  {selectedInvoice.total - selectedInvoice.paidAmount > 0 && (
+                    <div className="flex justify-between pt-1">
+                      <span className="text-xs text-slate-500">Reste</span>
+                      <span className="text-xs font-medium text-amber-600">{(selectedInvoice.total - selectedInvoice.paidAmount).toLocaleString()} GNF</span>
+                    </div>
+                  )}
                 </div>
-                {selectedInvoice.payments.length > 0 && (
+                {selectedInvoice.paymentMethod && selectedInvoice.paidAmount > 0 && (
                   <div>
-                    <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">Paiements</p>
-                    {selectedInvoice.payments.map((p, i) => {
-                      const Icon = methodIcons[p.method]
-                      return (
-                        <div key={i} className="flex items-center justify-between py-1.5">
-                          <span className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400"><Icon className="size-3.5" />{p.method} — {p.date}</span>
-                          <span className="text-xs font-medium text-emerald-600">{p.amount.toLocaleString()} GNF</span>
-                        </div>
-                      )
-                    })}
+                    <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">Paiement</p>
+                    <div className="flex items-center justify-between py-1.5">
+                      <span className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
+                        {React.createElement(methodIcons[selectedInvoice.paymentMethod] ?? CreditCard, { className: 'size-3.5' })}
+                        {selectedInvoice.paymentMethod}
+                      </span>
+                      <span className="text-xs font-medium text-emerald-600">{selectedInvoice.paidAmount.toLocaleString()} GNF</span>
+                    </div>
                   </div>
                 )}
               </div>
-              <DialogFooter><Button variant="outline" onClick={() => setSelectedInvoice(null)}>Fermer</Button></DialogFooter>
+              <DialogFooter className="flex gap-2">
+                {(selectedInvoice.status === 'En attente' || selectedInvoice.status === 'Partielle') && (
+                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => { openPaymentDialog(selectedInvoice) }}>Payer</Button>
+                )}
+                <Button variant="outline" onClick={() => setSelectedInvoice(null)}>Fermer</Button>
+              </DialogFooter>
             </>
           )}
         </DialogContent>
@@ -238,18 +292,22 @@ export function BillingPage() {
         <DialogContent className="sm:max-w-[480px]">
           <DialogHeader><DialogTitle>Nouvelle facture</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="space-y-2"><Label>Patient *</Label><Select><SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger><SelectContent><SelectItem value="1">Aminata Diallo</SelectItem><SelectItem value="2">Ibrahim Touré</SelectItem></SelectContent></Select></div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"><Label>Patient *</Label><Input placeholder="Nom du patient" value={newPatientName} onChange={e => setNewPatientName(e.target.value)} /></div>
+              <div className="space-y-2"><Label>ID Patient</Label><Input placeholder="P-XXXX-XXX" value={newPatientId} onChange={e => setNewPatientId(e.target.value)} /></div>
+            </div>
             <div>
-              <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Lignes</p>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1"><Label className="text-xs">Description</Label><Input placeholder="Acte..." /></div>
-                <div className="space-y-1"><Label className="text-xs">Montant (GNF)</Label><Input type="number" placeholder="0" /></div>
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Ligne</p>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1 col-span-1"><Label className="text-xs">Description *</Label><Input placeholder="Acte..." value={newItemDesc} onChange={e => setNewItemDesc(e.target.value)} /></div>
+                <div className="space-y-1"><Label className="text-xs">Qté</Label><Input type="number" placeholder="1" value={newItemQty} onChange={e => setNewItemQty(e.target.value)} /></div>
+                <div className="space-y-1"><Label className="text-xs">Prix unit. (GNF) *</Label><Input type="number" placeholder="0" value={newItemPrice} onChange={e => setNewItemPrice(e.target.value)} /></div>
               </div>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowNewDialog(false)}>Annuler</Button>
-            <Button className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white" onClick={() => setShowNewDialog(false)}>Créer facture</Button>
+            <Button className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white" onClick={handleAddInvoice}>Créer facture</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -259,12 +317,12 @@ export function BillingPage() {
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader><DialogTitle>Enregistrer paiement</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="space-y-2"><Label>Montant (GNF) *</Label><Input type="number" placeholder="0" /></div>
-            <div className="space-y-2"><Label>Mode de paiement *</Label><Select defaultValue="Cash"><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Cash">Espèces</SelectItem><SelectItem value="Mobile Money">Mobile Money</SelectItem><SelectItem value="Virement">Virement bancaire</SelectItem></SelectContent></Select></div>
+            <div className="space-y-2"><Label>Montant (GNF) *</Label><Input type="number" placeholder="0" value={paymentAmount} onChange={e => setPaymentAmount(e.target.value)} /></div>
+            <div className="space-y-2"><Label>Mode de paiement *</Label><Select value={paymentMethod} onValueChange={setPaymentMethod}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Espèces">Espèces</SelectItem><SelectItem value="Mobile Money">Mobile Money</SelectItem><SelectItem value="Virement">Virement bancaire</SelectItem></SelectContent></Select></div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowPaymentDialog(false)}>Annuler</Button>
-            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => setShowPaymentDialog(false)}>Confirmer paiement</Button>
+            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handlePay}>Confirmer paiement</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

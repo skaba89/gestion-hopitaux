@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import {
   BarChart3, Users, TrendingUp, Activity, DollarSign, Bed, Stethoscope, Calendar,
@@ -12,43 +12,10 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useDataStore } from '@/lib/data-store'
 
 const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.1 } } }
-const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } } }
-
-const consultationTrend = [
-  { month: 'Oct', consultations: 420, revenue: 8500000 },
-  { month: 'Nov', consultations: 480, revenue: 9200000 },
-  { month: 'Déc', consultations: 390, revenue: 7800000 },
-  { month: 'Jan', consultations: 510, revenue: 10200000 },
-  { month: 'Fév', consultations: 530, revenue: 10800000 },
-  { month: 'Mars', consultations: 560, revenue: 11500000 },
-]
-
-const admissionsByDept = [
-  { dept: 'Urgences', count: 145 },
-  { dept: 'Maternité', count: 120 },
-  { dept: 'Méd. Interne', count: 98 },
-  { dept: 'Chirurgie', count: 85 },
-  { dept: 'Pédiatrie', count: 72 },
-  { dept: 'Cardiologie', count: 45 },
-]
-
-const diseaseDistribution = [
-  { name: 'Paludisme', value: 28, color: '#14b8a6' },
-  { name: 'IRA', value: 19, color: '#06b6d4' },
-  { name: 'Diarrhée', value: 15, color: '#f59e0b' },
-  { name: 'Hypertension', value: 12, color: '#ef4444' },
-  { name: 'Diabète', value: 9, color: '#8b5cf6' },
-  { name: 'Autres', value: 17, color: '#64748b' },
-]
-
-const kpiCards = [
-  { label: 'Consultations', value: '560', trend: '+5.6%', up: true, icon: Stethoscope, color: 'from-teal-500 to-emerald-600', bg: 'bg-teal-50 dark:bg-teal-950/40', iconColor: 'text-teal-600 dark:text-teal-400' },
-  { label: 'Revenus', value: '11.5M', trend: '+6.5%', up: true, icon: DollarSign, color: 'from-emerald-500 to-green-600', bg: 'bg-emerald-50 dark:bg-emerald-950/40', iconColor: 'text-emerald-600 dark:text-emerald-400' },
-  { label: 'Patients', value: '1,247', trend: '+8.2%', up: true, icon: Users, color: 'from-cyan-500 to-teal-600', bg: 'bg-cyan-50 dark:bg-cyan-950/40', iconColor: 'text-cyan-600 dark:text-cyan-400' },
-  { label: 'Taux occupation', value: '68%', trend: '-2%', up: false, icon: Bed, color: 'from-amber-500 to-orange-600', bg: 'bg-amber-50 dark:bg-amber-950/40', iconColor: 'text-amber-600 dark:text-amber-400' },
-]
+const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } } }
 
 function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ name: string; value: number; color: string }>; label?: string }) {
   if (!active || !payload?.length) return null
@@ -66,6 +33,90 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
 
 export function AnalyticsPage() {
   const [period, setPeriod] = useState('6m')
+  const { patients, appointments, consultations, invoices, beds, emergencies } = useDataStore()
+
+  // Derive patient demographics by gender
+  const patientDemographics = useMemo(() => {
+    const maleCount = patients.filter(p => p.gender === 'M').length
+    const femaleCount = patients.filter(p => p.gender === 'F').length
+    return [
+      { name: 'Hommes', value: maleCount, color: '#06b6d4' },
+      { name: 'Femmes', value: femaleCount, color: '#f43f5e' },
+    ]
+  }, [patients])
+
+  // Derive consultation trend: group appointments by date
+  const consultationTrend = useMemo(() => {
+    const dateMap = new Map<string, { consultations: number; revenue: number }>()
+    // Group appointments by date
+    appointments.forEach(a => {
+      const existing = dateMap.get(a.date) || { consultations: 0, revenue: 0 }
+      existing.consultations += 1
+      dateMap.set(a.date, existing)
+    })
+    // Add revenue from invoices by date
+    invoices.forEach(inv => {
+      const existing = dateMap.get(inv.date) || { consultations: 0, revenue: 0 }
+      existing.revenue += inv.total
+      dateMap.set(inv.date, existing)
+    })
+    // Sort by date and format
+    return Array.from(dateMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, data]) => ({
+        month: new Date(date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }),
+        consultations: data.consultations,
+        revenue: data.revenue,
+      }))
+  }, [appointments, invoices])
+
+  // Derive revenue by invoice status
+  const revenueByStatus = useMemo(() => {
+    const statusMap = new Map<string, number>()
+    invoices.forEach(inv => {
+      const current = statusMap.get(inv.status) || 0
+      statusMap.set(inv.status, current + inv.total)
+    })
+    const statusColors: Record<string, string> = {
+      'Payée': '#10b981',
+      'En attente': '#f59e0b',
+      'Partielle': '#06b6d4',
+      'Annulée': '#ef4444',
+    }
+    return Array.from(statusMap.entries()).map(([status, total]) => ({
+      name: status,
+      value: total,
+      color: statusColors[status] || '#64748b',
+    }))
+  }, [invoices])
+
+  // Derive service distribution: count beds by service
+  const serviceDistribution = useMemo(() => {
+    const serviceMap = new Map<string, number>()
+    beds.forEach(b => {
+      const current = serviceMap.get(b.service) || 0
+      serviceMap.set(b.service, current + 1)
+    })
+    return Array.from(serviceMap.entries()).map(([dept, count]) => ({
+      dept,
+      count,
+    }))
+  }, [beds])
+
+  // Real KPI values from store
+  const totalConsultations = consultations.length + appointments.filter(a => a.status === 'Terminé').length
+  const totalRevenue = invoices.reduce((sum, inv) => sum + inv.total, 0)
+  const totalPatients = patients.length
+  const occupiedBeds = beds.filter(b => b.status === 'Occupé').length
+  const totalBeds = beds.length
+  const occupancyRate = totalBeds > 0 ? Math.round((occupiedBeds / totalBeds) * 100) : 0
+
+  const kpiCards = [
+    { label: 'Consultations', value: totalConsultations.toString(), trend: `+${appointments.length} RDV`, up: true, icon: Stethoscope, color: 'from-teal-500 to-emerald-600', bg: 'bg-teal-50 dark:bg-teal-950/40', iconColor: 'text-teal-600 dark:text-teal-400' },
+    { label: 'Revenus', value: `${(totalRevenue / 1000000).toFixed(1)}M`, trend: `${invoices.filter(i => i.status === 'Payée').length} payées`, up: true, icon: DollarSign, color: 'from-emerald-500 to-green-600', bg: 'bg-emerald-50 dark:bg-emerald-950/40', iconColor: 'text-emerald-600 dark:text-emerald-400' },
+    { label: 'Patients', value: totalPatients.toLocaleString(), trend: `${patients.filter(p => p.status === 'Actif').length} actifs`, up: true, icon: Users, color: 'from-cyan-500 to-teal-600', bg: 'bg-cyan-50 dark:bg-cyan-950/40', iconColor: 'text-cyan-600 dark:text-cyan-400' },
+    { label: 'Taux occupation', value: `${occupancyRate}%`, trend: `${occupiedBeds}/${totalBeds} lits`, up: occupancyRate >= 50, icon: Bed, color: 'from-amber-500 to-orange-600', bg: 'bg-amber-50 dark:bg-amber-950/40', iconColor: 'text-amber-600 dark:text-amber-400' },
+  ]
 
   return (
     <motion.div className="p-4 lg:p-6 space-y-6 max-w-[1600px] mx-auto" variants={containerVariants} initial="hidden" animate="visible">
@@ -120,7 +171,7 @@ export function AnalyticsPage() {
           <Card className="border-slate-200/60 dark:border-slate-800/60">
             <CardHeader className="pb-2">
               <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">Évolution des consultations</CardTitle>
-              <CardDescription className="text-xs">Tendance sur 6 mois</CardDescription>
+              <CardDescription className="text-xs">Rendez-vous groupés par date</CardDescription>
             </CardHeader>
             <CardContent className="pt-0">
               <div className="h-[280px]">
@@ -143,7 +194,7 @@ export function AnalyticsPage() {
           <Card className="border-slate-200/60 dark:border-slate-800/60">
             <CardHeader className="pb-2">
               <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">Évolution des revenus</CardTitle>
-              <CardDescription className="text-xs">Revenus mensuels en GNF</CardDescription>
+              <CardDescription className="text-xs">Revenus en GNF par date</CardDescription>
             </CardHeader>
             <CardContent className="pt-0">
               <div className="h-[280px]">
@@ -170,17 +221,17 @@ export function AnalyticsPage() {
 
       {/* Charts Row 2 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Admissions by Department */}
+        {/* Service Distribution (Beds by Service) */}
         <motion.div variants={itemVariants}>
           <Card className="border-slate-200/60 dark:border-slate-800/60">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">Admissions par service</CardTitle>
-              <CardDescription className="text-xs">Répartition ce trimestre</CardDescription>
+              <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">Lits par service</CardTitle>
+              <CardDescription className="text-xs">Répartition des lits de l&apos;établissement</CardDescription>
             </CardHeader>
             <CardContent className="pt-0">
               <div className="h-[280px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={admissionsByDept} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                  <BarChart data={serviceDistribution} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                     <defs>
                       <linearGradient id="admGrad" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#14b8a6" />
@@ -191,7 +242,7 @@ export function AnalyticsPage() {
                     <XAxis dataKey="dept" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                     <Tooltip content={<CustomTooltip />} />
-                    <Bar dataKey="count" fill="url(#admGrad)" radius={[6, 6, 0, 0]} maxBarSize={48} name="Admissions" />
+                    <Bar dataKey="count" fill="url(#admGrad)" radius={[6, 6, 0, 0]} maxBarSize={48} name="Lits" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -199,23 +250,23 @@ export function AnalyticsPage() {
           </Card>
         </motion.div>
 
-        {/* Disease Distribution */}
+        {/* Patient Demographics (Gender) */}
         <motion.div variants={itemVariants}>
           <Card className="border-slate-200/60 dark:border-slate-800/60">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">Distribution pathologies</CardTitle>
-              <CardDescription className="text-xs">Répartition des diagnostics</CardDescription>
+              <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">Démographie patients</CardTitle>
+              <CardDescription className="text-xs">Répartition par genre</CardDescription>
             </CardHeader>
             <CardContent className="pt-0">
               <div className="h-[280px] flex items-center">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={diseaseDistribution} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={3} dataKey="value">
-                      {diseaseDistribution.map((entry, index) => (
+                    <Pie data={patientDemographics} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={3} dataKey="value">
+                      {patientDemographics.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value: number) => `${value}%`} />
+                    <Tooltip formatter={(value: number) => `${value} patients`} />
                     <Legend verticalAlign="bottom" height={36} formatter={(value: string) => <span className="text-xs text-slate-600 dark:text-slate-400">{value}</span>} />
                   </PieChart>
                 </ResponsiveContainer>
