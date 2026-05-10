@@ -263,6 +263,7 @@ function Navbar({ onDemoClick }: { onDemoClick: () => void }) {
 /* ─────────── Hero Section ─────────── */
 
 function HeroSection({ onDemoClick }: { onDemoClick: () => void }) {
+  const { setCurrentView } = useStore()
   return (
     <section id="accueil" className="relative min-h-screen flex items-center overflow-hidden pt-20">
       {/* Background decorations */}
@@ -1860,6 +1861,7 @@ function DataSpherePortfolioSection() {
 
 function DemoVideoModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'patients' | 'pharmacy'>('dashboard')
+  const { setCurrentView } = useStore()
 
   const demoScreens: Record<string, { title: string; desc: string; elements: React.ReactNode }> = {
     dashboard: {
