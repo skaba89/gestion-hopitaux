@@ -96,7 +96,7 @@ function Reveal({ children, className = '', delay = 0 }: { children: React.React
 
 /* ─────────── Navigation Bar ─────────── */
 
-function Navbar() {
+function Navbar({ onDemoClick }: { onDemoClick: () => void }) {
   const { resolvedTheme, setTheme } = useTheme()
   const { setCurrentView } = useStore()
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -151,13 +151,23 @@ function Navbar() {
           {/* Desktop Links */}
           <div className="hidden lg:flex items-center gap-1">
             {navLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 rounded-lg hover:bg-teal-50 dark:hover:bg-teal-950/30 transition-colors"
-              >
-                {link.label}
-              </a>
+              link.label === 'Démo' ? (
+                <button
+                  key={link.label}
+                  onClick={onDemoClick}
+                  className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 rounded-lg hover:bg-teal-50 dark:hover:bg-teal-950/30 transition-colors"
+                >
+                  {link.label}
+                </button>
+              ) : (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-teal-600 dark:hover:text-teal-400 rounded-lg hover:bg-teal-50 dark:hover:bg-teal-950/30 transition-colors"
+                >
+                  {link.label}
+                </a>
+              )
             ))}
           </div>
 
@@ -237,7 +247,7 @@ function Navbar() {
 
 /* ─────────── Hero Section ─────────── */
 
-function HeroSection() {
+function HeroSection({ onDemoClick }: { onDemoClick: () => void }) {
   return (
     <section id="accueil" className="relative min-h-screen flex items-center overflow-hidden pt-20">
       {/* Background decorations */}
@@ -284,6 +294,7 @@ function HeroSection() {
               <Button
                 variant="outline"
                 size="lg"
+                onClick={onDemoClick}
                 className="border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-teal-50 dark:hover:bg-teal-950/30 hover:border-teal-300 dark:hover:border-teal-700 text-base px-8 h-12"
               >
                 <PlayCircle className="w-5 h-5 mr-1.5" />
@@ -1450,14 +1461,329 @@ function DataSpherePortfolioSection() {
   )
 }
 
+/* ─────────── Demo Video Modal ─────────── */
+
+function DemoVideoModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'patients' | 'pharmacy'>('dashboard')
+
+  const demoScreens: Record<string, { title: string; desc: string; elements: React.ReactNode }> = {
+    dashboard: {
+      title: 'Dashboard Santé',
+      desc: 'Vue d\'ensemble en temps réel de votre établissement',
+      elements: (
+        <div className="space-y-4">
+          {/* Mini KPI Cards */}
+          <div className="grid grid-cols-4 gap-3">
+            {[
+              { label: 'Patients', value: '24', trend: '+12%', color: 'bg-teal-500' },
+              { label: 'Rendez-vous', value: '18', trend: '+5%', color: 'bg-emerald-500' },
+              { label: 'Lits dispo.', value: '42/120', trend: '-3%', color: 'bg-amber-500' },
+              { label: 'Urgences', value: '7', trend: '+2', color: 'bg-rose-500' },
+            ].map((kpi) => (
+              <div key={kpi.label} className="bg-white dark:bg-slate-800 rounded-xl p-3 border border-slate-100 dark:border-slate-700">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className={`w-2 h-2 rounded-full ${kpi.color}`} />
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400">{kpi.label}</span>
+                </div>
+                <div className="text-lg font-bold text-slate-900 dark:text-white">{kpi.value}</div>
+                <span className="text-[9px] text-emerald-500 font-medium">{kpi.trend}</span>
+              </div>
+            ))}
+          </div>
+          {/* Mini Chart */}
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-3 border border-slate-100 dark:border-slate-700">
+            <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 mb-2">Consultations cette semaine</div>
+            <div className="flex items-end gap-1.5 h-20">
+              {[35, 55, 45, 70, 60, 80, 50].map((h, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ height: 0 }}
+                  animate={{ height: `${h}%` }}
+                  transition={{ delay: i * 0.08, duration: 0.5 }}
+                  className="flex-1 bg-gradient-to-t from-teal-500 to-emerald-400 rounded-sm"
+                />
+              ))}
+            </div>
+            <div className="flex justify-between mt-1">
+              {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d) => (
+                <span key={d} className="text-[8px] text-slate-400 w-full text-center">{d}</span>
+              ))}
+            </div>
+          </div>
+          {/* Mini Appointments */}
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-3 border border-slate-100 dark:border-slate-700">
+            <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 mb-2">Prochains rendez-vous</div>
+            {[
+              { name: 'Aminata Diallo', time: '09:00', type: 'Consultation' },
+              { name: 'Ibrahim Touré', time: '09:30', type: 'Suivi' },
+              { name: 'Fatoumata Camara', time: '10:00', type: 'Prénatal' },
+            ].map((apt, i) => (
+              <div key={i} className="flex items-center justify-between py-1.5 border-b border-slate-50 dark:border-slate-700/50 last:border-0">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-teal-100 dark:bg-teal-900/50 flex items-center justify-center text-[9px] font-bold text-teal-700 dark:text-teal-300">
+                    {apt.name.split(' ').map(n => n[0]).join('')}
+                  </div>
+                  <span className="text-[10px] font-medium text-slate-700 dark:text-slate-200">{apt.name}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] text-slate-400">{apt.type}</span>
+                  <span className="text-[10px] font-semibold text-teal-600 dark:text-teal-400">{apt.time}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ),
+    },
+    patients: {
+      title: 'Gestion des Patients',
+      desc: 'Dossier numérique complet avec QR code',
+      elements: (
+        <div className="space-y-4">
+          {/* Patient Card */}
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-100 dark:border-slate-700">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center text-white font-bold text-sm">AD</div>
+              <div>
+                <div className="font-semibold text-slate-900 dark:text-white text-sm">Aminata Diallo</div>
+                <div className="text-[10px] text-slate-500">F • 28 ans • +224 622 11 22 33</div>
+              </div>
+              <div className="ml-auto">
+                <div className="w-14 h-14 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center">
+                  <div className="grid grid-cols-5 gap-px">
+                    {Array.from({ length: 25 }).map((_, i) => (
+                      <div key={i} className={`w-1.5 h-1.5 rounded-sm ${Math.random() > 0.4 ? 'bg-slate-800 dark:bg-slate-200' : 'bg-slate-300 dark:bg-slate-600'}`} />
+                    ))}
+                  </div>
+                </div>
+                <div className="text-[7px] text-center text-slate-400 mt-0.5">QR Code</div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-2">
+                <div className="text-[9px] text-slate-500 mb-0.5">Groupe sanguin</div>
+                <div className="text-xs font-bold text-rose-500">O+</div>
+              </div>
+              <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-2">
+                <div className="text-[9px] text-slate-500 mb-0.5">Dernière visite</div>
+                <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">10 Mai 2026</div>
+              </div>
+            </div>
+          </div>
+          {/* Allergies */}
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-3 border border-slate-100 dark:border-slate-700">
+            <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 mb-2">Allergies</div>
+            <div className="flex flex-wrap gap-1.5">
+              {['Pénicilline', 'Sulfamides', 'Iode'].map((a) => (
+                <span key={a} className="px-2 py-0.5 bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 text-[9px] font-medium rounded-full border border-red-200 dark:border-red-800">{a}</span>
+              ))}
+            </div>
+          </div>
+          {/* Medical History */}
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-3 border border-slate-100 dark:border-slate-700">
+            <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 mb-2">Historique médical</div>
+            {[
+              { date: '10/05/26', diag: 'Paludisme simple', doctor: 'Dr. Diallo' },
+              { date: '22/03/26', diag: 'Consultation prénatale', doctor: 'Dr. Bah' },
+              { date: '15/01/26', diag: 'Grippe saisonnière', doctor: 'Dr. Condé' },
+            ].map((h, i) => (
+              <div key={i} className="flex items-center justify-between py-1.5 border-b border-slate-50 dark:border-slate-700/50 last:border-0">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-teal-500" />
+                  <span className="text-[10px] font-medium text-slate-700 dark:text-slate-200">{h.diag}</span>
+                </div>
+                <div className="text-[9px] text-slate-400">{h.date} • {h.doctor}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ),
+    },
+    pharmacy: {
+      title: 'Pharmacie & Stock',
+      desc: 'Suivi des médicaments et alertes en temps réel',
+      elements: (
+        <div className="space-y-4">
+          {/* Stock Alerts */}
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { label: 'En stock', value: '342', color: 'bg-emerald-500' },
+              { label: 'Stock faible', value: '18', color: 'bg-amber-500' },
+              { label: 'Rupture', value: '5', color: 'bg-rose-500' },
+            ].map((s) => (
+              <div key={s.label} className="bg-white dark:bg-slate-800 rounded-xl p-3 border border-slate-100 dark:border-slate-700 text-center">
+                <div className={`w-8 h-8 rounded-lg ${s.color}/10 flex items-center justify-center mx-auto mb-1`}>
+                  <div className={`w-3 h-3 rounded-full ${s.color}`} />
+                </div>
+                <div className="text-lg font-bold text-slate-900 dark:text-white">{s.value}</div>
+                <div className="text-[9px] text-slate-500">{s.label}</div>
+              </div>
+            ))}
+          </div>
+          {/* Medication Table */}
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-3 border border-slate-100 dark:border-slate-700">
+            <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 mb-2">État des stocks</div>
+            {[
+              { name: 'Paracétamol 500mg', stock: 85, max: 100, status: 'ok' },
+              { name: 'Amoxicilline 250mg', stock: 23, max: 100, status: 'low' },
+              { name: 'Quinine 300mg', stock: 5, max: 100, status: 'critical' },
+              { name: 'Métformine 500mg', stock: 67, max: 100, status: 'ok' },
+              { name: 'Ondansétron 4mg', stock: 12, max: 100, status: 'low' },
+            ].map((med, i) => (
+              <div key={i} className="flex items-center gap-3 py-2 border-b border-slate-50 dark:border-slate-700/50 last:border-0">
+                <span className="text-[10px] font-medium text-slate-700 dark:text-slate-200 w-32 truncate">{med.name}</span>
+                <div className="flex-1 h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${med.stock}%` }}
+                    transition={{ delay: i * 0.1, duration: 0.6 }}
+                    className={`h-full rounded-full ${
+                      med.status === 'ok' ? 'bg-emerald-500' : med.status === 'low' ? 'bg-amber-500' : 'bg-rose-500'
+                    }`}
+                  />
+                </div>
+                <span className={`text-[9px] font-semibold w-8 text-right ${
+                  med.status === 'ok' ? 'text-emerald-600' : med.status === 'low' ? 'text-amber-600' : 'text-rose-600'
+                }`}>{med.stock}%</span>
+              </div>
+            ))}
+          </div>
+          {/* Expiration Alert */}
+          <div className="bg-rose-50 dark:bg-rose-950/20 rounded-xl p-3 border border-rose-200 dark:border-rose-800/50">
+            <div className="flex items-center gap-2 mb-1">
+              <ShieldAlert className="w-4 h-4 text-rose-500" />
+              <span className="text-xs font-semibold text-rose-700 dark:text-rose-300">Alerte expiration</span>
+            </div>
+            <div className="text-[10px] text-rose-600 dark:text-rose-400">3 médicaments expirent dans les 30 prochains jours</div>
+          </div>
+        </div>
+      ),
+    },
+  }
+
+  if (!open) return null
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.9, y: 20 }}
+          transition={{ type: 'spring', damping: 25 }}
+          className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-4xl w-full overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Modal Header */}
+          <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
+            <div>
+              <h3 className="font-bold text-lg text-slate-900 dark:text-white">HealthFlow Guinea — Démo interactive</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Découvrez la plateforme en action</p>
+            </div>
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+            >
+              <X className="w-4 h-4 text-slate-500" />
+            </button>
+          </div>
+
+          <div className="flex flex-col md:flex-row">
+            {/* Sidebar - Screen Selection */}
+            <div className="md:w-56 border-b md:border-b-0 md:border-r border-slate-100 dark:border-slate-800 p-3 md:p-4">
+              <div className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">Écrans</div>
+              <div className="flex md:flex-col gap-1.5 overflow-x-auto md:overflow-x-visible">
+                {Object.entries(demoScreens).map(([key, screen]) => (
+                  <button
+                    key={key}
+                    onClick={() => setActiveTab(key as 'dashboard' | 'patients' | 'pharmacy')}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+                      activeTab === key
+                        ? 'bg-teal-50 dark:bg-teal-950/30 text-teal-700 dark:text-teal-300'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    {key === 'dashboard' && <BarChart3 className="w-4 h-4" />}
+                    {key === 'patients' && <Users className="w-4 h-4" />}
+                    {key === 'pharmacy' && <Pill className="w-4 h-4" />}
+                    <span>{screen.title}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Main Demo Screen */}
+            <div className="flex-1 p-4 md:p-6">
+              <div className="mb-4">
+                <h4 className="font-bold text-slate-900 dark:text-white">{demoScreens[activeTab].title}</h4>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{demoScreens[activeTab].desc}</p>
+              </div>
+
+              {/* Simulated App Screen */}
+              <div className="bg-slate-50 dark:bg-slate-950 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+                {/* Fake app header */}
+                <div className="flex items-center gap-2 mb-4 pb-3 border-b border-slate-200 dark:border-slate-700">
+                  <div className="w-6 h-6 rounded-md bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center">
+                    <Heart className="w-3.5 h-3.5 text-white" />
+                  </div>
+                  <span className="text-xs font-bold text-teal-700 dark:text-teal-300">HealthFlow</span>
+                  <span className="text-[9px] text-teal-500">Guinea</span>
+                  <div className="ml-auto flex gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-rose-400" />
+                    <div className="w-2 h-2 rounded-full bg-amber-400" />
+                    <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                  </div>
+                </div>
+
+                {/* Screen Content */}
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {demoScreens[activeTab].elements}
+                </motion.div>
+              </div>
+            </div>
+          </div>
+
+          {/* Modal Footer */}
+          <div className="flex items-center justify-between p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50">
+            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Démo interactive — Données fictives</span>
+            </div>
+            <Button
+              onClick={() => { onClose(); setCurrentView('dashboard') }}
+              className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white text-sm"
+            >
+              Essayer la plateforme
+              <ArrowRight className="w-4 h-4 ml-1" />
+            </Button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  )
+}
+
 /* ─────────── Main Landing Page ─────────── */
 
 export default function LandingPage() {
+  const [demoOpen, setDemoOpen] = useState(false)
+
   return (
     <div className="min-h-screen bg-white dark:bg-slate-950">
-      <Navbar />
+      <Navbar onDemoClick={() => setDemoOpen(true)} />
       <main>
-        <HeroSection />
+        <HeroSection onDemoClick={() => setDemoOpen(true)} />
         <TrustedBySection />
         <FeaturesSection />
         <HowItWorksSection />
@@ -1468,6 +1794,7 @@ export default function LandingPage() {
         <CTASection />
       </main>
       <Footer />
+      <DemoVideoModal open={demoOpen} onClose={() => setDemoOpen(false)} />
     </div>
   )
 }
