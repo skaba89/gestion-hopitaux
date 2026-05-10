@@ -24,6 +24,12 @@ export type AppView =
   | 'ai-diagnostic'
   | 'ai-interactions'
   | 'ai-surveillance'
+  | 'video-consultation'
+  | 'virtual-waiting-room'
+  | 'asc-dashboard'
+  | 'audit-log'
+  | 'security-dashboard'
+  | 'permission-matrix'
 
 interface User {
   name: string

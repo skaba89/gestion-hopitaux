@@ -38,6 +38,12 @@ import {
   Brain,
   AlertCircle,
   Activity,
+  MonitorPlay,
+  Clock,
+  MapPin,
+  Eye,
+  Shield,
+  Lock,
 } from 'lucide-react'
 import { useStore, type AppView } from '@/lib/store'
 import { useDataStore } from '@/lib/data-store'
@@ -79,6 +85,7 @@ import {
   SidebarSeparator,
   SidebarTrigger,
 } from '@/components/ui/sidebar'
+import { hasPermission, toHFRole, type HFRole } from '@/lib/rbac'
 
 /* ─────────── Navigation Configuration ─────────── */
 
@@ -86,6 +93,7 @@ interface NavItem {
   view: AppView
   label: string
   icon: React.ComponentType<{ className?: string }>
+  requiredPermission?: { resource: Parameters<typeof hasPermission>[0]; action: Parameters<typeof hasPermission>[1] }
 }
 
 const navGroups: { label: string; items: NavItem[] }[] = [
@@ -93,47 +101,63 @@ const navGroups: { label: string; items: NavItem[] }[] = [
     label: 'Principal',
     items: [
       { view: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-      { view: 'patients', label: 'Patients', icon: Users },
+      { view: 'patients', label: 'Patients', icon: Users, requiredPermission: { resource: 'patients', action: 'read' } },
       { view: 'appointments', label: 'Rendez-vous', icon: Calendar },
-      { view: 'consultations', label: 'Consultations', icon: Stethoscope },
+      { view: 'consultations', label: 'Consultations', icon: Stethoscope, requiredPermission: { resource: 'consultations', action: 'read' } },
     ],
   },
   {
     label: 'Médical',
     items: [
-      { view: 'laboratory', label: 'Laboratoire', icon: Microscope },
-      { view: 'pharmacy', label: 'Pharmacie', icon: Pill },
-      { view: 'hospitalization', label: 'Hospitalisation', icon: Bed },
-      { view: 'emergencies', label: 'Urgences', icon: Siren },
-      { view: 'maternity', label: 'Maternité', icon: Baby },
-      { view: 'vaccination', label: 'Vaccination', icon: Syringe },
+      { view: 'laboratory', label: 'Laboratoire', icon: Microscope, requiredPermission: { resource: 'laboratory', action: 'read' } },
+      { view: 'pharmacy', label: 'Pharmacie', icon: Pill, requiredPermission: { resource: 'pharmacy', action: 'read' } },
+      { view: 'hospitalization', label: 'Hospitalisation', icon: Bed, requiredPermission: { resource: 'hospitalization', action: 'read' } },
+      { view: 'emergencies', label: 'Urgences', icon: Siren, requiredPermission: { resource: 'emergencies', action: 'read' } },
+      { view: 'maternity', label: 'Maternité', icon: Baby, requiredPermission: { resource: 'maternity', action: 'read' } },
+      { view: 'vaccination', label: 'Vaccination', icon: Syringe, requiredPermission: { resource: 'vaccinations', action: 'read' } },
     ],
   },
   {
     label: 'Gestion',
     items: [
-      { view: 'billing', label: 'Facturation', icon: Receipt },
+      { view: 'billing', label: 'Facturation', icon: Receipt, requiredPermission: { resource: 'billing', action: 'read' } },
       { view: 'payments', label: 'Paiements', icon: CreditCard },
-      { view: 'messaging', label: 'Messagerie', icon: MessageSquare },
-      { view: 'insurance', label: 'Assurance', icon: ShieldCheck },
-      { view: 'teleconsultation', label: 'Téléconsultation', icon: Video },
+      { view: 'messaging', label: 'Messagerie', icon: MessageSquare, requiredPermission: { resource: 'messaging', action: 'send' } },
+      { view: 'insurance', label: 'Assurance', icon: ShieldCheck, requiredPermission: { resource: 'insurance', action: 'read' } },
+      { view: 'teleconsultation', label: 'Téléconsultation', icon: Video, requiredPermission: { resource: 'telemedicine', action: 'read' } },
       { view: 'analytics', label: 'Analytics', icon: BarChart3 },
     ],
   },
   {
-    label: 'Système',
+    label: 'Télémédecine',
     items: [
-      { view: 'administration', label: 'Administration', icon: Settings2 },
-      { view: 'settings', label: 'Paramètres', icon: Cog },
-      { view: 'patient-portal', label: 'Portail Patient', icon: Smartphone },
+      { view: 'video-consultation', label: 'Vidéo Consultation', icon: MonitorPlay, requiredPermission: { resource: 'telemedicine', action: 'read' } },
+      { view: 'virtual-waiting-room', label: 'Salle d\'attente', icon: Clock, requiredPermission: { resource: 'telemedicine', action: 'read' } },
+      { view: 'asc-dashboard', label: 'Outils ASC', icon: MapPin, requiredPermission: { resource: 'asc', action: 'read' } },
     ],
   },
   {
     label: 'IA Santé',
     items: [
-      { view: 'ai-diagnostic', label: 'Diagnostic IA', icon: Brain },
-      { view: 'ai-interactions', label: 'Interactions', icon: AlertCircle },
-      { view: 'ai-surveillance', label: 'Surveillance', icon: Activity },
+      { view: 'ai-diagnostic', label: 'Diagnostic IA', icon: Brain, requiredPermission: { resource: 'ai', action: 'diagnostic' } },
+      { view: 'ai-interactions', label: 'Interactions', icon: AlertCircle, requiredPermission: { resource: 'ai', action: 'interactions' } },
+      { view: 'ai-surveillance', label: 'Surveillance', icon: Activity, requiredPermission: { resource: 'ai', action: 'surveillance' } },
+    ],
+  },
+  {
+    label: 'Sécurité',
+    items: [
+      { view: 'audit-log', label: 'Journal d\'audit', icon: Eye, requiredPermission: { resource: 'admin', action: 'read' } },
+      { view: 'security-dashboard', label: 'Sécurité', icon: Shield, requiredPermission: { resource: 'admin', action: 'read' } },
+      { view: 'permission-matrix', label: 'Permissions', icon: Lock, requiredPermission: { resource: 'admin', action: 'read' } },
+    ],
+  },
+  {
+    label: 'Système',
+    items: [
+      { view: 'administration', label: 'Administration', icon: Settings2, requiredPermission: { resource: 'admin', action: 'read' } },
+      { view: 'settings', label: 'Paramètres', icon: Cog },
+      { view: 'patient-portal', label: 'Portail Patient', icon: Smartphone },
     ],
   },
 ]
@@ -164,6 +188,12 @@ const viewTitles: Record<AppView, string> = {
   'ai-diagnostic': 'Diagnostic IA',
   'ai-interactions': 'Interactions médicamenteuses',
   'ai-surveillance': 'Surveillance épidémiologique',
+  'video-consultation': 'Vidéo Consultation',
+  'virtual-waiting-room': 'Salle d\'attente virtuelle',
+  'asc-dashboard': 'Agent de Santé Communautaire',
+  'audit-log': 'Journal d\'audit',
+  'security-dashboard': 'Tableau de bord sécurité',
+  'permission-matrix': 'Matrice de permissions',
 }
 
 /* ─────────── Notification Icon Map ─────────── */
@@ -186,6 +216,18 @@ const notifColors: Record<string, string> = {
 
 function AppSidebar() {
   const { currentView, setCurrentView, user } = useStore()
+  const userRole = toHFRole(user.role)
+
+  // Check if a nav item should be visible
+  const isItemVisible = (item: NavItem): boolean => {
+    if (!item.requiredPermission) return true
+    return hasPermission(userRole, item.requiredPermission.resource, item.requiredPermission.action)
+  }
+
+  // Check if a group has any visible items
+  const isGroupVisible = (group: { items: NavItem[] }): boolean => {
+    return group.items.some(isItemVisible)
+  }
 
   return (
     <Sidebar collapsible="icon" className="border-r border-slate-200 dark:border-slate-800">
@@ -214,14 +256,14 @@ function AppSidebar() {
       <SidebarSeparator />
 
       <SidebarContent>
-        {navGroups.map((group) => (
+        {navGroups.filter(isGroupVisible).map((group) => (
           <SidebarGroup key={group.label}>
             <SidebarGroupLabel className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
               {group.label}
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {group.items.map((item) => (
+                {group.items.filter(isItemVisible).map((item) => (
                   <SidebarMenuItem key={item.view}>
                     <SidebarMenuButton
                       isActive={currentView === item.view}

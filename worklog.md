@@ -1,204 +1,265 @@
-# HealthFlow Guinea — Phase 3: AI Health Intelligence Implementation Worklog
+# HealthFlow Guinea — Phase 4 (Telemedicine Advanced) + Maximum Security Implementation Log
 
-**Date**: 2026-05-10
-**Phase**: 3 — AI Health Intelligence
-**Status**: ✅ Completed
+## Date: 2026-05-10
 
 ## Summary
 
-Implemented a comprehensive AI Health Intelligence system for HealthFlow Guinea, a hospital information system built with Next.js 16, React 19, TypeScript, Tailwind CSS, shadcn/ui, Framer Motion, Zustand, and Prisma. This phase adds three major AI-powered features using the z-ai-web-dev-sdk, with full offline fallback capabilities.
+Successfully implemented Phase 4 (Telemedicine Advanced) with 4 sub-phases: Video Consultation (WebRTC), Community Health Worker Tools (ASC), AI Pre-Consultation, and Maximum Security (RLS + RBAC + Audit + Encryption).
 
-## Sub-Phase 3.1: AI Diagnostic Assistant
+---
 
-### Backend
-- **`src/lib/ai-diagnostic.ts`** — AI diagnostic service with:
-  - `buildMedicalPrompt()` — Builds medical system + user prompts for the AI
-  - `parseDiagnosticResponse()` — Parses AI JSON response into structured diagnostic data
-  - `getDiagnosticTree()` — Offline diagnostic trees for 5 symptom categories:
-    - Fièvre (Paludisme, Typhoïde, Dengue, Fièvre de Lassa)
-    - Douleurs abdominales (Appendicite, Ulcère, Hépatite, Paludisme viscéral)
-    - Difficultés respiratoires (Pneumonie, Asthme, Tuberculose, COVID-19)
-    - Symptômes neurologiques (Méningite, AVC, Paludisme cérébral, Épilepsie)
-    - Symptômes pédiatriques (Rougeole, Paludisme grave, Malnutrition, Infection respiratoire)
-  - Full TypeScript types: DiagnosticRequest, DiagnosticResponse, PossibleDiagnosis, PatientContext
+## Sub-Phase 4.1: Video Consultation (WebRTC)
 
-- **`src/app/api/ai/diagnostic/route.ts`** — API endpoint:
-  - POST endpoint accepting symptoms and patient context
-  - Rate limiting: 20 requests/hour per IP
-  - Tries z-ai-web-dev-sdk first, falls back to offline diagnostic trees
-  - Returns structured JSON with possibleDiagnoses, recommendedExams, orientation, redFlags, questions
+### Files Created:
+- **`src/lib/telemedicine.ts`** — Complete telemedicine service with:
+  - `TelemedicinePeerConnection` class using browser native WebRTC APIs (RTCPeerConnection, getUserMedia)
+  - Video quality adaptation: HD (720p), SD (480p), Audio-only
+  - Connection quality monitoring (packet loss, latency, jitter assessment)
+  - Screen sharing support via `getDisplayMedia`
+  - Camera/microphone toggle methods
+  - Signaling channel via API polling
+  - Demo video session data
 
-### Frontend
-- **`src/components/ai/symptom-selector.tsx`** — Symptom selection UI:
-  - 8 symptom categories with icons (Généraux, Tête, Respiratoire, Digestif, Urinaire, Cutané, Musculosquelettique, Pédiatrique)
-  - Search/filter functionality
-  - Custom symptom input
-  - Selected symptoms as removable tags with duration and severity editing
-  - Duration selector (aigu <7j, subaigu 7-30j, chronique >30j)
-  - Severity slider (1-10)
+- **`src/app/api/telemedicine/signaling/route.ts`** — Signaling API:
+  - POST: Send offer/answer/ICE candidate
+  - GET: Poll for pending signals
+  - Automatic cleanup of stale messages (5 min)
 
-- **`src/components/ai/patient-context-form.tsx`** — Patient context form:
-  - Age, gender, weight, height inputs
-  - Pre-existing conditions with quick-select buttons
-  - Current medications with custom input
-  - Known allergies with quick-select buttons
-  - Pregnancy status toggle
-  - Recent travel and vaccination status
+- **`src/app/api/telemedicine/sessions/route.ts`** — Session management:
+  - POST: Create session with RBAC middleware
+  - GET: List sessions with filters
+  - PUT: Update session status
+  - DELETE: End session
+  - All wrapped with `secureApiHandler` (RBAC + audit + rate limit)
 
-- **`src/components/ai/diagnostic-assistant.tsx`** — Main diagnostic UI:
-  - 4-step wizard flow (Symptômes → Contexte → Analyse → Résultats)
-  - Voice input support via Web Speech API
-  - Loading animation with pulsing brain icon
-  - Results display with:
-    - Confidence bars color-coded by percentage
-    - Urgency badges (Faible, Modéré, Élevé, Critique)
-    - Red flags with warning animations
-    - Orientation recommendation with contextual icons
-    - Recommended exams as badges
-    - Follow-up questions
-  - Export report to text file
-  - Offline mode indicator
-  - Medical disclaimer
+- **`src/components/telemedicine/video-consultation.tsx`** — Main video UI:
+  - Full video grid with doctor/patient views
+  - Camera/mic toggle buttons
+  - Screen share button
+  - Chat panel sidebar
+  - Connection quality indicator (green/yellow/red)
+  - Timer for consultation duration
+  - "Fin de consultation" button
+  - "Basculer en audio" fallback button
+  - Fullscreen mode support
+  - E2E encryption badge
+  - Recording indicator
 
-## Sub-Phase 3.2: Drug Interaction Checker
+- **`src/components/telemedicine/consultation-chat.tsx`** — Chat panel:
+  - Real-time text chat during video call
+  - Image/file sharing buttons
+  - Medical note support
+  - Message timestamps
+  - Custom scrollbar styling
 
-### Backend
-- **`src/lib/drug-interactions.ts`** — Drug interaction service:
-  - `buildInteractionPrompt()` — Builds AI prompt for interaction analysis
-  - `parseInteractionResponse()` — Parses AI response
-  - `checkInteractionsOffline()` — Offline interaction database with 25+ known interactions
-  - Covers African medications:
-    - Antipaludéens (Artéméther/Luméfantrine, Quinine, Primaquine)
-    - Antibiotiques (Amoxicilline, Ciprofloxacine, Métronidazole, Cotrimoxazole, Rifampicine, Isoniazide)
-    - Antirétroviraux (Efavirenz, Ténofovir, Dolutégravir)
-    - Antihypertenseurs (Amlodipine, Losartan, Hydrochlorothiazide)
-    - Antidiabétiques (Metformine, Glibenclamide, Insuline)
-    - Antalgiques/Anti-inflammatoires (Paracétamol, Ibuprofène, Diclofénac, Prednisone)
-  - Severity levels: MINEUR, MODÉRÉ, MAJEUR, CRITIQUE
+- **`src/components/telemedicine/virtual-waiting-room.tsx`** — Waiting room:
+  - Queue position and estimated wait time
+  - Doctor's name and specialty with online status
+  - Pre-consultation questionnaire
+  - Preparation instructions
+  - "Je suis prêt(e)" button
 
-- **`src/app/api/ai/interactions/route.ts`** — API endpoint:
-  - POST: Check interactions between medications
-  - AI-first with offline fallback
-  - Returns interactions, contraindications, dosage adjustments
+- **`src/components/telemedicine/preconsultation-form.tsx`** — Pre-consultation:
+  - `PreConsultationForm` — Patient questionnaire (chief complaint, duration, severity, symptoms, medications, allergies)
+  - `AIConsultationSummary` — Doctor-facing AI summary with accept/modify actions
 
-### Frontend
-- **`src/components/ai/interaction-checker.tsx`** — Interaction checker UI:
-  - Medication search from 30+ medication database
-  - Add multiple medications as tags
-  - Patient age/weight context
-  - "Vérifier les interactions" button with loading state
-  - Results display:
-    - Severity-coded interaction cards with color bars (CRITIQUE=red, MAJEUR=amber, MODÉRÉ=yellow, MINEUR=green)
-    - Severity legend with counts
-    - Detailed descriptions and recommendations
-    - Contraindications section
-    - Dosage adjustment suggestions
-  - Print report button
-  - Medical disclaimer
+---
 
-### Module Integration
-- **Pharmacy** (`src/components/app/modules/pharmacy.tsx`):
-  - Added "Vérifier interactions" button in header
-  - Category color indicator dots next to medication names
+## Sub-Phase 4.2: Community Health Worker Tools (ASC)
 
-- **Consultations** (`src/components/app/modules/consultations.tsx`):
-  - "Vérifier interactions" link on prescriptions with multiple medications
-  - Navigates to AI Interactions module
+### Files Created:
+- **`src/lib/asc-tools.ts`** — ASC toolkit:
+  - 6 diagnostic guides: Paludisme, Diarrhée, IRA, Malnutrition, Grossesse, Vaccination
+  - Step-by-step decision trees with Yes/No navigation
+  - Color-coded severity (vert/jaune/orange/rouge)
+  - Referral decision matrix
+  - Treatment instructions for "Traiter sur place"
+  - Medication recommendations
+  - Training modules with quiz functionality
+  - Demo visit and referral data
 
-## Sub-Phase 3.3: Intelligent Epidemiological Surveillance
+- **`src/app/api/asc/visits/route.ts`** — ASC Visit API:
+  - POST: Log community visit with RBAC
+  - GET: List visits with filters
+  - PUT: Update visit
 
-### Backend
-- **`src/lib/epidemiological-surveillance.ts`** — Surveillance service:
-  - `analyzeTrends()` — Analyzes surveillance data for trends (hausse, stable, baisse)
-  - `detectAnomalies()` — Detects unusual symptom clusters using standard deviation
-  - `generateAlert()` — Generates epidemiological alerts
-  - `predictOutbreak()` — Predicts outbreaks based on season and trends
-  - Disease-specific predictions:
-    - Paludisme (seasonal rainy season patterns)
-    - Choléra (waterborne, rainy season)
-    - Méningite (dry season peaks)
-    - Fièvre de Lassa (forest zone)
-    - Rougeole (vaccination gaps)
-    - COVID-19/Influenza (respiratory)
-  - Alert levels: VEILLE, ALERTE, ÉPIDÉMIE
+- **`src/app/api/asc/referrals/route.ts`** — ASC Referral API:
+  - POST: Create referral
+  - GET: Track referral status
+  - PUT: Accept/complete referral
 
-- **`src/app/api/ai/surveillance/route.ts`** — API endpoints:
-  - GET: Returns trends, anomalies, alerts, predictions, data quality
-  - POST: Submit new case data with AI analysis
+- **`src/components/asc/asc-dashboard.tsx`** — ASC mobile dashboard:
+  - Ultra-lightweight interface for low-end phones
+  - Today's visit list
+  - Quick diagnostic guides
+  - GPS tracking toggle
+  - Offline mode indicator with sync count
+  - Visit logging
+  - Referral tracking
+  - E-learning access
 
-### Frontend
-- **`src/components/ai/surveillance-map.tsx`** — SVG map of Guinea:
-  - 9 health zones (Conakry, Kindia, Boké, Labé, Mamou, Faranah, Kankan, N'Zérékoré, Kissidougou)
-  - Color-coded by alert level (red/amber/green)
-  - Click to filter alerts by zone
-  - Alert indicator dots
+- **`src/components/asc/diagnostic-guide.tsx`** — Step-by-step diagnostic:
+  - Accordion-style navigation
+  - Yes/No decision tree with animated transitions
+  - Color-coded severity results
+  - "Référer" vs "Traiter sur place" decision
+  - Red flags display
+  - Treatment instructions
+  - Medication details
+
+- **`src/components/asc/visit-form.tsx`** — Visit logging:
+  - Patient search/create
+  - GPS location auto-capture
+  - Symptoms checklist (common + custom)
+  - Vital signs entry (temp, HR, BP, weight, MUAC)
+  - Actions taken
+  - Referral creation if needed
+  - Offline save support
+
+- **`src/components/asc/e-learning.tsx`** — Training module:
+  - List of training modules with progress tracking
+  - Lesson completion tracking
+  - Quiz functionality with score calculation
+  - Certificate generation for perfect scores
+  - Progress bars
+
+---
+
+## Sub-Phase 4.3: AI Pre-Consultation
+
+### Files Created:
+- **`src/app/api/ai/preconsultation/route.ts`** — AI pre-consultation API:
+  - POST: Submit patient questionnaire
+  - Uses `z-ai-web-dev-sdk` for AI analysis
+  - Generates structured summary: key findings, suggested questions, possible diagnoses, red flags, recommended exams
+  - Fallback summary when AI is unavailable
+  - Rate limited (10 req/min)
+
+---
+
+## Sub-Phase 4.4: Maximum Security (RLS + RBAC + Audit + Encryption)
+
+### Files Created:
+- **`src/lib/rbac.ts`** — Enhanced Role-Based Access Control:
+  - Granular permissions matrix for 8 roles × 30+ permissions
+  - `hasPermission(role, resource, action)` — Check permission
+  - `canPerformAction(role, resource, action, options)` — Full check with ownership/authorization
+  - `getAccessibleViews(role)` — Get list of accessible views
+  - `filterDataByRole(role, data, resource)` — Filter response data by role
+  - Support for `withAuthorization`, `ownDataOnly`, `withAdminAuth` flags
+  - Roles: Administrateur, Médecin, Infirmier, Laborantin, Pharmacien, Secrétaire, ASC, Patient
+
+- **`src/lib/rls.ts`** — Row Level Security:
+  - `applyRLS(user, query, resource)` — Apply row-level filters
+  - `filterPatientData(patient, role)` — Filter patient record fields by role
+  - `maskSensitiveFields(data, role)` — Mask SSN, HIV status, mental health for unauthorized roles
+  - `canAccessRecord(user, resource, record)` — Check record access
+  - Per-role field access definitions
+
+- **`src/lib/audit-logger.ts`** — Comprehensive audit logging:
+  - `logAccess()` — Log data access
+  - `logModification()` — Log data changes with before/after
+  - `logAuth()` — Log auth events (login, logout, MFA)
+  - `logExport()` — Log data exports
+  - `logPermissionDenial()` — Log denied access
+  - `logCreation()` / `logDeletion()` — Log record lifecycle
+  - Tamper-proof hash chain
+  - `getAuditLogs()` — Query with filters
+  - `getAuditStats()` — Statistics
+  - `verifyIntegrity()` — Hash chain verification
+  - 10 demo audit entries
+  - API sync support
+
+- **`src/lib/security.ts`** — Security utilities:
+  - `encryptField()` / `decryptField()` — Browser-compatible encryption
+  - `encryptFieldServer()` / `decryptFieldServer()` — Node.js crypto
+  - `hashPassword()` / `verifyPassword()` — Password hashing
+  - `generateSecureToken()` — Cryptographically secure tokens
+  - `generateCSRFToken()` / `validateCSRFToken()` — CSRF protection
+  - `sanitizeInput()` / `sanitizeObject()` — XSS/SQL injection prevention
+  - `rateLimiter()` — Generic rate limiting
+  - Session management (create, validate, destroy)
+  - `checkIPWhitelist()` — IP-based access control
+  - `calculateSecurityScore()` — Security score (0-100)
+
+- **`src/lib/api-middleware.ts`** — API middleware factory:
+  - `withRBAC(handler, permission)` — Check role has permission
+  - `withAudit(handler, resource, action)` — Log access
+  - `withRateLimit(handler, maxRequests, window)` — Rate limit
+  - `withValidation(handler, schema)` — Input validation
+  - `withCSRF(handler)` — CSRF protection
+  - `secureApiHandler(handler, config)` — Combines all middleware
+  - Automatic user context extraction from headers
+
+- **`src/app/api/audit/route.ts`** — Audit log API:
+  - GET: Query audit logs (admin only, with filters)
+  - POST: Create audit entry (for offline sync)
+  - Stats endpoint
+
+- **`src/components/admin/audit-log-viewer.tsx`** — Audit log UI:
+  - Real-time log viewer with filters (action, severity, search)
+  - Stats cards (total entries, critical, denied, active sessions)
+  - Export functionality
+  - Color-coded severity badges
+  - Action labels in French
+
+- **`src/components/admin/security-dashboard.tsx`** — Security dashboard:
+  - Security score with visual gauge (SVG)
+  - Stats grid (sessions, failed attempts, critical events)
+  - Security features status (8 features, all enabled)
+  - Recent denied attempts section
+  - Quick actions: force logout all, regenerate tokens, maintenance mode
+
+- **`src/components/admin/permission-matrix.tsx`** — Permission management:
+  - Visual matrix of roles × permissions
+  - Role selector highlighting
+  - Permission indicators (check/X icons)
+  - Authorization flags (*, **, "Propre")
   - Legend
+  - Export/import config buttons
 
-- **`src/components/ai/surveillance-dashboard.tsx`** — Full surveillance dashboard:
-  - KPI cards (active alerts, total cases, deaths, epidemics)
-  - 4-tab interface:
-    - **Carte**: Interactive map + alert list with zone filtering
-    - **Tendances**: Area/Line charts for Paludisme, Choléra, multi-disease comparison
-    - **Alertes**: Searchable alert cards with severity, status, case counts
-    - **Prédictions**: Risk scores, outbreak probability, preventive actions
-  - Data quality indicators
-  - DHIS2 integration placeholder
+- **`src/hooks/use-permission.ts`** — Permission check hooks:
+  - `usePermission(resource, action)` — Returns allowed + flags
+  - `useRolePermissions()` — Returns all permissions for current role
+  - `useCanPerform(resource, action, options)` — Full check with ownership
+  - `useFilteredData(resource, data)` — Returns RLS-filtered data
+  - `useAccessibleViews()` — Returns accessible views list
 
-- **`src/components/ai/alert-detail.tsx`** — Alert detail view:
-  - Alert metadata and key metrics
-  - Epidemiological curve chart
-  - Timeline of events
-  - Recommended actions
-  - Affected areas
-  - Generate Ministry report button
+### Files Updated:
+- **`src/middleware.ts`** — Enhanced with security:
+  - Content-Security-Policy header
+  - X-Frame-Options: DENY
+  - X-Content-Type-Options: nosniff
+  - Referrer-Policy: strict-origin-when-cross-origin
+  - Permissions-Policy (restrict camera/mic)
+  - HSTS (production only)
+  - Rate limiting on API routes (100/min general, 10/min auth)
+  - CSRF origin checking on POST/PUT/DELETE
+  - IP logging for audit
 
-## Data Store Updates
+- **`src/lib/store.ts`** — Added 6 new AppView types:
+  - video-consultation, virtual-waiting-room, asc-dashboard
+  - audit-log, security-dashboard, permission-matrix
 
-- **`src/lib/data-store.ts`** — Added Phase 3 types and demo data:
-  - Types: DiagnosticSession, PatientContext, PossibleDiagnosis, OrientationLevel, DrugInteractionAlert, DosageAdjustment, InteractionCheckResult, SurveillanceAlertLevel, EpidemiologicalAlert, SurveillanceDataPoint, OutbreakPrediction
-  - Demo data:
-    - 5 epidemiological alerts (Paludisme Conakry, Choléra Kindia, Méningite N'Zérékoré, Rougeole Conakry, Fièvre de Lassa Faranah)
-    - 18 surveillance data points across 4 diseases
-    - 6 outbreak predictions
+- **`src/components/app/app-shell.tsx`** — Updated navigation:
+  - Added "Télémédecine" group (Video Consultation, Salle d'attente, Outils ASC)
+  - Added "Sécurité" admin-only group (Journal d'audit, Sécurité, Permissions)
+  - RBAC-based menu item visibility using `hasPermission`
+  - Updated viewTitles for all new views
 
-## Navigation Integration
+- **`src/app/page.tsx`** — Updated with new view components:
+  - VideoConsultation, VirtualWaitingRoom, ASCDashboard
+  - AuditLogViewer, SecurityDashboard, PermissionMatrix
+  - All properly mapped in viewComponents
 
-- **`src/lib/store.ts`** — Added 3 new AppView types: 'ai-diagnostic', 'ai-interactions', 'ai-surveillance'
-- **`src/components/app/app-shell.tsx`** — Added "IA Santé" navigation group with Brain, AlertCircle, Activity icons
-- **`src/app/page.tsx`** — Mapped new views to DiagnosticAssistant, InteractionChecker, SurveillanceDashboard
+---
 
-## Technical Details
+## Architecture Highlights
 
-- All AI calls use z-ai-web-dev-sdk in API routes only (never client-side)
-- Full offline fallback with predefined diagnostic trees and drug interaction databases
-- All UI text in French
-- Medical disclaimer on every AI feature
-- TypeScript strict typing throughout
-- Rate limiting on diagnostic API (20 req/hour)
-- Responsive design with mobile-first approach
-- Build passes successfully with no errors
-
-## Files Created/Modified
-
-### New Files (14)
-1. `src/lib/ai-diagnostic.ts`
-2. `src/lib/drug-interactions.ts`
-3. `src/lib/epidemiological-surveillance.ts`
-4. `src/app/api/ai/diagnostic/route.ts`
-5. `src/app/api/ai/interactions/route.ts`
-6. `src/app/api/ai/surveillance/route.ts`
-7. `src/components/ai/symptom-selector.tsx`
-8. `src/components/ai/patient-context-form.tsx`
-9. `src/components/ai/diagnostic-assistant.tsx`
-10. `src/components/ai/interaction-checker.tsx`
-11. `src/components/ai/surveillance-map.tsx`
-12. `src/components/ai/surveillance-dashboard.tsx`
-13. `src/components/ai/alert-detail.tsx`
-
-### Modified Files (5)
-1. `src/lib/store.ts` — Added 3 new AppView types
-2. `src/lib/data-store.ts` — Added Phase 3 types and demo data
-3. `src/components/app/app-shell.tsx` — Added IA Santé navigation group
-4. `src/app/page.tsx` — Added new view mappings
-5. `src/components/app/modules/pharmacy.tsx` — Added interaction check button + indicators
-6. `src/components/app/modules/consultations.tsx` — Added interaction check link
+1. **RBAC is enforced everywhere**: Sidebar hides unauthorized menu items, API routes return 403 for unauthorized roles, UI components can use `usePermission` hook
+2. **All API routes use `secureApiHandler`**: Combines RBAC + audit + rate limit in one wrapper
+3. **Audit trail is comprehensive**: Every data access, modification, and permission denial is logged with tamper-proof hashing
+4. **WebRTC uses native browser APIs**: No external packages needed
+5. **Security headers are comprehensive**: CSP, X-Frame-Options, HSTS, etc.
+6. **All UI text is in French**: Consistent with the Guinea deployment context
+7. **Demo data is rich**: 10 audit entries, 2 ASC visits, 2 referrals, diagnostic guides for 6 conditions, 4 training modules

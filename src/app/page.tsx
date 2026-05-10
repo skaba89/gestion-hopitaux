@@ -25,9 +25,16 @@ import { PatientPortalPage } from '@/components/app/modules/patient-portal'
 import { DiagnosticAssistant } from '@/components/ai/diagnostic-assistant'
 import { InteractionChecker } from '@/components/ai/interaction-checker'
 import { SurveillanceDashboard } from '@/components/ai/surveillance-dashboard'
+import { VideoConsultation } from '@/components/telemedicine/video-consultation'
+import { VirtualWaitingRoom } from '@/components/telemedicine/virtual-waiting-room'
+import { ASCDashboard } from '@/components/asc/asc-dashboard'
+import { AuditLogViewer } from '@/components/admin/audit-log-viewer'
+import { SecurityDashboard } from '@/components/admin/security-dashboard'
+import { PermissionMatrix } from '@/components/admin/permission-matrix'
 import { I18nProvider } from '@/i18n/provider'
 import { QueryProvider } from '@/lib/query-provider'
 import { PWARegistrar } from '@/components/app/pwa-registrar'
+import { demoVideoSessions } from '@/lib/telemedicine'
 
 const viewComponents: Record<AppView, React.ComponentType> = {
   landing: LandingPage,
@@ -53,6 +60,12 @@ const viewComponents: Record<AppView, React.ComponentType> = {
   'ai-diagnostic': DiagnosticAssistant,
   'ai-interactions': InteractionChecker,
   'ai-surveillance': SurveillanceDashboard,
+  'video-consultation': VideoConsultation,
+  'virtual-waiting-room': () => <VirtualWaitingRoom session={demoVideoSessions[0]} onStartCall={() => {}} />,
+  'asc-dashboard': ASCDashboard,
+  'audit-log': AuditLogViewer,
+  'security-dashboard': SecurityDashboard,
+  'permission-matrix': PermissionMatrix,
 }
 
 function AppContent() {
