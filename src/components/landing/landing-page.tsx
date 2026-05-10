@@ -1505,8 +1505,8 @@ function DemoVideoModal({ open, onClose }: { open: boolean; onClose: () => void 
               ))}
             </div>
             <div className="flex justify-between mt-1">
-              {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d) => (
-                <span key={d} className="text-[8px] text-slate-400 w-full text-center">{d}</span>
+              {['L', 'Ma', 'Me', 'J', 'V', 'S', 'D'].map((d, i) => (
+                <span key={i} className="text-[8px] text-slate-400 w-full text-center">{d}</span>
               ))}
             </div>
           </div>
