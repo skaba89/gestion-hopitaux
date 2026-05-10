@@ -32,6 +32,9 @@ import {
   CheckCircle2,
   XCircle,
   Smartphone,
+  CreditCard,
+  MessageSquare,
+  ShieldCheck,
 } from 'lucide-react'
 import { useStore, type AppView } from '@/lib/store'
 import { useDataStore } from '@/lib/data-store'
@@ -107,6 +110,9 @@ const navGroups: { label: string; items: NavItem[] }[] = [
     label: 'Gestion',
     items: [
       { view: 'billing', label: 'Facturation', icon: Receipt },
+      { view: 'payments', label: 'Paiements', icon: CreditCard },
+      { view: 'messaging', label: 'Messagerie', icon: MessageSquare },
+      { view: 'insurance', label: 'Assurance', icon: ShieldCheck },
       { view: 'teleconsultation', label: 'Téléconsultation', icon: Video },
       { view: 'analytics', label: 'Analytics', icon: BarChart3 },
     ],
@@ -136,6 +142,9 @@ const viewTitles: Record<AppView, string> = {
   maternity: 'Maternité',
   vaccination: 'Vaccination',
   billing: 'Facturation & Paiements',
+  payments: 'Paiements Mobile Money',
+  messaging: 'Messagerie',
+  insurance: 'Assurance Santé',
   teleconsultation: 'Téléconsultation',
   analytics: 'Analytics',
   administration: 'Administration',

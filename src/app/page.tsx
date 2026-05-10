@@ -14,6 +14,9 @@ import { EmergenciesPage } from '@/components/app/modules/emergencies'
 import { MaternityPage } from '@/components/app/modules/maternity'
 import { VaccinationPage } from '@/components/app/modules/vaccination'
 import { BillingPage } from '@/components/app/modules/billing'
+import { PaymentsPage } from '@/components/app/modules/payments'
+import { MessagingPage } from '@/components/app/modules/messaging'
+import { InsurancePage } from '@/components/app/modules/insurance-module'
 import { TeleconsultationPage } from '@/components/app/modules/teleconsultation'
 import { AnalyticsPage } from '@/components/app/modules/analytics'
 import { AdministrationPage } from '@/components/app/modules/administration'
@@ -36,6 +39,9 @@ const viewComponents: Record<AppView, React.ComponentType> = {
   maternity: MaternityPage,
   vaccination: VaccinationPage,
   billing: BillingPage,
+  payments: PaymentsPage,
+  messaging: MessagingPage,
+  insurance: InsurancePage,
   teleconsultation: TeleconsultationPage,
   analytics: AnalyticsPage,
   administration: AdministrationPage,

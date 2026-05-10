@@ -170,6 +170,135 @@ export interface Invoice {
   status: 'En attente' | 'Payée' | 'Partielle' | 'Annulée'
   paymentMethod: string | null
   paidAmount: number
+  mobileMoneyTransactions?: string[]
+  insuranceCoverage?: InsuranceCoverage[]
+}
+
+/* ─────────── Mobile Money Types ─────────── */
+
+export type MobileMoneyProvider = 'Orange Money' | 'MTN MoMo'
+export type TransactionStatus = 'En attente' | 'En cours' | 'Réussi' | 'Échoué' | 'Remboursé'
+export type PaymentReason = 'Facture' | 'Consultation' | 'Pharmacie' | 'Laboratoire' | 'Hospitalisation' | 'Autre'
+
+export interface MobileMoneyTransaction {
+  id: string
+  reference: string
+  provider: MobileMoneyProvider
+  phoneNumber: string
+  amount: number
+  currency: 'GNF' | 'USD'
+  reason: PaymentReason
+  invoiceId: string | null
+  patientName: string
+  patientId: string
+  status: TransactionStatus
+  createdAt: string
+  updatedAt: string
+  completedAt: string | null
+  providerTransactionId: string | null
+  paymentLink: string | null
+}
+
+/* ─────────── Insurance Types ─────────── */
+
+export interface InsuranceProvider {
+  id: string
+  name: string
+  code: string
+  coveragePercentage: number
+  contactPhone: string
+  email: string
+  address: string
+  isActive: boolean
+  logoColor: string
+}
+
+export interface InsuranceCoverage {
+  providerId: string
+  providerName: string
+  policyNumber: string
+  coveragePercentage: number
+  coveredAmount: number
+}
+
+export interface InsuranceClaim {
+  id: string
+  providerId: string
+  providerName: string
+  patientId: string
+  patientName: string
+  invoiceId: string
+  amount: number
+  coveredAmount: number
+  patientAmount: number
+  policyNumber: string
+  status: 'Soumise' | 'En cours' | 'Approuvée' | 'Rejetée' | 'Remboursée'
+  submittedAt: string
+  processedAt: string | null
+  notes: string
+}
+
+export interface PreAuthorization {
+  id: string
+  providerId: string
+  providerName: string
+  patientId: string
+  patientName: string
+  procedureDescription: string
+  estimatedCost: number
+  status: 'Demandée' | 'Approuvée' | 'Rejetée'
+  requestedAt: string
+  responseAt: string | null
+  authorizationCode: string | null
+}
+
+/* ─────────── Messaging Types ─────────── */
+
+export type MessageChannel = 'SMS' | 'WhatsApp'
+export type MessageStatus = 'En attente' | 'Envoyé' | 'Délivré' | 'Échoué'
+
+export interface MessageLog {
+  id: string
+  channel: MessageChannel
+  recipient: string
+  recipientName: string
+  message: string
+  templateId: string | null
+  status: MessageStatus
+  sentAt: string
+  deliveredAt: string | null
+  errorMessage: string | null
+}
+
+/* ─────────── Health Credit (Crédit Santé) Types ─────────── */
+
+export interface PaymentPlan {
+  id: string
+  invoiceId: string
+  patientId: string
+  patientName: string
+  totalAmount: number
+  downPayment: number
+  installmentCount: number
+  installmentAmount: number
+  startDate: string
+  status: 'Actif' | 'Terminé' | 'En retard' | 'Annulé'
+  installments: { id: string; dueDate: string; amount: number; paidDate: string | null; status: 'En attente' | 'Payé' | 'En retard' }[]
+}
+
+/* ─────────── Reminder Settings ─────────── */
+
+export interface ReminderSettings {
+  appointmentReminders: boolean
+  appointmentChannel: 'SMS' | 'WhatsApp' | 'Les deux'
+  appointmentTiming: '24h' | '2h' | 'Les deux'
+  labResultNotifications: boolean
+  labResultChannel: 'SMS' | 'WhatsApp' | 'Les deux'
+  vaccinationReminders: boolean
+  vaccinationChannel: 'SMS' | 'WhatsApp' | 'Les deux'
+  paymentReminders: boolean
+  paymentChannel: 'SMS' | 'WhatsApp' | 'Les deux'
+  prescriptionReminders: boolean
 }
 
 export interface TeleconsultSession {
@@ -440,6 +569,65 @@ const demoFamilyAccounts: FamilyAccount[] = [
   },
 ]
 
+/* ─────────── Phase 2 Demo Data ─────────── */
+
+const demoMobileMoneyTransactions: MobileMoneyTransaction[] = [
+  { id: 'MM-001', reference: 'OM-20260510-001', provider: 'Orange Money', phoneNumber: '+224 622 11 22 33', amount: 60000, currency: 'GNF', reason: 'Facture', invoiceId: 'FAC-002', patientName: 'Mamadou Condé', patientId: 'P-2024-002', status: 'Réussi', createdAt: '2026-05-10T09:30:00', updatedAt: '2026-05-10T09:32:00', completedAt: '2026-05-10T09:32:00', providerTransactionId: 'OM-TXN-78901', paymentLink: null },
+  { id: 'MM-002', reference: 'MTN-20260509-001', provider: 'MTN MoMo', phoneNumber: '+224 524 77 88 99', amount: 45000, currency: 'GNF', reason: 'Consultation', invoiceId: 'FAC-003', patientName: 'Fatoumata Camara', patientId: 'P-2024-003', status: 'En attente', createdAt: '2026-05-09T14:00:00', updatedAt: '2026-05-09T14:00:00', completedAt: null, providerTransactionId: null, paymentLink: 'https://pay.mtn.gf/MTN-20260509-001' },
+  { id: 'MM-003', reference: 'OM-20260508-001', provider: 'Orange Money', phoneNumber: '+224 621 55 66 77', amount: 450000, currency: 'GNF', reason: 'Hospitalisation', invoiceId: 'FAC-004', patientName: 'Ousmane Camara', patientId: 'P-2024-010', status: 'En cours', createdAt: '2026-05-08T11:00:00', updatedAt: '2026-05-08T11:01:00', completedAt: null, providerTransactionId: 'OM-TXN-78902', paymentLink: null },
+  { id: 'MM-004', reference: 'MTN-20260507-001', provider: 'MTN MoMo', phoneNumber: '+224 527 77 88 99', amount: 25000, currency: 'GNF', reason: 'Consultation', invoiceId: null, patientName: 'Abdoulaye Sylla', patientId: 'P-2024-006', status: 'Réussi', createdAt: '2026-05-07T08:15:00', updatedAt: '2026-05-07T08:17:00', completedAt: '2026-05-07T08:17:00', providerTransactionId: 'MTN-TXN-45601', paymentLink: null },
+  { id: 'MM-005', reference: 'OM-20260506-001', provider: 'Orange Money', phoneNumber: '+224 620 33 44 55', amount: 15000, currency: 'GNF', reason: 'Pharmacie', invoiceId: null, patientName: 'Aïssatou Baldé', patientId: 'P-2024-009', status: 'Échoué', createdAt: '2026-05-06T16:30:00', updatedAt: '2026-05-06T16:35:00', completedAt: null, providerTransactionId: 'OM-TXN-78903', paymentLink: null },
+]
+
+const demoInsuranceProviders: InsuranceProvider[] = [
+  { id: 'INS-001', name: 'SONAR Assurance', code: 'SONAR', coveragePercentage: 80, contactPhone: '+224 630 00 00 00', email: 'info@sonar-gn.com', address: 'Conakry, Kaloum', isActive: true, logoColor: '#E67E22' },
+  { id: 'INS-002', name: 'CGM Guinée', code: 'CGM', coveragePercentage: 70, contactPhone: '+224 631 00 00 00', email: 'contact@cgm-guinee.com', address: 'Conakry, Dixinn', isActive: true, logoColor: '#2ECC71' },
+  { id: 'INS-003', name: 'Saham Assurance', code: 'SAHAM', coveragePercentage: 75, contactPhone: '+224 632 00 00 00', email: 'info@saham-gn.com', address: 'Conakry, Matam', isActive: true, logoColor: '#9B59B6' },
+  { id: 'INS-004', name: 'NSIA Assurance', code: 'NSIA', coveragePercentage: 85, contactPhone: '+224 633 00 00 00', email: 'guinee@nsia.co', address: 'Conakry, Matoto', isActive: false, logoColor: '#3498DB' },
+]
+
+const demoInsuranceClaims: InsuranceClaim[] = [
+  { id: 'CLM-001', providerId: 'INS-001', providerName: 'SONAR Assurance', patientId: 'P-2024-010', patientName: 'Ousmane Camara', invoiceId: 'FAC-004', amount: 450000, coveredAmount: 360000, patientAmount: 90000, policyNumber: 'SON-2024-001234', status: 'En cours', submittedAt: '2026-05-08T12:00:00', processedAt: null, notes: 'AVC ischémique — hospitalisation d\'urgence' },
+  { id: 'CLM-002', providerId: 'INS-002', providerName: 'CGM Guinée', patientId: 'P-2024-006', patientName: 'Abdoulaye Sylla', invoiceId: 'FAC-001', amount: 40000, coveredAmount: 28000, patientAmount: 12000, policyNumber: 'CGM-2023-005678', status: 'Approuvée', submittedAt: '2026-05-09T10:00:00', processedAt: '2026-05-09T16:00:00', notes: 'Consultation de suivi rénal' },
+  { id: 'CLM-003', providerId: 'INS-003', providerName: 'Saham Assurance', patientId: 'P-2024-002', patientName: 'Mamadou Condé', invoiceId: 'FAC-002', amount: 60000, coveredAmount: 45000, patientAmount: 15000, policyNumber: 'SAH-2024-009012', status: 'Remboursée', submittedAt: '2026-05-10T10:00:00', processedAt: '2026-05-10T14:00:00', notes: 'Contrôle hypertension + ECG' },
+]
+
+const demoMessageLogs: MessageLog[] = [
+  { id: 'MSG-001', channel: 'SMS', recipient: '+224 622 11 22 33', recipientName: 'Aminata Diallo', message: 'Rappel : Vous avez un rendez-vous le 10/05/2026 à 08:00 avec Dr. Diallo à Hôpital Donka. HealthFlow Africa', templateId: 'appointment_reminder', status: 'Délivré', sentAt: '2026-05-09T08:00:00', deliveredAt: '2026-05-09T08:01:00', errorMessage: null },
+  { id: 'MSG-002', channel: 'WhatsApp', recipient: '+224 623 44 55 66', recipientName: 'Mamadou Condé', message: 'Vos résultats d\'analyse sont disponibles. Connectez-vous à votre espace patient pour les consulter. HealthFlow Africa', templateId: 'lab_result', status: 'Délivré', sentAt: '2026-05-10T09:20:00', deliveredAt: '2026-05-10T09:21:00', errorMessage: null },
+  { id: 'MSG-003', channel: 'SMS', recipient: '+224 626 55 66 77', recipientName: 'Mariama Sow', message: 'Rappel vaccination : Enfant de M. Sow doit recevoir le vaccin DTC-HepB-Hib 3 le 15/12/2025. HealthFlow Africa', templateId: 'vaccination_reminder', status: 'Envoyé', sentAt: '2026-05-05T10:00:00', deliveredAt: null, errorMessage: null },
+  { id: 'MSG-004', channel: 'WhatsApp', recipient: '+224 622 11 22 33', recipientName: 'Aminata Diallo', message: 'Paiement de 60,000 GNF reçu pour la facture #FAC-002. Merci ! HealthFlow Africa', templateId: 'payment_confirmation', status: 'Délivré', sentAt: '2026-05-10T09:32:00', deliveredAt: '2026-05-10T09:33:00', errorMessage: null },
+  { id: 'MSG-005', channel: 'SMS', recipient: '+224 620 33 44 55', recipientName: 'Aïssatou Baldé', message: 'ALERTE : Rupture de stock Salbutamol inhalé prévue sous 7 jours. Contactez immédiatement votre centre de santé. HealthFlow Africa', templateId: 'emergency_alert', status: 'Échoué', sentAt: '2026-05-06T15:00:00', deliveredAt: null, errorMessage: 'Numéro injoignable' },
+]
+
+const demoPaymentPlans: PaymentPlan[] = [
+  {
+    id: 'PP-001', invoiceId: 'FAC-004', patientId: 'P-2024-010', patientName: 'Ousmane Camara', totalAmount: 450000, downPayment: 90000, installmentCount: 6, installmentAmount: 60000, startDate: '2026-06-01', status: 'Actif',
+    installments: [
+      { id: 'PP-001-1', dueDate: '2026-06-01', amount: 90000, paidDate: '2026-06-01', status: 'Payé' },
+      { id: 'PP-001-2', dueDate: '2026-07-01', amount: 60000, paidDate: null, status: 'En attente' },
+      { id: 'PP-001-3', dueDate: '2026-08-01', amount: 60000, paidDate: null, status: 'En attente' },
+      { id: 'PP-001-4', dueDate: '2026-09-01', amount: 60000, paidDate: null, status: 'En attente' },
+      { id: 'PP-001-5', dueDate: '2026-10-01', amount: 60000, paidDate: null, status: 'En attente' },
+      { id: 'PP-001-6', dueDate: '2026-11-01', amount: 60000, paidDate: null, status: 'En attente' },
+      { id: 'PP-001-7', dueDate: '2026-12-01', amount: 60000, paidDate: null, status: 'En attente' },
+    ],
+  },
+]
+
+const defaultReminderSettings: ReminderSettings = {
+  appointmentReminders: true,
+  appointmentChannel: 'SMS',
+  appointmentTiming: '24h',
+  labResultNotifications: true,
+  labResultChannel: 'WhatsApp',
+  vaccinationReminders: true,
+  vaccinationChannel: 'SMS',
+  paymentReminders: true,
+  paymentChannel: 'SMS',
+  prescriptionReminders: false,
+}
+
 /* ─────────── Data Store ─────────── */
 
 interface DataState {
@@ -457,6 +645,14 @@ interface DataState {
   notifications: Notification[]
   documentAuthorizations: DocumentAuthorization[]
   familyAccounts: FamilyAccount[]
+
+  // Phase 2
+  mobileMoneyTransactions: MobileMoneyTransaction[]
+  insuranceProviders: InsuranceProvider[]
+  insuranceClaims: InsuranceClaim[]
+  messageLogs: MessageLog[]
+  paymentPlans: PaymentPlan[]
+  reminderSettings: ReminderSettings
 
   // Actions
   addPatient: (patient: Patient) => void
@@ -517,6 +713,28 @@ interface DataState {
   addFamilyMember: (accountId: string, member: FamilyMember) => void
   removeFamilyMember: (accountId: string, patientId: string) => void
 
+  // Phase 2 actions — Mobile Money
+  addMobileMoneyTransaction: (txn: MobileMoneyTransaction) => void
+  updateMobileMoneyTransaction: (id: string, data: Partial<MobileMoneyTransaction>) => void
+
+  // Phase 2 actions — Insurance
+  addInsuranceProvider: (provider: InsuranceProvider) => void
+  updateInsuranceProvider: (id: string, data: Partial<InsuranceProvider>) => void
+  addInsuranceClaim: (claim: InsuranceClaim) => void
+  updateInsuranceClaim: (id: string, data: Partial<InsuranceClaim>) => void
+
+  // Phase 2 actions — Messaging
+  addMessageLog: (msg: MessageLog) => void
+  updateMessageLog: (id: string, data: Partial<MessageLog>) => void
+
+  // Phase 2 actions — Payment Plans
+  addPaymentPlan: (plan: PaymentPlan) => void
+  updatePaymentPlan: (id: string, data: Partial<PaymentPlan>) => void
+  payInstallment: (planId: string, installmentId: string) => void
+
+  // Phase 2 actions — Reminder Settings
+  updateReminderSettings: (data: Partial<ReminderSettings>) => void
+
   resetToDemo: () => void
 }
 
@@ -535,6 +753,12 @@ const initialState = {
   notifications: demoNotifications,
   documentAuthorizations: [] as DocumentAuthorization[],
   familyAccounts: demoFamilyAccounts,
+  mobileMoneyTransactions: demoMobileMoneyTransactions,
+  insuranceProviders: demoInsuranceProviders,
+  insuranceClaims: demoInsuranceClaims,
+  messageLogs: demoMessageLogs,
+  paymentPlans: demoPaymentPlans,
+  reminderSettings: defaultReminderSettings,
 }
 
 export const useDataStore = create<DataState>()(
@@ -696,6 +920,43 @@ export const useDataStore = create<DataState>()(
           a.id === accountId ? { ...a, members: a.members.filter((m) => m.patientId !== patientId) } : a
         ),
       })),
+
+      // Phase 2 — Mobile Money actions
+      addMobileMoneyTransaction: (txn) => set((s) => ({ mobileMoneyTransactions: [...s.mobileMoneyTransactions, txn] })),
+      updateMobileMoneyTransaction: (id, data) => set((s) => ({
+        mobileMoneyTransactions: s.mobileMoneyTransactions.map((t) => t.id === id ? { ...t, ...data } : t),
+      })),
+
+      // Phase 2 — Insurance actions
+      addInsuranceProvider: (provider) => set((s) => ({ insuranceProviders: [...s.insuranceProviders, provider] })),
+      updateInsuranceProvider: (id, data) => set((s) => ({
+        insuranceProviders: s.insuranceProviders.map((p) => p.id === id ? { ...p, ...data } : p),
+      })),
+      addInsuranceClaim: (claim) => set((s) => ({ insuranceClaims: [...s.insuranceClaims, claim] })),
+      updateInsuranceClaim: (id, data) => set((s) => ({
+        insuranceClaims: s.insuranceClaims.map((c) => c.id === id ? { ...c, ...data } : c),
+      })),
+
+      // Phase 2 — Messaging actions
+      addMessageLog: (msg) => set((s) => ({ messageLogs: [msg, ...s.messageLogs] })),
+      updateMessageLog: (id, data) => set((s) => ({
+        messageLogs: s.messageLogs.map((m) => m.id === id ? { ...m, ...data } : m),
+      })),
+
+      // Phase 2 — Payment Plan actions
+      addPaymentPlan: (plan) => set((s) => ({ paymentPlans: [...s.paymentPlans, plan] })),
+      updatePaymentPlan: (id, data) => set((s) => ({
+        paymentPlans: s.paymentPlans.map((p) => p.id === id ? { ...p, ...data } : p),
+      })),
+      payInstallment: (planId, installmentId) => set((s) => ({
+        paymentPlans: s.paymentPlans.map((p) => p.id === planId ? {
+          ...p,
+          installments: p.installments.map((i) => i.id === installmentId ? { ...i, status: 'Payé' as const, paidDate: new Date().toISOString().split('T')[0] } : i),
+        } : p),
+      })),
+
+      // Phase 2 — Reminder Settings
+      updateReminderSettings: (data) => set((s) => ({ reminderSettings: { ...s.reminderSettings, ...data } })),
 
       // Reset
       resetToDemo: () => set(initialState),

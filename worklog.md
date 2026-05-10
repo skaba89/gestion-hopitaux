@@ -1,159 +1,176 @@
-# HealthFlow Africa - Phase 1 Implementation Worklog
+# HealthFlow Africa — Phase 2 Implementation Worklog
 
-**Date:** 2026-05-10
-**Phase:** Phase 1 - Foundation & Offline-First Architecture
-**Implementer:** Z.ai Code
+## Date: 2026-05-10
 
 ## Summary
+Implemented Phase 2 of HealthFlow Guinea: Mobile Money, SMS/WhatsApp, QR Payments & Insurance modules. This adds comprehensive payment and communication capabilities to the hospital information system.
 
-Implemented all 4 sub-phases of the HealthFlow Africa roadmap Phase 1, adding PWA offline-first architecture, internationalization, authentication, and React Query API integration to the existing Next.js 16 + React 19 + TypeScript + Tailwind CSS + shadcn/ui application.
+## Files Created
 
----
+### Service Layers (src/lib/)
+1. **src/lib/mobile-money.ts** — Mobile Money service layer
+   - Orange Money API integration class (sandbox/demo)
+   - MTN MoMo API integration class (sandbox/demo)
+   - Unified MobileMoneyService that auto-selects provider based on phone number (+224 6XX = Orange, +224 5XX = MTN)
+   - Phone validation for Guinea format (+224)
+   - Transaction reference generation
+   - Webhook signature verification (demo)
+   - Payment link generation
 
-## Sub-Phase 1.1: PWA Offline-First Architecture
+2. **src/lib/messaging.ts** — Unified messaging service
+   - SMS channel (Twilio-compatible API demo)
+   - WhatsApp Business API (demo)
+   - Rate limiting (100 SMS/hour, 50 WhatsApp/hour)
+   - Message queue for offline/batched sending
+   - OTP sending via SMS
+   - Appointment reminders, lab result notifications, payment confirmations
 
-### Files Created
+3. **src/lib/message-templates.ts** — French message templates
+   - 16 templates across 7 categories: Rendez-vous, Résultat, Vaccination, Paiement, Urgence, Ordonnance, Campagne
+   - All templates in French with placeholder support
+   - Template filling utility function
 
-| File | Description |
-|------|-------------|
-| `public/manifest.json` | PWA manifest with app name "HealthFlow Africa", short name "HealthFlow", theme color #0d9488 (teal-600), background color #0f172a, display: standalone, French description, placeholder icon paths, and app shortcuts |
-| `public/sw.js` | Service Worker v1 with three caching strategies: cache-first for static assets (JS, CSS, images, fonts), network-first for API calls (/api/*), stale-while-revalidate for pages. Includes background sync for pending mutations, offline fallback, and push notification support |
-| `src/lib/pwa.ts` | PWA registration utility with service worker registration, update checking, online/offline status detection, sync status indicator helpers, and periodic update checking (30 min) |
-| `src/lib/offline-db.ts` | IndexedDB wrapper for offline data with database 'healthflow-offline', stores for patients/appointments/consultations/labRequests/medications, CRUD operations, sync queue for pending changes, and conflict resolution (last-write-wins with timestamp) |
-| `src/hooks/use-online-status.ts` | Hook for online/offline detection using `useSyncExternalStore` (avoids setState in effect lint error). Includes syncing state management with 3-second sync indicator on reconnection |
-| `src/components/app/network-status.tsx` | Visual network status indicator: green dot (online), red dot with "Hors ligne" text (offline, with pending changes count), yellow dot with "Synchronisation..." (syncing). Uses Framer Motion AnimatePresence for smooth transitions |
-| `src/components/app/pwa-registrar.tsx` | Client component that registers the PWA service worker and initializes network listeners on mount |
+4. **src/lib/insurance.ts** — Insurance service layer
+   - Coverage verification (demo)
+   - Claim submission (demo)
+   - Pre-authorization requests (demo)
+   - Reimbursement calculation
+   - Provider and claim status formatting helpers
 
-### Files Updated
+### API Routes (src/app/api/)
+5. **src/app/api/payments/mobile-money/route.ts** — POST initiate payment, GET check status
+6. **src/app/api/payments/mobile-money/callback/route.ts** — POST webhook callback
+7. **src/app/api/payments/dashboard/route.ts** — GET financial statistics
+8. **src/app/api/messaging/sms/route.ts** — POST send SMS (single/bulk)
+9. **src/app/api/messaging/whatsapp/route.ts** — POST send WhatsApp, GET webhook verification
+10. **src/app/api/insurance/route.ts** — GET coverage check, POST claim/pre-auth, PUT update claim
 
-| File | Changes |
-|------|---------|
-| `src/app/layout.tsx` | Added manifest link, PWA meta tags (apple-mobile-web-app-capable, apple-mobile-web-app-status-bar-style, apple-mobile-web-app-title, mobile-web-app-capable, msapplication-TileColor), viewport export with themeColor |
-| `next.config.ts` | Added PWA headers: Service-Worker-Allowed header for /sw.js, Cache-Control headers for manifest.json |
-| `src/components/app/app-shell.tsx` | Added NetworkStatus and LanguageSwitcher components to the header |
-| `src/app/page.tsx` | Wrapped app with I18nProvider, QueryProvider, and PWARegistrar |
+### Payment UI Components (src/components/payments/)
+11. **src/components/payments/mobile-money-form.tsx** — Full payment form with:
+    - Auto-detect provider from phone number
+    - Amount input with GNF/USD currency selector
+    - Phone number input with +224 prefix
+    - Payment reason selection
+    - Invoice linking
+    - Processing animation with Framer Motion
+    - Success/failure states with animated transitions
+    - Receipt download button
 
----
+12. **src/components/payments/payment-status-badge.tsx** — Status badge with:
+    - 5 statuses: En attente (yellow), En cours (blue/pulsing), Réussi (green), Échoué (red), Remboursé (purple)
+    - Animated pulse for "En cours" status
 
-## Sub-Phase 1.2: Internationalization (i18n)
+13. **src/components/payments/transaction-history.tsx** — Transaction list with:
+    - Stats cards (total, pending, per-provider counts)
+    - Search by reference, patient, phone
+    - Filter by provider and status
+    - CSV export
+    - Pagination
+    - Refresh individual transactions
 
-### Files Created
+14. **src/components/payments/qr-payment.tsx** — QR Code payment with:
+    - Custom SVG-based QR code generator (no external npm package)
+    - Generate QR containing payment reference, amount, facility ID
+    - Print receipt with QR code
+    - Share via WhatsApp/Web Share API
+    - Copy-to-clipboard fallback
 
-| File | Description |
-|------|-------------|
-| `src/i18n/config.ts` | i18n configuration with 5 locales: fr (default), en, msk (Malinké), sus (Soussou), ff (Poular). Includes locale labels, flag emojis, browser locale detection, and localStorage persistence |
-| `src/i18n/request.ts` | next-intl request configuration for server-side rendering |
-| `src/i18n/messages/fr.json` | Complete French translations with 200+ keys covering all modules: common, nav, dashboard, patients, appointments, consultations, laboratory, pharmacy, hospitalization, emergencies, maternity, vaccination, billing, teleconsultation, analytics, administration, settings, patientPortal, auth |
-| `src/i18n/messages/en.json` | Complete English translations matching all French keys |
-| `src/i18n/messages/msk.json` | Malinké translations for key UI elements (common, nav, dashboard, patients, appointments, consultations, auth, settings, etc.) |
-| `src/i18n/messages/sus.json` | Soussou translations for key UI elements |
-| `src/i18n/messages/ff.json` | Poular translations for key UI elements |
-| `src/i18n/provider.tsx` | I18n context provider with dynamic locale loading, message caching, dot-notation key resolution, French fallback for missing keys, and namespace support |
-| `src/components/app/language-switcher.tsx` | Language selection dropdown using shadcn Select component, shows current language with flag emoji, saves preference to localStorage |
-| `src/hooks/use-translation.ts` | Re-export hook wrapping the i18n provider's useTranslation |
-| `src/middleware.ts` | Next.js middleware for request routing (allows auth routes, static assets, and SPA) |
+15. **src/components/payments/financial-dashboard.tsx** — Financial overview with:
+    - Animated number counters
+    - KPI cards (total revenue, mobile money, outstanding, projections)
+    - Daily revenue bar chart (Recharts)
+    - Monthly trend line chart
+    - Payment method pie chart
+    - Orange Money vs MTN MoMo split
+    - Revenue by service horizontal bar chart
+    - Top debtors list
+    - All charts using Recharts (already installed)
 
-### Key Decisions
+16. **src/components/payments/credit-sante.tsx** — Health credit module with:
+    - Create payment plan for expensive invoices
+    - Installment calculator (3, 6, 12 months)
+    - Down payment + monthly installments
+    - Progress bar
+    - Pay individual installments
+    - Late payment tracking
 
-- Used a custom I18nProvider with React Context instead of next-intl's server-side approach, because the app is a client-side SPA with Zustand routing
-- Dynamic locale loading with JSON imports and caching for performance
-- French fallback for all missing translations in other locales
-- Namespace support via useTranslation hook for scoped translations
+### Messaging UI Components (src/components/messaging/)
+17. **src/components/messaging/message-center.tsx** — Message center with:
+    - Send SMS or WhatsApp messages
+    - Quick patient search
+    - Template selector with parameter filling
+    - Message history with status icons
+    - Filter by channel and search
+    - Statistics (sent, delivered, failed, delivery rate)
 
----
+18. **src/components/messaging/reminder-settings.tsx** — Automated reminder config with:
+    - Toggle appointment reminders (SMS/WhatsApp/both)
+    - Toggle lab result notifications
+    - Toggle vaccination reminders
+    - Toggle payment reminders
+    - Toggle prescription reminders
+    - Set reminder timing (24h before, 2h before, both)
+    - Per-reminder channel selection
 
-## Sub-Phase 1.3: Authentication with Next-Auth
+### Insurance UI Components (src/components/insurance/)
+19. **src/components/insurance/insurance-panel.tsx** — Insurance management with:
+    - Provider list with coverage percentages and logos
+    - Coverage verification dialog
+    - Claim submission dialog
+    - Pre-authorization request dialog
+    - Claim tracking table with status badges
+    - Patient and invoice selection from existing data
 
-### Files Created
+### Module Pages (src/components/app/modules/)
+20. **src/components/app/modules/payments.tsx** — Payments page with tabs for Mobile Money, QR Code, Dashboard, Crédit Santé
+21. **src/components/app/modules/messaging.tsx** — Messaging page with tabs for Messages and Reminder Settings
+22. **src/components/app/modules/insurance-module.tsx** — Insurance page with header and panel
 
-| File | Description |
-|------|-------------|
-| `src/lib/auth.ts` | NextAuth v4 configuration with Credentials provider (phone + OTP), JWT session strategy (24h max age), custom JWT and session callbacks with role/phone/establishmentId, custom sign-in page path |
-| `src/app/api/auth/[...nextauth]/route.ts` | NextAuth API route handler |
-| `src/app/api/auth/otp/route.ts` | OTP generation and verification endpoints: POST generates 6-digit OTP with 5-min expiry and rate limiting (3 per 15 min), PUT verifies OTP with max 3 attempts, includes demo auto-fill |
-| `src/lib/auth-store.ts` | Zustand store for auth state with user info, login/logout actions, token management, session persistence via localStorage |
-| `src/components/auth/sign-in-form.tsx` | Two-step sign-in form: Step 1 (phone input with +224 Guinea country code), Step 2 (6-digit OTP input with auto-submit, countdown timer, resend functionality). Uses auth store and app store integration |
-| `src/components/auth/otp-input.tsx` | OTP input component with 6 individual digit inputs, auto-focus next on entry, paste support, backspace navigation, keyboard navigation |
-| `src/app/auth/signin/page.tsx` | Sign-in page with HealthFlow branding, gradient background matching landing page, sign-in form, patient portal link, language switcher, theme toggle |
+### Hooks
+23. **src/hooks/api/use-payments.ts** — React Query hooks for payments (useTransactions, useInitiatePayment, useCheckPaymentStatus, useFinancialDashboard)
 
-### Key Decisions
+## Files Modified
 
-- Used phone + OTP authentication (common in West Africa) instead of email/password
-- In-memory OTP store for demo (production would use Redis or DB)
-- OTP is returned in API response for demo/testing purposes
-- Auto-fill OTP in demo mode for easy testing
-- Auth state persisted in Zustand with localStorage for offline support
-- Sign-in page uses client-side SPA navigation (setCurrentView) instead of Next.js routing
+### src/lib/data-store.ts
+- Added 10 new types: MobileMoneyTransaction, InsuranceProvider, InsuranceCoverage, InsuranceClaim, PreAuthorization, MessageLog, PaymentPlan, ReminderSettings, and associated enums
+- Extended Invoice type with mobileMoneyTransactions and insuranceCoverage optional fields
+- Added demo data: 5 mobile money transactions, 4 insurance providers, 3 insurance claims, 5 message logs, 1 payment plan, default reminder settings
+- Added store actions: addMobileMoneyTransaction, updateMobileMoneyTransaction, addInsuranceProvider, updateInsuranceProvider, addInsuranceClaim, updateInsuranceClaim, addMessageLog, updateMessageLog, addPaymentPlan, updatePaymentPlan, payInstallment, updateReminderSettings
 
----
+### src/lib/store.ts
+- Added 3 new AppView types: 'payments', 'messaging', 'insurance'
 
-## Sub-Phase 1.4: React Query + API Connection
+### src/components/app/app-shell.tsx
+- Added 3 new navigation items in the "Gestion" group: Paiements (CreditCard icon), Messagerie (MessageSquare icon), Assurance (ShieldCheck icon)
+- Added 3 new view title mappings
 
-### Files Created
+### src/app/page.tsx
+- Added imports for PaymentsPage, MessagingPage, InsurancePage
+- Added view components for 'payments', 'messaging', 'insurance'
 
-| File | Description |
-|------|-------------|
-| `src/lib/api-client.ts` | Centralized HTTP client with auth token injection, request/response interceptors, automatic retry (2 retries), offline detection with queue, timeout handling (30s), TypeScript generic types for API responses |
-| `src/lib/query-provider.tsx` | React Query provider with QueryClient configuration: 1-min stale time, 5-min GC time, 2 retries, refetchOnReconnect |
-| `src/lib/sync-manager.ts` | Sync manager with queue processing, last-write-wins conflict resolution, sync progress tracking, event-based state notification, service worker integration |
-| `src/hooks/api/use-patients.ts` | Patient CRUD hooks: usePatients, usePatient, useCreatePatient, useUpdatePatient, useDeletePatient with optimistic updates and offline fallback |
-| `src/hooks/api/use-appointments.ts` | Appointment CRUD hooks with confirm/cancel operations |
-| `src/hooks/api/use-consultations.ts` | Consultation CRUD hooks |
-| `src/hooks/api/use-laboratory.ts` | Laboratory CRUD hooks with validate operation |
-| `src/hooks/api/use-pharmacy.ts` | Pharmacy CRUD hooks with stock entry/exit operations |
-| `src/hooks/api/use-hospitalization.ts` | Hospitalization hooks with bed management, admit/discharge operations |
-| `src/hooks/api/use-emergencies.ts` | Emergency CRUD hooks with take-charge operation |
-| `src/hooks/api/use-maternity.ts` | Maternity hooks with pregnancy and visit management |
-| `src/hooks/api/use-vaccination.ts` | Vaccination hooks with vaccine administration |
-| `src/hooks/api/use-billing.ts` | Billing hooks with invoice creation and payment |
-| `src/hooks/api/use-teleconsultation.ts` | Teleconsultation CRUD hooks |
-| `src/hooks/api/use-dashboard.ts` | Dashboard stats and trends hooks |
-| `src/hooks/api/use-notifications.ts` | Notification hooks with mark read operations |
+### src/components/app/modules/billing.tsx
+- Complete rewrite with enhanced billing module including:
+  - Mobile Money payment button on each invoice
+  - QR Code payment button on each invoice
+  - New "Assurance" payment method option
+  - Tabs for Factures, Dashboard financier, Crédit Santé, Assurance
+  - Mobile Money payment dialog integration
+  - QR Payment dialog integration
+  - Insurance panel integration
 
-### Key Decisions
+## Key Design Decisions
 
-- All API hooks use a hybrid approach: they first update the Zustand store (optimistic update), then sync to the API
-- When offline, hooks return data from the Zustand store
-- Query keys are structured hierarchically for efficient cache invalidation
-- Each hook uses `useOnlineStatus` to conditionally enable/disable API calls
-- Toast notifications for success/error feedback on all mutations
-- The sync manager processes pending mutations when coming back online
+1. **No new npm packages** — QR codes generated with inline SVG, no external library needed
+2. **All UI text in French** — Consistent with the Guinea-focused application
+3. **Demo/Sandbox mode** — All external API calls (Orange Money, MTN MoMo, SMS, WhatsApp) simulated with realistic delays and success rates
+4. **Guinea-specific** — Currency GNF, phone format +224, Orange (6XX) and MTN (5XX) detection
+5. **Zustand for demo data** — All transaction/claim/message data stored in Zustand with persistence
+6. **Recharts for charts** — Already installed, used for financial dashboard visualizations
+7. **Framer Motion animations** — Consistent with existing patterns for success/failure/pulsing states
+8. **Component isolation** — New features in separate directories (payments/, messaging/, insurance/) for maintainability
 
----
-
-## Architecture Decisions
-
-1. **Hybrid Data Strategy**: The app maintains the existing Zustand store as the source of truth for the UI, while React Query handles API synchronization. This ensures backward compatibility and works seamlessly offline.
-
-2. **Client-Side SPA Routing**: The app continues to use Zustand-based routing (`currentView` state) instead of Next.js file-based routing, preserving the existing architecture while adding new layers.
-
-3. **Offline-First Design**: All data operations work offline through the Zustand store, with the IndexedDB wrapper and service worker providing additional offline resilience.
-
-4. **Progressive Enhancement**: PWA, i18n, and auth features are layered on top of the existing application without breaking any current functionality.
-
-5. **Guinea-Specific Localization**: Support for 3 local Guinean languages (Malinké, Soussou, Poular) alongside French and English, reflecting the multilingual reality of Guinea's healthcare system.
-
-## Lint Status
-
-All source files pass ESLint with no errors (excluding the download/ directory which is pre-existing). The only remaining lint issues are in the pre-existing `download/generate-roadmap.js` file.
-
-## App Status
-
-The application compiles and loads successfully at http://localhost:3000 with all new features integrated.
-
----
-Task ID: 1
-Agent: Main Agent
-Task: Create strategic roadmap document and implement Phase 1
-
-Work Log:
-- Generated HealthFlow_Africa_Roadmap_2025-2030.docx with 12 sections covering 6 phases over 24 months
-- Fixed sign-in form "Cannot access before initialization" error (duplicate handleVerifyOtp callback, restructured using ref-based approach)
-- Verified successful build with all routes including new /auth/signin and /api/auth/* endpoints
-- Confirmed all Phase 1 sub-phases are implemented and building correctly
-
-Stage Summary:
-- Roadmap document saved to /home/z/my-project/download/HealthFlow_Africa_Roadmap_2025-2030.docx
-- Phase 1 fully implemented: PWA offline-first, i18n (5 languages), Next-Auth with OTP, React Query API hooks
-- Build passes successfully with 22 routes + middleware
-- Ready for Phase 2 implementation (Mobile Money & Payments)
+## Build Status
+- ✅ `next build` succeeds
+- ✅ No TypeScript errors in new files
+- ✅ Dev server running on port 3000
+- ✅ All API routes registered correctly
