@@ -38,6 +38,11 @@ import {
   Facebook,
   Twitter,
   Linkedin,
+  Award,
+  Target,
+  Lightbulb,
+  Handshake,
+  Globe2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -1126,7 +1131,10 @@ function Footer() {
             </div>
             <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
               Système d&apos;Information Hospitalier nouvelle génération pour la Guinée et l&apos;Afrique.
-              Développé par DataSphere Innovation.
+              Développé par DataSphere Innovation — France & Guinée.
+            </p>
+            <p className="text-xs text-slate-500 mt-2">
+              Fondé par Sekouna KABA
             </p>
             <div className="flex items-center gap-3 mt-6">
               {socialLinks.map((social) => (
@@ -1172,16 +1180,223 @@ function Footer() {
           <div className="flex items-center gap-4 text-sm text-slate-500">
             <div className="flex items-center gap-1.5">
               <MapPin className="w-4 h-4" />
-              <span>Conakry, Guinée</span>
+              <span>Paris, France & Conakry, Guinée</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Mail className="w-4 h-4" />
-              <span>contact@healthflow-gn.com</span>
+              <span>contact@datasphere-innovation.com</span>
             </div>
           </div>
         </div>
       </div>
     </footer>
+  )
+}
+
+/* ─────────── DataSphere Innovation Portfolio Section ─────────── */
+
+function DataSpherePortfolioSection() {
+  const values = [
+    { icon: Lightbulb, title: 'Innovation', desc: 'Nous repoussons les limites de la technologie pour transformer la santé en Afrique.' },
+    { icon: Handshake, title: 'Impact social', desc: 'Chaque ligne de code vise à améliorer l\'accès aux soins pour les populations.' },
+    { icon: ShieldAlert, title: 'Sécurité', desc: 'La protection des données de santé est au cœur de notre approche.' },
+    { icon: Target, title: 'Excellence', desc: 'Des standards internationaux adaptés au contexte africain.' },
+  ]
+
+  const keyFigures = [
+    { value: '2', label: 'Pays', sublabel: 'France & Guinée' },
+    { value: '45+', label: 'Établissements', sublabel: 'Connectés' },
+    { value: '120K+', label: 'Patients', sublabel: 'Gérés' },
+    { value: '99.9%', label: 'Uptime', sublabel: 'Garanti' },
+  ]
+
+  const milestones = [
+    { year: '2023', event: 'Création de DataSphere Innovation à Paris et Conakry par Sekouna KABA' },
+    { year: '2024', event: 'Lancement du programme HealthFlow Guinea — premier pilote à Conakry' },
+    { year: '2025', event: 'Déploiement dans 15 hôpitaux guinéens, partenariat avec le Ministère de la Santé' },
+    { year: '2026', event: 'Expansion régionale — HealthFlow déployé au Sénégal, Mali et Côte d\'Ivoire' },
+  ]
+
+  return (
+    <section className="py-20 lg:py-28 bg-white dark:bg-slate-950">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <Reveal>
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <Badge className="mb-4 bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800">
+              DataSphere Innovation
+            </Badge>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white mt-4">
+              La HealthTech{' '}
+              <span className="bg-gradient-to-r from-teal-600 to-emerald-500 bg-clip-text text-transparent">
+                franco-guinéenne
+              </span>
+            </h2>
+            <p className="mt-4 text-lg text-slate-600 dark:text-slate-300">
+              Fondée par Sekouna KABA, DataSphere Innovation développe des solutions numériques de santé
+              pensées pour l&apos;Afrique, avec des standards internationaux et une expertise locale.
+            </p>
+          </div>
+        </Reveal>
+
+        {/* Founder Card */}
+        <Reveal>
+          <div className="max-w-4xl mx-auto mb-16">
+            <Card className="border-2 border-teal-100 dark:border-teal-900/50 bg-gradient-to-br from-teal-50/50 to-emerald-50/50 dark:from-teal-950/20 dark:to-emerald-950/20 overflow-hidden">
+              <CardContent className="p-8 lg:p-10">
+                <div className="flex flex-col md:flex-row items-center gap-8">
+                  <div className="flex-shrink-0">
+                    <div className="w-28 h-28 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center shadow-xl shadow-teal-500/20">
+                      <span className="text-4xl font-bold text-white">SK</span>
+                    </div>
+                  </div>
+                  <div className="text-center md:text-left">
+                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Sekouna KABA</h3>
+                    <p className="text-teal-600 dark:text-teal-400 font-semibold mt-1">Fondateur & Directeur Général</p>
+                    <p className="text-slate-600 dark:text-slate-300 mt-3 leading-relaxed">
+                      Entrepreneur franco-guinéen passionné par la transformation numérique de la santé en Afrique.
+                      Fort de son expérience dans les systèmes d&apos;information hospitaliers en Europe, il a créé
+                      DataSphere Innovation pour combler le fossé technologique dans les établissements de santé
+                      guinéens et africains. Sa vision : rendre la santé numérique accessible, sécurisée et
+                      adaptée aux réalités locales.
+                    </p>
+                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-4">
+                      <Badge className="bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800">
+                        <MapPin className="w-3 h-3 mr-1" /> Paris, France
+                      </Badge>
+                      <Badge className="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800">
+                        <MapPin className="w-3 h-3 mr-1" /> Conakry, Guinée
+                      </Badge>
+                      <Badge className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700">
+                        <Award className="w-3 h-3 mr-1" /> HealthTech
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </Reveal>
+
+        {/* Key Figures */}
+        <Reveal>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
+            {keyFigures.map((fig, i) => (
+              <motion.div
+                key={fig.label}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                viewport={{ once: true }}
+                className="text-center p-6 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800"
+              >
+                <div className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-teal-600 to-emerald-500 bg-clip-text text-transparent">
+                  {fig.value}
+                </div>
+                <div className="text-sm font-semibold text-slate-900 dark:text-white mt-1">{fig.label}</div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">{fig.sublabel}</div>
+              </motion.div>
+            ))}
+          </div>
+        </Reveal>
+
+        {/* Values */}
+        <Reveal>
+          <div className="mb-16">
+            <h3 className="text-2xl font-bold text-center text-slate-900 dark:text-white mb-8">
+              Nos valeurs fondatrices
+            </h3>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {values.map((v, i) => (
+                <motion.div
+                  key={v.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                  viewport={{ once: true }}
+                  whileHover={{ y: -4 }}
+                  className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-teal-50 dark:bg-teal-950/50 flex items-center justify-center mb-4">
+                    <v.icon className="w-6 h-6 text-teal-600 dark:text-teal-400" />
+                  </div>
+                  <h4 className="font-bold text-slate-900 dark:text-white mb-2">{v.title}</h4>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{v.desc}</p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </Reveal>
+
+        {/* Timeline */}
+        <Reveal>
+          <div className="max-w-3xl mx-auto">
+            <h3 className="text-2xl font-bold text-center text-slate-900 dark:text-white mb-10">
+              Notre parcours
+            </h3>
+            <div className="space-y-6">
+              {milestones.map((m, i) => (
+                <motion.div
+                  key={m.year}
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.15 }}
+                  viewport={{ once: true }}
+                  className="flex gap-5"
+                >
+                  <div className="flex-shrink-0 w-16 text-right">
+                    <span className="text-sm font-bold text-teal-600 dark:text-teal-400">{m.year}</span>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <div className="w-3 h-3 rounded-full bg-teal-500 ring-4 ring-teal-100 dark:ring-teal-950" />
+                    {i < milestones.length - 1 && (
+                      <div className="w-0.5 h-full bg-teal-100 dark:bg-teal-900 mt-1" />
+                    )}
+                  </div>
+                  <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed pb-6">{m.event}</p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </Reveal>
+
+        {/* Dual Presence */}
+        <Reveal>
+          <div className="mt-16 grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            <Card className="border border-slate-100 dark:border-slate-800 bg-gradient-to-br from-blue-50/50 to-slate-50 dark:from-blue-950/20 dark:to-slate-900/50">
+              <CardContent className="p-6 flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center flex-shrink-0">
+                  <Globe2 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <MapPin className="w-4 h-4" /> Paris, France
+                  </h4>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                    Siège social — R&D, architecture logicielle, conformité RGPD, partenariats européens et levée de fonds.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border border-slate-100 dark:border-slate-800 bg-gradient-to-br from-emerald-50/50 to-slate-50 dark:from-emerald-950/20 dark:to-slate-900/50">
+              <CardContent className="p-6 flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center flex-shrink-0">
+                  <Building2 className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <MapPin className="w-4 h-4" /> Conakry, Guinée
+                  </h4>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                    Bureau opérationnel — Déploiement terrain, formation utilisateurs, support local et relations ministérielles.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </Reveal>
+      </div>
+    </section>
   )
 }
 
@@ -1199,6 +1414,7 @@ export default function LandingPage() {
         <StatsSection />
         <TestimonialsSection />
         <PricingSection />
+        <DataSpherePortfolioSection />
         <CTASection />
       </main>
       <Footer />

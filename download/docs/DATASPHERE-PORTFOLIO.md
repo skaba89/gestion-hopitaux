@@ -6,18 +6,40 @@
 
 ## 🏢 À Propos de DataSphere Innovation
 
-**DataSphere Innovation** est une startup HealthTech guinéenne fondée en 2024 à Conakry, République de Guinée. Nous concevons et développons des solutions technologiques adaptées au contexte des systèmes de santé africains, avec une expertise particulière dans les Systèmes d'Information Hospitaliers (SIH).
+**DataSphere Innovation** est une entreprise HealthTech franco-guinéenne fondée par **Sekouna KABA**, implantée en **France (Paris)** et en **Guinée (Conakry)**. Nous concevons et développons des solutions technologiques adaptées au contexte des systèmes de santé africains, avec une expertise particulière dans les Systèmes d'Information Hospitaliers (SIH).
 
 Notre conviction : **la technologie peut sauver des vies** lorsqu'elle est conçue avec et pour les professionnels de santé locaux. Chaque ligne de code que nous écrivons a pour but de réduire les temps d'attente, d'améliorer la qualité des soins et de rendre les données de santé accessibles et sécurisées.
 
+La double présence **France–Guinée** nous permet de combiner le meilleur des deux mondes : l'excellence technique européenne et la compréhension profonde du terrain africain. Notre siège parisien assure la R&D, l'architecture logicielle et la conformité RGPD, tandis que notre bureau de Conakry garantit le déploiement terrain, la formation et le support local.
+
 | Information | Détails |
 |-------------|---------|
-| **Fondation** | 2024 |
-| **Siège** | Conakry, République de Guinée 🇬🇳 |
+| **Fondation** | 2023 |
+| **Fondateur** | Sekouna KABA |
+| **Siège social** | Paris, France 🇫🇷 |
+| **Bureau opérationnel** | Conakry, République de Guinée 🇬🇳 |
 | **Secteur** | HealthTech / Systèmes d'Information Hospitaliers |
-| **Équipe** | 15+ professionnels |
+| **Équipe** | 20+ professionnels |
 | **Clients** | 45+ établissements de santé |
 | **Statut** | SaaS — En croissance |
+
+---
+
+## 👤 Le Fondateur — Sekouna KABA
+
+**Sekouna KABA** est un entrepreneur franco-guinéen passionné par la transformation numérique de la santé en Afrique. Fort de son expérience dans les systèmes d'information hospitaliers en Europe, il a créé DataSphere Innovation pour combler le fossé technologique dans les établissements de santé guinéens et africains.
+
+| | |
+|---|---|
+| **Rôle** | Fondateur & Directeur Général |
+| **Nationalité** | Franco-guinéenne |
+| **Implantation** | Paris, France & Conakry, Guinée |
+| **Expertise** | Systèmes d'Information Hospitaliers, Transformation numérique, Entrepreneurship HealthTech |
+| **Vision** | Rendre la santé numérique accessible, sécurisée et adaptée aux réalités locales africaines |
+
+> *« Après avoir vu de près les défis des hôpitaux guinéens et les solutions existantes en Europe, j'ai créé DataSphere Innovation pour apporter une réponse adaptée. Notre avantage concurrentiel est cette double perspective : nous comprenons les standards internationaux ET les réalités du terrain. »*
+>
+> — **Sekouna KABA**, Fondateur de DataSphere Innovation
 
 ---
 
@@ -31,15 +53,44 @@ Notre conviction : **la technologie peut sauver des vies** lorsqu'elle est conç
 
 > *« Un système de santé africain où chaque établissement — de l'hôpital national au dispensaire rural — dispose d'outils numériques performants pour offrir les meilleurs soins possibles à chaque patient. »*
 
-### Nos Valeurs
+### Nos Valeurs Fondatrices
 
 | Valeur | Description |
 |--------|-------------|
-| 🌍 **Impact Local** | Nos solutions sont conçues en Guinée, pour la Guinée, avec une compréhension profonde du terrain |
+| 💡 **Innovation** | Nous repoussons les limites de la technologie pour transformer la santé en Afrique |
+| 🤝 **Impact social** | Chaque ligne de code vise à améliorer l'accès aux soins pour les populations |
 | 🔒 **Sécurité** | La protection des données de santé est au cœur de chaque décision technique |
-| 🤝 **Accessibilité** | Des solutions abordables pour tous les établissements, du CHU au dispensaire |
-| 💡 **Innovation** | Nous repoussons les limites de ce qui est possible en HealthTech africaine |
+| 🎯 **Excellence** | Des standards internationaux adaptés au contexte africain |
 | 🏥 **Empathie Clinique** | Nous travaillons main dans la main avec les professionnels de santé |
+
+---
+
+## 🌍 Présence France–Guinée
+
+### 🇫🇷 Paris, France — Siège Social
+
+- **R&D & Innovation** : Architecture logicielle, développement des nouvelles fonctionnalités
+- **Conformité RGPD** : Assurance de la protection des données selon les normes européennes
+- **Partenariats européens** : Levée de fonds, relations investisseurs, certifications
+- **Veille technologique** : Intégration des dernières innovations en IA, sécurité et cloud
+
+### 🇬🇳 Conakry, Guinée — Bureau Opérationnel
+
+- **Déploiement terrain** : Installation et configuration dans les établissements de santé
+- **Formation utilisateurs** : Accompagnement des médecins, infirmiers et personnels administratifs
+- **Support local** : Assistance technique réactive, maintenance et mise à jour
+- **Relations ministérielles** : Partenariat avec le Ministère de la Santé et les directions régionales
+
+---
+
+## 📜 Notre Parcours
+
+| Année | Étape clé |
+|-------|-----------|
+| **2023** | Création de DataSphere Innovation à Paris et Conakry par Sekouna KABA |
+| **2024** | Lancement du programme HealthFlow Guinea — premier pilote à Conakry |
+| **2025** | Déploiement dans 15 hôpitaux guinéens, partenariat avec le Ministère de la Santé |
+| **2026** | Expansion régionale — HealthFlow déployé au Sénégal, Mali et Côte d'Ivoire |
 
 ---
 
@@ -47,7 +98,7 @@ Notre conviction : **la technologie peut sauver des vies** lorsqu'elle est conç
 
 ### Présentation
 
-**HealthFlow Guinea** est le premier Système d'Information Hospitalier (SIH) intégré conçu spécifiquement pour le contexte guinéen. Développé de zéro par notre équipe à Conakry, il couvre l'ensemble du parcours patient avec 10 modules fonctionnels et 63 modèles de données.
+**HealthFlow Guinea** est le premier Système d'Information Hospitalier (SIH) intégré conçu spécifiquement pour le contexte guinéen et africain. Développé par nos équipes à Paris et Conakry, il couvre l'ensemble du parcours patient avec 10 modules fonctionnels et 63 modèles de données.
 
 ### Les 10 Modules
 
@@ -127,7 +178,19 @@ Notre conviction : **la technologie peut sauver des vies** lorsqu'elle est conç
 
 ### Direction
 
-#### 🧑‍💻 Ibrahima Souaré — CTO & Co-fondateur
+#### 🧑‍💼 Sekouna KABA — Fondateur & Directeur Général
+
+| | |
+|---|---|
+| **Rôle** | Fondateur & CEO |
+| **Expertise** | Systèmes d'Information Hospitaliers, Transformation numérique, Business Development |
+| **Implantation** | Paris & Conakry |
+| **Expérience** | 10+ ans en SIH, entrepreneurship franco-guinéen |
+| **Focus** | Vision stratégique, développement commercial, partenariats institutionnels |
+
+> *« Notre double présence France-Guinée est notre force. Nous apportons les standards européens avec la compréhension du terrain africain. »*
+
+#### 🧑‍💻 Ibrahima Souaré — CTO
 
 | | |
 |---|---|
@@ -137,9 +200,7 @@ Notre conviction : **la technologie peut sauver des vies** lorsqu'elle est conç
 | **Expérience** | 8+ ans en développement logiciel, ex-consultant tech pour l'OMS Guinée |
 | **Focus** | Architecture scalable, sécurité des données de santé, intégrations système |
 
-> *« Notre défi technique est de construire un SIH qui fonctionne aussi bien à Conakry qu'à N'Zérékoré, avec des connexions internet parfois instables. L'architecture offline-first n'est pas un luxe, c'est une nécessité. »*
-
-#### 🏛️ Aissatou Diallo — Lead Architect & Co-fondatrice
+#### 🏛️ Aissatou Diallo — Lead Architect
 
 | | |
 |---|---|
@@ -148,8 +209,6 @@ Notre conviction : **la technologie peut sauver des vies** lorsqu'elle est conç
 | **Formation** | Master en Systèmes d'Information, Université Julius Nyerere de Kankan |
 | **Expérience** | 6+ ans en conception de systèmes d'information, ex-analyste au Ministère de la Santé |
 | **Focus** | Modélisation des données de santé, standards HL7/FHIR, interopérabilité |
-
-> *« Les 63 modèles de notre base de données ne sont pas le fruit du hasard. Chaque champ a été pensé avec les médecins, les infirmiers et les pharmaciens guinéens pour refléter leur réalité quotidienne. »*
 
 #### 📋 Mamadou Bah — Product Manager
 
@@ -161,9 +220,7 @@ Notre conviction : **la technologie peut sauver des vies** lorsqu'elle est conç
 | **Expérience** | 5+ ans en gestion de produit, ex-PM dans une startup e-santé sénégalaise |
 | **Focus** | Expérience utilisateur, accessibilité, adoption par les utilisateurs |
 
-> *« Un SIH qui n'est pas utilisé par les infirmiers est un SIH inutile. Nous passons 30% de notre temps sur le terrain, dans les hôpitaux, à observer et à écouter. »*
-
-#### 📢 Fatoumata Camara — CMO & Co-fondatrice
+#### 📢 Fatoumata Camara — CMO
 
 | | |
 |---|---|
@@ -173,17 +230,15 @@ Notre conviction : **la technologie peut sauver des vies** lorsqu'elle est conç
 | **Expérience** | 7+ ans en marketing digital, ex-responsable com. pour une ONG de santé |
 | **Focus** | Développement commercial en Afrique de l'Ouest, partenariats institutionnels |
 
-> *« Notre plus grand défi n'est pas technologique — c'est la confiance. Les hôpitaux nous confient leurs données les plus sensibles. Nous devons mériter cette confiance chaque jour. »*
-
 ### Équipe Élargie
 
 | Département | Effectif | Compétences clés |
 |-------------|----------|-----------------|
-| **Engineering** | 6 | Full-stack, DevOps, Sécurité, QA |
+| **Engineering** | 8 | Full-stack, DevOps, Sécurité, QA |
 | **Design & UX** | 2 | UI/UX, Design System, Recherche utilisateur |
 | **Data & Analytics** | 2 | Data Engineering, BI, Superset |
-| **Support Client** | 3 | Formation, Support technique, Déploiement |
-| **Operations** | 2 | Finance, Juridique, Administration |
+| **Support Client** | 4 | Formation, Support technique, Déploiement |
+| **Operations** | 3 | Finance, Juridique, Administration |
 
 ---
 
@@ -220,35 +275,40 @@ Notre conviction : **la technologie peut sauver des vies** lorsqu'elle est conç
 
 ---
 
+## 💰 Tarification HealthFlow Guinea
+
+| Plan | Tarif | Idéal pour |
+|------|-------|-----------|
+| **Starter** | $250 USD/mois | Dispensaires et centres de santé (jusqu'à 500 patients) |
+| **Professionnel** | $500 USD/mois | Cliniques et hôpitaux régionaux |
+| **Entreprise** | Sur devis | CHU, ministères et réseaux d'établissements |
+
+**Essai gratuit de 30 jours** — Aucune carte bancaire requise
+
+---
+
 ## 📞 Contact & Appel à l'Action
 
 ### Contactez-nous
 
 | Canal | Coordonnées |
 |-------|-------------|
-| 📧 **Email** | [info@datasphere-gn.com](mailto:info@datasphere-gn.com) |
-| 📧 **Support** | [support@datasphere-gn.com](mailto:support@datasphere-gn.com) |
-| 📧 **Partenariats** | [partners@datasphere-gn.com](mailto:partners@datasphere-gn.com) |
-| 🌐 **Site Web** | [datasphere-gn.com](https://datasphere-gn.com) |
-| 📍 **Adresse** | Quartier Almamya, Conakry, République de Guinée |
-| 📱 **Téléphone** | +224 622 00 00 00 |
-| 🐦 **Twitter** | [@DataSphereGN](https://twitter.com/DataSphereGN) |
-| 💼 **LinkedIn** | [DataSphere Innovation](https://linkedin.com/company/datasphere-gn) |
-| 📘 **Facebook** | [DataSphere Innovation](https://facebook.com/dataspheregn) |
+| 📧 **Email** | [contact@datasphere-innovation.com](mailto:contact@datasphere-innovation.com) |
+| 📧 **Support** | [support@datasphere-innovation.com](mailto:support@datasphere-innovation.com) |
+| 📧 **Partenariats** | [partners@datasphere-innovation.com](mailto:partners@datasphere-innovation.com) |
+| 🌐 **Site Web** | [datasphere-innovation.com](https://datasphere-innovation.com) |
+| 📍 **Siège social** | Paris, France 🇫🇷 |
+| 📍 **Bureau opérationnel** | Conakry, République de Guinée 🇬🇳 |
+| 📱 **Téléphone** | +33 1 00 00 00 00 / +224 622 00 00 00 |
+| 🐦 **Twitter** | [@DataSphereInnov](https://twitter.com/DataSphereInnov) |
+| 💼 **LinkedIn** | [DataSphere Innovation](https://linkedin.com/company/datasphere-innovation) |
+| 📘 **Facebook** | [DataSphere Innovation](https://facebook.com/datasphereinnovation) |
 
 ### Vous êtes un établissement de santé ?
 
 > **Rejoignez les 45+ hôpitaux, cliniques et centres de santé qui font confiance à HealthFlow Guinea.**
 
-| Plan | Tarif | Idéal pour |
-|------|-------|-----------|
-| **Starter** | Gratuit | Dispensaires et centres de santé (jusqu'à 500 patients) |
-| **Professionnel** | 2 500 000 GNF/mois | Cliniques et hôpitaux régionaux |
-| **Entreprise** | Sur devis | CHU et réseaux d'établissements |
-
-**Essai gratuit de 30 jours** — Aucune carte bancaire requise
-
-📞 **Demander une démo** : [demo@datasphere-gn.com](mailto:demo@datasphere-gn.com)
+📞 **Demander une démo** : [demo@datasphere-innovation.com](mailto:demo@datasphere-innovation.com)
 
 ### Vous êtes un investisseur ?
 
@@ -256,24 +316,26 @@ DataSphere Innovation lève une **Série Seed** pour accélérer son déploiemen
 
 **Marché cible** : 2 000+ établissements de santé en Guinée, 50 000+ en Afrique de l'Ouest
 
-📧 **IR** : [investors@datasphere-gn.com](mailto:investors@datasphere-gn.com)
+📧 **IR** : [investors@datasphere-innovation.com](mailto:investors@datasphere-innovation.com)
 
 ### Vous êtes un développeur ?
 
 Rejoignez notre équipe ! Nous recrutons des talents passionnés par la HealthTech.
 
-🔗 **Offres d'emploi** : [datasphere-gn.com/careers](https://datasphere-gn.com/careers)
+🔗 **Offres d'emploi** : [datasphere-innovation.com/careers](https://datasphere-innovation.com/careers)
 
 ---
 
 <div align="center">
 
-# 🇬🇳 DataSphere Innovation
+# 🇫🇷🇬🇳 DataSphere Innovation
 
 ### *Transformer la santé, un établissement à la fois*
 
-**Conakry, République de Guinée**
+**Fondée par Sekouna KABA**
 
-[🌐 Site Web](https://datasphere-gn.com) · [📧 Email](mailto:info@datasphere-gn.com) · [💼 LinkedIn](https://linkedin.com/company/datasphere-gn) · [🐦 Twitter](https://twitter.com/DataSphereGN)
+**Paris, France & Conakry, Guinée**
+
+[🌐 Site Web](https://datasphere-innovation.com) · [📧 Email](mailto:contact@datasphere-innovation.com) · [💼 LinkedIn](https://linkedin.com/company/datasphere-innovation) · [🐦 Twitter](https://twitter.com/DataSphereInnov)
 
 </div>
