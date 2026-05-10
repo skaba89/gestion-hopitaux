@@ -872,8 +872,9 @@ function PricingSection() {
   const plans = [
     {
       name: 'Starter',
-      price: 'Gratuit',
-      period: '',
+      price: '$250',
+      currency: 'USD',
+      period: '/mois',
       desc: 'Pour les petits centres de santé et dispensaires qui débutent leur transformation numérique.',
       features: [
         'Gestion patients (jusqu\'à 500)',
@@ -883,14 +884,14 @@ function PricingSection() {
         'Support email',
         '1 établissement',
       ],
-      cta: 'Commencer gratuitement',
+      cta: 'Commencer maintenant',
       popular: false,
       gradient: false,
     },
     {
       name: 'Professionnel',
-      price: '2,500,000',
-      currency: 'GNF',
+      price: '$500',
+      currency: 'USD',
       period: '/mois',
       desc: 'Pour les hôpitaux et cliniques qui veulent exploiter tout le potentiel de HealthFlow.',
       features: [
@@ -944,7 +945,7 @@ function PricingSection() {
               à chaque besoin
             </h2>
             <p className="mt-4 text-lg text-slate-600 dark:text-slate-300">
-              Commencez gratuitement et évoluez selon vos besoins. Aucune carte de crédit requise.
+              Des tarifs transparents, adaptés à chaque structure de santé. Évoluez selon vos besoins.
             </p>
           </div>
         </Reveal>
