@@ -32,6 +32,13 @@ export type AppView =
   | 'permission-matrix'
   | 'fhir-explorer'
   | 'integration-dashboard'
+  | 'adt-messages'
+  | 'terminology-browser'
+  | 'mpi-dashboard'
+  | 'dicom-viewer'
+  | 'cross-border'
+  | 'fhir-subscriptions'
+  | 'national-health-id'
 
 interface User {
   name: string

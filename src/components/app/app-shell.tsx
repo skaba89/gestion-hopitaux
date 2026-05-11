@@ -46,6 +46,13 @@ import {
   Lock,
   FileJson,
   Globe,
+  ArrowRightLeft,
+  BookOpen,
+  Fingerprint,
+  Monitor,
+  Plane,
+  Zap,
+  Database,
 } from 'lucide-react'
 import { useStore, type AppView } from '@/lib/store'
 import { useDataStore } from '@/lib/data-store'
@@ -147,10 +154,22 @@ const navGroups: { label: string; items: NavItem[] }[] = [
     ],
   },
   {
-    label: 'Interopérabilité',
+    label: 'Interopérabilité FHIR',
     items: [
       { view: 'fhir-explorer', label: 'FHIR Explorer', icon: FileJson },
+      { view: 'adt-messages', label: 'Messages ADT', icon: ArrowRightLeft },
+      { view: 'terminology-browser', label: 'Terminologie', icon: BookOpen },
+      { view: 'mpi-dashboard', label: 'MPI Registre', icon: Database },
+      { view: 'fhir-subscriptions', label: 'Abonnements', icon: Zap },
+    ],
+  },
+  {
+    label: 'Intégrations Nationales',
+    items: [
       { view: 'integration-dashboard', label: 'Intégrations', icon: Globe },
+      { view: 'national-health-id', label: 'INS Guinée', icon: Fingerprint },
+      { view: 'dicom-viewer', label: 'Imagerie DICOM', icon: Monitor },
+      { view: 'cross-border', label: 'Echanges CEDEAO', icon: Plane },
     ],
   },
   {
@@ -204,7 +223,14 @@ const viewTitles: Record<AppView, string> = {
   'security-dashboard': 'Tableau de bord sécurité',
   'permission-matrix': 'Matrice de permissions',
   'fhir-explorer': 'FHIR R4 Explorer',
-  'integration-dashboard': 'Intégrations & Interopérabilité',
+  'integration-dashboard': 'Intégrations Nationales',
+  'adt-messages': 'Messages ADT (Admission/Sortie/Transfert)',
+  'terminology-browser': 'Navigateur de Terminologie',
+  'mpi-dashboard': 'Registre Principal des Patients (MPI)',
+  'dicom-viewer': 'Imagerie Médicale DICOM',
+  'cross-border': 'Echanges Sanitaires CEDEAO',
+  'fhir-subscriptions': 'Abonnements FHIR & Webhooks',
+  'national-health-id': 'Identité Nationale de Santé (INS)',
 }
 
 /* ─────────── Notification Icon Map ─────────── */

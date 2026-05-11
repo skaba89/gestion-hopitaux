@@ -32,6 +32,12 @@ import { AuditLogViewer } from '@/components/admin/audit-log-viewer'
 import { SecurityDashboard } from '@/components/admin/security-dashboard'
 import { PermissionMatrix } from '@/components/admin/permission-matrix'
 import { FHIRExplorer } from '@/components/fhir/fhir-explorer'
+import { ADTMessageCenter } from '@/components/fhir/adt-message-center'
+import { TerminologyBrowser } from '@/components/fhir/terminology-browser'
+import { MPIDashboard } from '@/components/fhir/mpi-dashboard'
+import { DICOMViewer } from '@/components/fhir/dicom-viewer'
+import { CrossBorderExchange } from '@/components/fhir/cross-border-exchange'
+import { FHIRSubscriptions } from '@/components/fhir/fhir-subscriptions'
 import { IntegrationDashboard } from '@/components/integrations/integration-dashboard'
 import { I18nProvider } from '@/i18n/provider'
 import { QueryProvider } from '@/lib/query-provider'
@@ -69,6 +75,13 @@ const viewComponents: Record<AppView, React.ComponentType> = {
   'security-dashboard': SecurityDashboard,
   'permission-matrix': PermissionMatrix,
   'fhir-explorer': FHIRExplorer,
+  'adt-messages': ADTMessageCenter,
+  'terminology-browser': TerminologyBrowser,
+  'mpi-dashboard': MPIDashboard,
+  'dicom-viewer': DICOMViewer,
+  'cross-border': CrossBorderExchange,
+  'fhir-subscriptions': FHIRSubscriptions,
+  'national-health-id': IntegrationDashboard,
   'integration-dashboard': IntegrationDashboard,
 }
 
