@@ -40,6 +40,9 @@ export type AppView =
   | 'fhir-subscriptions'
   | 'national-health-id'
   | 'dhis2-connector'
+  | 'facilities-management'
+  | 'national-supervision'
+  | 'national-statistics'
 
 interface User {
   name: string

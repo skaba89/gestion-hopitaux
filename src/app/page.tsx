@@ -41,6 +41,9 @@ import { FHIRSubscriptions } from '@/components/fhir/fhir-subscriptions'
 import { IntegrationDashboard } from '@/components/integrations/integration-dashboard'
 import { NationalHealthIDPage } from '@/components/fhir/national-health-id-page'
 import { DHIS2Connector } from '@/components/fhir/dhis2-connector'
+import { FacilitiesManagement } from '@/components/deployment/facilities-management'
+import { NationalSupervision } from '@/components/deployment/national-supervision'
+import { NationalStatistics } from '@/components/deployment/national-statistics'
 import { I18nProvider } from '@/i18n/provider'
 import { QueryProvider } from '@/lib/query-provider'
 import { PWARegistrar } from '@/components/app/pwa-registrar'
@@ -86,6 +89,9 @@ const viewComponents: Record<AppView, React.ComponentType> = {
   'national-health-id': NationalHealthIDPage,
   'integration-dashboard': IntegrationDashboard,
   'dhis2-connector': DHIS2Connector,
+  'facilities-management': FacilitiesManagement,
+  'national-supervision': NationalSupervision,
+  'national-statistics': NationalStatistics,
 }
 
 function AppContent() {

@@ -53,6 +53,9 @@ import {
   Plane,
   Zap,
   Database,
+  Building2,
+  Target,
+  PieChart,
 } from 'lucide-react'
 import { useStore, type AppView } from '@/lib/store'
 import { useDataStore } from '@/lib/data-store'
@@ -174,6 +177,14 @@ const navGroups: { label: string; items: NavItem[] }[] = [
     ],
   },
   {
+    label: 'Déploiement National',
+    items: [
+      { view: 'national-supervision', label: 'Supervision', icon: Target, requiredPermission: { resource: 'admin', action: 'read' } },
+      { view: 'facilities-management', label: 'Établissements', icon: Building2 },
+      { view: 'national-statistics', label: 'Statistiques', icon: PieChart },
+    ],
+  },
+  {
     label: 'Sécurité',
     items: [
       { view: 'audit-log', label: 'Journal d\'audit', icon: Eye, requiredPermission: { resource: 'admin', action: 'read' } },
@@ -233,6 +244,9 @@ const viewTitles: Record<AppView, string> = {
   'fhir-subscriptions': 'Abonnements FHIR & Webhooks',
   'national-health-id': 'Identité Nationale de Santé (INS)',
   'dhis2-connector': 'DHIS2 / SNIS / mTrac',
+  'facilities-management': 'Gestion des Établissements',
+  'national-supervision': 'Supervision Nationale',
+  'national-statistics': 'Statistiques Nationales',
 }
 
 /* ─────────── Notification Icon Map ─────────── */
