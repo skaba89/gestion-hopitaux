@@ -1257,10 +1257,10 @@ function DataSpherePortfolioSection() {
   ]
 
   const keyFigures = [
-    { value: '20+', label: 'Projets', sublabel: 'Réalisés' },
-    { value: '10', label: 'Secteurs', sublabel: 'Couverts' },
-    { value: '2', label: 'Pays', sublabel: 'France & Guinée' },
-    { value: '99.9%', label: 'Uptime', sublabel: 'Garanti' },
+    { value: '10+', label: 'Années', sublabel: 'Expérience Data & BI' },
+    { value: '8+', label: 'Grands Comptes', sublabel: 'SACEM, Thales, Accor...' },
+    { value: '20+', label: 'Projets', sublabel: 'Réalisés en Afrique & Europe' },
+    { value: '25+', label: 'Technologies', sublabel: 'Cloud, Data, BI, DevOps' },
   ]
 
   const categories = [
@@ -1548,8 +1548,15 @@ function DataSpherePortfolioSection() {
   ]
 
   const milestones = [
-    { year: '2023', event: 'Création de DataSphere Innovation à Paris et Conakry par Sekouna KABA' },
-    { year: '2024', event: 'Lancement des premières plateformes GovTech et HealthFlow Guinea' },
+    { year: '2015', event: 'Master 2 SID — Université Paris 1 Sorbonne Panthéon' },
+    { year: '2016-19', event: 'Consultant BI chez DPD France — Solutions décisionnelles SQL Server, Talend, Tableau' },
+    { year: '2019-20', event: 'Consultant BI chez Orano, Kiloutou — Migration Snowflake, Power BI, RLS' },
+    { year: '2021', event: 'Tech Lead BI / Data Engineer chez ARCADE (Keyrus) & Préfecture de Police de Paris' },
+    { year: '2021-22', event: 'Consultant Data Engineer chez Accor — Data Warehouse Snowflake, dbt, Terraform' },
+    { year: '2022-23', event: 'Data Architect & Consultant BI Senior chez Thales Group — GCP, Talend, Dataiku' },
+    { year: '2023-24', event: 'Data Architect / Data Engineer chez MSO-SOFT — MinIO, Airflow, dbt, Superset' },
+    { year: '2024', event: 'Data Architect / Data Engineer chez SACEM — Snowflake, Kafka, PySpark, Data Factory' },
+    { year: '2023', event: 'Création de DataSphere Innovation à Paris et Conakry' },
     { year: '2025', event: '20+ projets déployés — 10 secteurs couverts en Afrique et en France' },
     { year: '2026', event: 'Expansion régionale + Services IA & Architecture pour entreprises françaises' },
   ]
@@ -1596,29 +1603,105 @@ function DataSpherePortfolioSection() {
                   </div>
                   <div className="text-center md:text-left">
                     <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Sekouna KABA</h3>
-                    <p className="text-teal-600 dark:text-teal-400 font-semibold mt-1">Fondateur & Directeur Général</p>
+                    <p className="text-teal-600 dark:text-teal-400 font-semibold mt-1">Fondateur & Directeur Général — Data Architect Senior</p>
                     <p className="text-slate-600 dark:text-slate-300 mt-3 leading-relaxed">
-                      Entrepreneur franco-guinéen visionnaire, Sekouna KABA a créé DataSphere Innovation
-                      pour accélérer la transformation numérique en Afrique et en Europe.
-                      Fort de son expertise en architecture logicielle et intelligence artificielle,
-                      il a dirigé plus de 20 projets couvrant 10 secteurs — de la GovTech à la FinTech,
-                      de la Santé à l&apos;IA. De Conakry à Paris, DataSphere innove pour un monde connecté.
+                      Entrepreneur franco-guinéen, Sekouna KABA est un Data Engineer Senior et Data Architect
+                      avec plus de 10 ans d&apos;expérience chez SACEM, Thales, Accor, Orano et DPD France.
+                      Master 2 en Systèmes d&apos;Information et Décisionnelles de l&apos;Université Paris 1 Sorbonne Panthéon,
+                      il a créé DataSphere Innovation pour accélérer la transformation numérique en Afrique et en Europe.
+                      Expert en architectures Data Lake, Data Warehouse, pipelines ELT (dbt, Airflow), Cloud (AWS, Azure, GCP)
+                      et solutions BI (Snowflake, Tableau, Power BI, Superset), il dirige plus de 20 projets couvrant
+                      10 secteurs — de la GovTech à la FinTech, de la Santé à l&apos;IA.
                     </p>
-                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-4">
+                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mt-4">
                       <Badge className="bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800">
                         <MapPin className="w-3 h-3 mr-1" /> Paris, France
                       </Badge>
                       <Badge className="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800">
                         <MapPin className="w-3 h-3 mr-1" /> Conakry, Guinée
                       </Badge>
+                      <Badge className="bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-800">
+                        <GraduationCap className="w-3 h-3 mr-1" /> Master 2 Sorbonne
+                      </Badge>
                       <Badge className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700">
-                        <Award className="w-3 h-3 mr-1" /> 20+ Projets
+                        <Award className="w-3 h-3 mr-1" /> 10+ ans d&apos;expérience
                       </Badge>
                     </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
+          </div>
+        </Reveal>
+
+        {/* Clients & Références */}
+        <Reveal>
+          <div className="max-w-5xl mx-auto mb-16">
+            <h3 className="text-xl font-bold text-center text-slate-900 dark:text-white mb-2">
+              Clients & Références
+            </h3>
+            <p className="text-center text-sm text-slate-500 dark:text-slate-400 mb-8 max-w-2xl mx-auto">
+              Sekouna KABA a collaboré avec des entreprises majeures en France avant de fonder DataSphere Innovation.
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {[
+                { name: 'SACEM', role: 'Data Architect / Data Engineer', period: '2024 - Présent', color: 'from-blue-500 to-indigo-600' },
+                { name: 'Thales Group', role: 'Data Architect & Consultant BI Senior', period: '2022 - 2023', color: 'from-sky-500 to-blue-600' },
+                { name: 'Accor', role: 'Consultant Data Engineer / BI', period: '2021 - 2022', color: 'from-blue-600 to-violet-600' },
+                { name: 'Orano (Areva)', role: 'Consultant BI', period: '2019', color: 'from-amber-500 to-orange-600' },
+                { name: 'DPD France', role: 'Consultant BI', period: '2016 - 2019', color: 'from-red-500 to-rose-600' },
+                { name: 'MSO-SOFT', role: 'Data Architect / Data Engineer', period: '2023 - 2024', color: 'from-emerald-500 to-teal-600' },
+                { name: 'ARCADE (Keyrus)', role: 'Tech Lead BI / Data Engineer', period: '2021', color: 'from-violet-500 to-purple-600' },
+                { name: 'Kiloutou', role: 'Consultant BI', period: '2019 - 2020', color: 'from-yellow-500 to-amber-600' },
+              ].map((client, i) => (
+                <motion.div
+                  key={client.name}
+                  initial={{ opacity: 0, y: 15 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  viewport={{ once: true }}
+                  whileHover={{ y: -4, scale: 1.03 }}
+                  className="relative p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-lg transition-all overflow-hidden group"
+                >
+                  <div className={`absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r ${client.color}`} />
+                  <h4 className="font-bold text-sm text-slate-900 dark:text-white leading-tight">{client.name}</h4>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-snug">{client.role}</p>
+                  <p className="text-[10px] text-teal-600 dark:text-teal-400 font-medium mt-1.5">{client.period}</p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </Reveal>
+
+        {/* Technical Expertise */}
+        <Reveal>
+          <div className="max-w-5xl mx-auto mb-16">
+            <h3 className="text-xl font-bold text-center text-slate-900 dark:text-white mb-2">
+              Stack Technique
+            </h3>
+            <p className="text-center text-sm text-slate-500 dark:text-slate-400 mb-6">
+              Technologies maîtrisées à travers 10+ ans de missions Data & BI
+            </p>
+            <div className="flex flex-wrap justify-center gap-2">
+              {[
+                'Snowflake', 'Apache Airflow', 'dbt Core', 'Docker', 'Terraform',
+                'Python / PySpark', 'SQL', 'GCP / BigQuery', 'AWS S3 / Glue', 'Azure DevOps',
+                'Apache Kafka', 'MinIO', 'Tableau', 'Power BI', 'Apache Superset',
+                'Talend', 'Dataiku', 'GitLab CI/CD', 'PostgreSQL', 'SAP BW / Hana',
+                'Oracle', 'SQL Server', 'Salesforce', 'Dynamics 365', 'Shell / Bash',
+              ].map((tech, i) => (
+                <motion.span
+                  key={tech}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: i * 0.02 }}
+                  viewport={{ once: true }}
+                  className="px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-teal-50 dark:hover:bg-teal-950/50 hover:text-teal-700 dark:hover:text-teal-300 hover:border-teal-200 dark:hover:border-teal-800 transition-colors cursor-default"
+                >
+                  {tech}
+                </motion.span>
+              ))}
+            </div>
           </div>
         </Reveal>
 
