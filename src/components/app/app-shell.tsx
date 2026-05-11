@@ -168,6 +168,7 @@ const navGroups: { label: string; items: NavItem[] }[] = [
     items: [
       { view: 'integration-dashboard', label: 'Intégrations', icon: Globe },
       { view: 'national-health-id', label: 'INS Guinée', icon: Fingerprint },
+      { view: 'dhis2-connector', label: 'DHIS2 / SNIS', icon: BarChart3 },
       { view: 'dicom-viewer', label: 'Imagerie DICOM', icon: Monitor },
       { view: 'cross-border', label: 'Echanges CEDEAO', icon: Plane },
     ],
@@ -231,6 +232,7 @@ const viewTitles: Record<AppView, string> = {
   'cross-border': 'Echanges Sanitaires CEDEAO',
   'fhir-subscriptions': 'Abonnements FHIR & Webhooks',
   'national-health-id': 'Identité Nationale de Santé (INS)',
+  'dhis2-connector': 'DHIS2 / SNIS / mTrac',
 }
 
 /* ─────────── Notification Icon Map ─────────── */

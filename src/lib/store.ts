@@ -39,6 +39,7 @@ export type AppView =
   | 'cross-border'
   | 'fhir-subscriptions'
   | 'national-health-id'
+  | 'dhis2-connector'
 
 interface User {
   name: string

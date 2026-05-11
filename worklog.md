@@ -22,3 +22,24 @@ Stage Summary:
 - FHIR server now supports full CRUD (GET/POST/PUT/DELETE) + 3 FHIR operations ($validate, $everything, $export)
 - Search support for 7 resource types (Patient, Encounter, Observation, DiagnosticReport, MedicationRequest, Organization, Practitioner)
 - Key Guinea-specific features: INS National Health ID, ECOWAS cross-border exchange, DICOM PACS gateways, MPI golden records, ADT message handling
+
+---
+Task ID: 5b
+Agent: Main Agent
+Task: Phase 5 Enhancement — National Health ID, DHIS2 Connector, Integration Improvements
+
+Work Log:
+- Created NationalHealthIDPage component (4 tabs: Dashboard, Registry, Verification, Issuance)
+- Created DHIS2Connector component (5 tabs: DHIS2 Dashboard, DHIS2 Reports, SNIS National, mTrac Surveillance, Sync History)
+- Created /api/ins API route (GET: records/search/verify/verifications/statistics, POST: issue new INS)
+- Updated store.ts to add 'dhis2-connector' AppView type
+- Updated page.tsx to import and map NationalHealthIDPage and DHIS2Connector
+- Updated app-shell.tsx navigation: added DHIS2/SNIS link, added view title for dhis2-connector
+- Enhanced IntegrationDashboard with "Accès rapide" section (4 clickable cards linking to sub-pages)
+- Build verification passed: 43 static pages + 42 API routes, 0 build errors
+
+Stage Summary:
+- Phase 5 fully enhanced with dedicated INS and DHIS2 pages
+- Navigation now has 5 items in "Intégrations Nationales" group
+- Total API routes: 42 (including new /api/ins)
+- All new components use French text, dark mode, Framer Motion animations

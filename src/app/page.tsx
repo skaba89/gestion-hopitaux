@@ -39,6 +39,8 @@ import { DICOMViewer } from '@/components/fhir/dicom-viewer'
 import { CrossBorderExchange } from '@/components/fhir/cross-border-exchange'
 import { FHIRSubscriptions } from '@/components/fhir/fhir-subscriptions'
 import { IntegrationDashboard } from '@/components/integrations/integration-dashboard'
+import { NationalHealthIDPage } from '@/components/fhir/national-health-id-page'
+import { DHIS2Connector } from '@/components/fhir/dhis2-connector'
 import { I18nProvider } from '@/i18n/provider'
 import { QueryProvider } from '@/lib/query-provider'
 import { PWARegistrar } from '@/components/app/pwa-registrar'
@@ -81,8 +83,9 @@ const viewComponents: Record<AppView, React.ComponentType> = {
   'dicom-viewer': DICOMViewer,
   'cross-border': CrossBorderExchange,
   'fhir-subscriptions': FHIRSubscriptions,
-  'national-health-id': IntegrationDashboard,
+  'national-health-id': NationalHealthIDPage,
   'integration-dashboard': IntegrationDashboard,
+  'dhis2-connector': DHIS2Connector,
 }
 
 function AppContent() {

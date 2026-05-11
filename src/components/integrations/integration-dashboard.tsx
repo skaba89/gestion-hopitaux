@@ -36,7 +36,9 @@ import {
   Activity, Database, Wifi, WifiOff, Shield, FileText,
   Building2, MapPin, CreditCard, Bell, TrendingUp, TrendingDown,
   Minus, Play, Pause, Search, Eye, Heart, Zap,
+  Fingerprint, BarChart3, Monitor, Plane, ChevronRight,
 } from 'lucide-react'
+import { useStore } from '@/lib/store'
 
 export function IntegrationDashboard() {
   const [activeTab, setActiveTab] = useState('overview')
@@ -146,6 +148,49 @@ export function IntegrationDashboard() {
               </motion.div>
             ))}
           </div>
+
+          {/* Integration Status Grid */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Database className="h-5 w-5" />
+                Accès rapide — Modules d'intégration
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {[
+                  { view: 'national-health-id' as const, label: 'INS Guinée', desc: 'Identité Nationale de Santé, vérification biométrique, registre INS', icon: Fingerprint, color: 'from-teal-500 to-cyan-600' },
+                  { view: 'dhis2-connector' as const, label: 'DHIS2 / SNIS / mTrac', desc: 'Rapports DHIS2, indicateurs SNIS, alertes mTrac, surveillance nationale', icon: BarChart3, color: 'from-blue-500 to-indigo-600' },
+                  { view: 'dicom-viewer' as const, label: 'Imagerie DICOM', desc: 'Visualisation d\'images médicales, intégration PACS, stockage WADO-RS', icon: Monitor, color: 'from-purple-500 to-violet-600' },
+                  { view: 'cross-border' as const, label: 'Échanges CEDEAO', desc: 'Échanges transfrontaliers, mutualisation sanitaire régionale', icon: Plane, color: 'from-emerald-500 to-green-600' },
+                ].map((item, i) => (
+                  <motion.div
+                    key={item.view}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                  >
+                    <Card
+                      className="cursor-pointer hover:shadow-lg transition-all group h-full"
+                      onClick={() => useStore.getState().setCurrentView(item.view)}
+                    >
+                      <CardContent className="p-5">
+                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center mb-3 shadow-lg group-hover:scale-110 transition-transform`}>
+                          <item.icon className="h-6 w-6 text-white" />
+                        </div>
+                        <p className="font-semibold text-sm mb-1">{item.label}</p>
+                        <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
+                        <div className="mt-3 flex items-center text-xs text-teal-600 dark:text-teal-400 font-medium">
+                          Accéder <ChevronRight className="h-3 w-3 ml-1 group-hover:translate-x-1 transition-transform" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Integration Status Grid */}
           <Card>
