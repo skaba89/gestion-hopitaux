@@ -1278,9 +1278,10 @@ function DataSpherePortfolioSection() {
     { id: 'social', label: 'Social', icon: Smartphone },
     { id: 'business', label: 'Business', icon: TrendingUp },
     { id: 'food', label: 'FoodTech', icon: Package },
-    { id: 'fintech', label: 'FinTech', icon: Receipt },
     { id: 'data', label: 'Data Eng.', icon: Database },
     { id: 'cloud', label: 'Cloud', icon: Cloud },
+    { id: 'energy', label: 'Énergie', icon: Zap },
+    { id: 'construction', label: 'BTP', icon: Building2 },
     { id: 'france', label: '🇫🇷 France', icon: Cpu },
   ]
 
@@ -1474,17 +1475,6 @@ function DataSpherePortfolioSection() {
       targets: 'Restaurants, fast-foods, livraison',
     },
     {
-      id: 'facturepro',
-      name: 'FacturePro / GKL Logistics',
-      subtitle: 'SaaS Facturation & Gestion Entreprise',
-      category: 'fintech',
-      flag: '🇬🇳',
-      icon: Receipt,
-      color: 'from-green-500 to-emerald-600',
-      features: ['Factures', 'Devis', 'Paiements', 'Dashboard analytics', 'Relances automatiques', 'IA comptable'],
-      targets: 'PME, TPE, auto-entrepreneurs',
-    },
-    {
       id: 'noc',
       name: 'NOC Conformité Platform',
       subtitle: 'Plateforme Data Engineering & Monitoring',
@@ -1504,7 +1494,40 @@ function DataSpherePortfolioSection() {
       icon: Cloud,
       color: 'from-sky-500 to-blue-600',
       features: ['Ingestion temps réel', 'Kafka', 'CDC', 'Snowflake', 'Synapse', 'BigQuery', 'PostgreSQL', 'MinIO', 'Airflow', 'MLflow'],
-      targets: 'DSI, architectses data, cloud engineers',
+      targets: 'DSI, architectes data, cloud engineers',
+    },
+    {
+      id: 'energysmart',
+      name: 'EnergySmart Guinea',
+      subtitle: 'Monitoring & Optimisation Énergie',
+      category: 'energy',
+      flag: '🇬🇳',
+      icon: Zap,
+      color: 'from-yellow-500 to-amber-600',
+      features: ['Monitoring consommation', 'IoT compteurs', 'Optimisation énergie', 'Dashboards temps réel', 'Alertes surconsommation', 'Prévision IA'],
+      targets: 'EDG, sociétés d\'énergie, industries',
+    },
+    {
+      id: 'btp360',
+      name: 'BTP360 Guinea',
+      subtitle: 'Plateforme Gestion BTP & Chantiers',
+      category: 'construction',
+      flag: '🇬🇳',
+      icon: Building2,
+      color: 'from-stone-500 to-stone-600',
+      features: ['Suivi chantiers', 'Gestion matériaux', 'Planning travaux', 'Rapports d\'avancement', 'QR code inspections', 'Dashboards BTP'],
+      targets: 'Entreprises BTP, promoteurs, ministère des Travaux',
+    },
+    {
+      id: 'gkllogistics',
+      name: 'GKL Logistics Pro',
+      subtitle: 'SaaS Gestion Logistique & Commercial',
+      category: 'logistics',
+      flag: '🇬🇳',
+      icon: Truck,
+      color: 'from-green-500 to-emerald-600',
+      features: ['Factures & Devis', 'Gestion commerciale', 'Suivi livraisons', 'Dashboard analytics', 'Relances automatiques', 'Paiement Mobile Money'],
+      targets: 'PME, TPE, transporteurs, commerçants',
     },
   ]
 
@@ -1579,12 +1602,12 @@ function DataSpherePortfolioSection() {
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white mt-4">
               20+ projets,{' '}
               <span className="bg-gradient-to-r from-teal-600 to-emerald-500 bg-clip-text text-transparent">
-                10 secteurs
+                12 secteurs
               </span>
             </h2>
             <p className="mt-4 text-lg text-slate-600 dark:text-slate-300">
               Fondée par Sekouna KABA, DataSphere Innovation conçoit des solutions numériques
-              pour l&apos;Afrique et la France — GovTech, Santé, Finance, IA, Data Engineering
+              pour l&apos;Afrique et la France — GovTech, Santé, Énergie, BTP, IA, Data Engineering
               et bien plus. De Conakry à Paris, nous transformons les secteurs clés.
             </p>
           </div>
@@ -1611,7 +1634,7 @@ function DataSpherePortfolioSection() {
                       il a créé DataSphere Innovation pour accélérer la transformation numérique en Afrique et en Europe.
                       Expert en architectures Data Lake, Data Warehouse, pipelines ELT (dbt, Airflow), Cloud (AWS, Azure, GCP)
                       et solutions BI (Snowflake, Tableau, Power BI, Superset), il dirige plus de 20 projets couvrant
-                      10 secteurs — de la GovTech à la FinTech, de la Santé à l&apos;IA.
+                      12 secteurs — de la GovTech à l&apos;Énergie, de la Santé à l&apos;IA.
                     </p>
                     <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mt-4">
                       <Badge className="bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800">
