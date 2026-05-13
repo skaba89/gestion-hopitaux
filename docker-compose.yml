@@ -1,0 +1,138 @@
+# =============================================================================
+# HealthFlow Guinea - Docker Compose (Production)
+# Full-stack hospital information system orchestration
+# DataSphere Innovation — Sekouna KABA
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Frontend - Next.js Application
+  # ---------------------------------------------------------------------------
+  healthflow:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: healthflow-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-healthflow}:${POSTGRES_PASSWORD:-healthflow_secret_2024}@postgres:5432/${POSTGRES_DB:-healthflow}?schema=public
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-hf-guinea-secret-change-in-production-2024}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - healthflow-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL - Primary Database
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: healthflow-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-healthflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-healthflow_secret_2024}
+      POSTGRES_DB: ${POSTGRES_DB:-healthflow}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - healthflow-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-healthflow} -d ${POSTGRES_DB:-healthflow}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    command: >
+      postgres
+        -c max_connections=200
+        -c shared_buffers=256MB
+        -c effective_cache_size=768MB
+        -c maintenance_work_mem=64MB
+        -c checkpoint_completion_target=0.9
+        -c wal_buffers=16MB
+        -c default_statistics_target=100
+        -c random_page_cost=1.1
+        -c effective_io_concurrency=200
+        -c work_mem=2621kB
+        -c min_wal_size=1GB
+        -c max_wal_size=4GB
+
+  # ---------------------------------------------------------------------------
+  # Redis - Caching & Session Store
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: healthflow-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - healthflow-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    command: >
+      redis-server
+        --maxmemory 256mb
+        --maxmemory-policy allkeys-lru
+        --appendonly yes
+        --appendfsync everysec
+
+  # ---------------------------------------------------------------------------
+  # Nginx - Reverse Proxy & SSL Termination
+  # ---------------------------------------------------------------------------
+  nginx:
+    image: nginx:alpine
+    container_name: healthflow-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      healthflow:
+        condition: service_healthy
+    networks:
+      - healthflow-network
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  healthflow-network:
+    driver: bridge
+    name: healthflow-network
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  postgres-data:
+    name: healthflow-postgres-data
+  redis-data:
+    name: healthflow-redis-data

@@ -1,0 +1,102 @@
+# =============================================================================
+# HealthFlow Guinea - Docker Compose (Development Override)
+# Use: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+# DataSphere Innovation — Sekouna KABA
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Frontend - Hot Reload Development
+  # ---------------------------------------------------------------------------
+  healthflow:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: healthflow-app-dev
+    command: npm run dev
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://${POSTGRES_USER:-healthflow}:${POSTGRES_PASSWORD:-healthflow_secret_2024}@postgres:5432/${POSTGRES_DB:-healthflow}?schema=public
+      NEXTAUTH_SECRET: dev-secret-not-for-production
+      NEXTAUTH_URL: http://localhost:3000
+      REDIS_URL: redis://redis:6379/0
+      NEXT_DEBUG: "true"
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+    volumes:
+      - ./src:/app/src:ro
+      - ./public:/app/public:ro
+      - ./prisma:/app/prisma:ro
+      - app-node-modules:/app/node_modules
+    ports:
+      - "3000:3000"
+      - "9229:9229"
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL - Development (relaxed settings, query logging)
+  # ---------------------------------------------------------------------------
+  postgres:
+    container_name: healthflow-postgres-dev
+    command: postgres -c log_statement=all -c log_duration=on
+
+  # ---------------------------------------------------------------------------
+  # Redis - Development (less memory)
+  # ---------------------------------------------------------------------------
+  redis:
+    container_name: healthflow-redis-dev
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru
+
+  # ---------------------------------------------------------------------------
+  # pgAdmin - Database Management UI (Dev only)
+  # ---------------------------------------------------------------------------
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: healthflow-pgadmin-dev
+    restart: unless-stopped
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@healthflow.gn
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    networks:
+      - healthflow-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ---------------------------------------------------------------------------
+  # Redis Commander - Redis Management UI (Dev only)
+  # ---------------------------------------------------------------------------
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: healthflow-redis-commander-dev
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    networks:
+      - healthflow-network
+    depends_on:
+      redis:
+        condition: service_healthy
+
+# =============================================================================
+# Additional Volumes (Dev only)
+# =============================================================================
+volumes:
+  app-node-modules:
+    name: healthflow-app-node-modules
+  pgadmin-data:
+    name: healthflow-pgadmin-data
+
+# Network inherited from docker-compose.yml
+networks:
+  healthflow-network:
+    external: true
+    name: healthflow-network
