@@ -8,7 +8,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -59,7 +59,7 @@ model Department {
   code            String
   type            String // MEDICAL, SURGICAL, PEDIATRICS, MATERNITY, EMERGENCY, LAB, PHARMACY, ADMIN, etc.
   establishmentId String
-  establishment   Establishment @relation(fields: [establishmentId], references: [id])
+  establishment   Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
   headDoctorId    String? // Reference to User
   floor           String?
   description     String?
@@ -80,9 +80,9 @@ model Room {
   type            String // GENERAL, PRIVATE, ICU, OPERATING, CONSULTATION, LAB, etc.
   floor           String?
   establishmentId String
-  establishment   Establishment @relation(fields: [establishmentId], references: [id])
+  establishment   Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
   departmentId    String
-  department      Department    @relation(fields: [departmentId], references: [id])
+  department      Department    @relation(fields: [departmentId], references: [id], onDelete: Cascade)
   isActive        Boolean       @default(true)
   beds            Bed[]
   createdAt       DateTime      @default(now())
@@ -99,9 +99,9 @@ model Bed {
   type               String // STANDARD, ELECTRIC, ICU, STRETCHER, etc.
   status             String        @default("AVAILABLE") // AVAILABLE, OCCUPIED, MAINTENANCE, RESERVED
   establishmentId    String
-  establishment      Establishment @relation(fields: [establishmentId], references: [id])
+  establishment      Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
   roomId             String
-  room               Room          @relation(fields: [roomId], references: [id])
+  room               Room          @relation(fields: [roomId], references: [id], onDelete: Cascade)
   currentAdmissionId String? // Reference to current admission
   lastSanitizedAt    DateTime?
   notes              String?
@@ -165,8 +165,8 @@ model User {
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
 
-  @@index([email])
-  @@index([professionalId])
+  // email already has @unique which creates an index; no need for @@index
+  @@index([phone])
   @@index([isActive])
 }
 
@@ -298,7 +298,7 @@ model Patient {
   notes                    String?
 
   establishmentId String
-  establishment   Establishment @relation(fields: [establishmentId], references: [id])
+  establishment   Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
 
   allergies         PatientAllergy[]
   antecedents       PatientAntecedent[]
@@ -314,6 +314,8 @@ model Patient {
   invoices          Invoice[]
   payments          Payment[]
   teleconsultations Teleconsultation[]
+  account           PatientAccount?
+  carePlans         CarePlan[]
 
   isActive       Boolean  @default(true)
   registeredById String?
@@ -324,8 +326,7 @@ model Patient {
   @@index([dateOfBirth])
   @@index([phone])
   @@index([establishmentId])
-  @@index([nationalId])
-  @@index([qrCode])
+  // nationalId and qrCode already have @unique which creates indexes; removed duplicates
   @@index([isActive])
 }
 
@@ -1657,4 +1658,84 @@ model Notification {
   @@index([isRead])
   @@index([type])
   @@index([createdAt])
+}
+
+// ============================================================================
+// PATIENT PORTAL - Patient Accounts, Family Accounts, Care Plans
+// ============================================================================
+
+model PatientAccount {
+  id              String    @id @default(cuid())
+  phone           String    @unique // Primary identifier for patient login (+224 XXX XX XX XX)
+  email           String?   @unique
+  passwordHash    String?   // Optional - OTP-only auth if null
+  patientId       String?   @unique // Link to primary Patient record
+  patient         Patient?  @relation(fields: [patientId], references: [id])
+  familyAccountId String?   // Link to family account
+  familyAccount   FamilyAccount? @relation("FamilyAccountMembers", fields: [familyAccountId], references: [id])
+
+  // Auth state
+  otpCode         String?   // Current OTP code (encrypted)
+  otpExpiresAt    DateTime?
+  otpAttempts     Int       @default(0)
+  isActive        Boolean   @default(true)
+  isVerified      Boolean   @default(false)
+  lastLoginAt     DateTime?
+
+  // Patient preferences
+  preferredLanguage String   @default("fr") // fr, en, msk, sus, ff
+  notificationPrefs String?  // JSON: {sms: bool, whatsapp: bool, email: bool, appointmentReminder: bool, labResults: bool, vaccination: bool}
+
+  // Account lockout
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+
+  // Password reset
+  resetToken          String?
+  resetTokenExpiresAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([phone])
+  @@index([email])
+  @@index([patientId])
+  @@index([familyAccountId])
+  @@index([isActive])
+}
+
+model FamilyAccount {
+  id            String    @id @default(cuid())
+  primaryPhone  String    @unique // Head of family phone number
+  primaryName   String    // Head of family name
+  verificationCode String? // Code for family member access
+  members       PatientAccount[] @relation("FamilyAccountMembers")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([primaryPhone])
+}
+
+model CarePlan {
+  id              String    @id @default(cuid())
+  patientId       String
+  patient         Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  establishmentId String?
+  title           String    // e.g., "Diabetes Management Plan"
+  description     String?
+  status          String    @default("ACTIVE") // DRAFT, ACTIVE, COMPLETED, CANCELLED
+  priority        String    @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  startDate       DateTime
+  endDate         DateTime?
+  goals           String?   // JSON array of care goals
+  interventions   String?   // JSON array of interventions
+  milestones      String?   // JSON array of milestones with dates
+  responsibleDoctorId String?
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([patientId])
+  @@index([status])
+  @@index([startDate])
 }

@@ -5,7 +5,19 @@
 
 // ─────────── Encryption ───────────
 
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'healthflow-guinea-32byte-encrypt-k'
+// SECURITY FIX: No hardcoded encryption key fallback.
+// ENCRYPTION_KEY MUST be set via environment variable.
+const ENCRYPTION_KEY = (() => {
+  const key = process.env.ENCRYPTION_KEY
+  if (!key) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('[FATAL] ENCRYPTION_KEY environment variable is required in production')
+    }
+    console.warn('[SECURITY] ENCRYPTION_KEY not set - using development-only key. NEVER use in production!')
+    return 'healthflow-guinea-32byte-encrypt-k' // Dev only - will be removed
+  }
+  return key
+})()
 const ALGORITHM = 'aes-256-gcm'
 
 /**

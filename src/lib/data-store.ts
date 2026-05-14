@@ -1140,6 +1140,17 @@ export const useDataStore = create<DataState>()(
     }),
     {
       name: 'healthflow-data-store',
+      // SECURITY FIX: partialize to avoid persisting demo data (5MB localStorage limit)
+      // Only persist user-created data, not demo defaults
+      partialize: (state) => ({
+        // Only persist data that differs from initial demo state
+        patients: state.patients.filter(p => !p.id.startsWith('P-2024-')),
+        appointments: state.appointments.filter(a => !a.id.startsWith('RDV-')),
+        invoices: state.invoices.filter(i => !i.id.startsWith('FAC-')),
+        mobileMoneyTransactions: state.mobileMoneyTransactions.filter(t => !t.id.startsWith('MM-')),
+        insuranceClaims: state.insuranceClaims.filter(c => !c.id.startsWith('CLM-')),
+        reminderSettings: state.reminderSettings,
+      }),
     }
   )
 )

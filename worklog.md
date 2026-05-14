@@ -1,309 +1,312 @@
 ---
-Task ID: 6
-Agent: Super Z (Main)
-Task: Phase 6 — Déploiement National Guinée
-
-Work Log:
-- Verified Phase 5 was already fully implemented and building successfully
-- Created `src/lib/national-deployment.ts` with comprehensive data model:
-  - 8 Guinean health zones with full administrative data (population, area, districts, personnel)
-  - 38 districts across all zones
-  - 9 demo health facilities (CHU Donka, Ignace Deen, Kindia, Kankan, etc.)
-  - 4 deployment plans (Conakry completed, Kindia monitoring, Kankan training, Nzerekore planning)
-  - 4 training sessions with certified/in-progress participants
-  - 5 infrastructure alerts (connectivity, power, security)
-  - National statistics calculator with key health indicators
-- Created `src/components/deployment/facilities-management.tsx`:
-  - 3 tabs: Zones Sanitaires, Établissements, Vue d'ensemble
-  - Full facility search/filter by zone and type
-  - Detailed facility dialog with all metadata
-  - Deployment status tracking per zone
-- Created `src/components/deployment/national-supervision.tsx`:
-  - 4 tabs: Tableau de bord, Déploiement, Formation, Alertes
-  - National deployment progress tracking
-  - Training session management with certification tracking
-  - Infrastructure alert monitoring with severity levels
-  - Budget tracking per zone
-  - Top 8 national diseases with trend indicators
-- Created `src/components/deployment/national-statistics.tsx`:
-  - 4 tabs: Vue d'ensemble, Personnel, Pathologies, Par Zone
-  - Health system coverage indicators (HealthFlow, INS, DHIS2)
-  - Per-capita ratios vs WHO recommendations
-  - Staff distribution by zone with stacked bar visualization
-  - Disease trend analysis (up/down/stable)
-  - Zone-specific drill-down view
-- Updated `src/lib/store.ts`: Added 3 new AppView types
-- Updated `src/app/page.tsx`: Added 3 new view components
-- Updated `src/components/app/app-shell.tsx`: Added "Déploiement National" navigation group with Target, Building2, PieChart icons
-- Final build: 0 errors, all routes and views operational
-
-Stage Summary:
-- Phase 6 fully implemented with Guinea-focused deployment management
-- 3 new major components: FacilitiesManagement, NationalSupervision, NationalStatistics
-- 1 new library: national-deployment.ts with extensive Guinea health system data
-- Complete navigation integration with RBAC permissions
-- Build passes with 0 errors
----
-Task ID: 1
+Task ID: 9.1
 Agent: Main Agent
-Task: Analyze, audit, and generate recommendations/evolutions report for HealthFlow Guinea
+Task: Phase 9.1 - Base de données réelle PostgreSQL + Prisma migrate + seed
 
 Work Log:
-- Explored entire codebase structure via subagent: 30+ API routes, 40+ Prisma models, 5 languages, PWA, FHIR R4, DHIS2
-- Identified 12 security vulnerabilities (6 critical, 5 high, 3 medium)
-- Analyzed architecture strengths and weaknesses
-- Audited performance issues (eager loading, no pagination, no code splitting)
-- Reviewed FHIR R4 implementation and national integrations (all conceptual/in-memory)
-- Generated comprehensive PDF audit report (14 pages) with cover page
-- Report includes: Executive summary, Architecture analysis, Security audit, Performance analysis, FHIR review, Prioritized recommendations, 5-phase evolution roadmap, DevOps recommendations
+- Installed PostgreSQL 17 in user space (/home/z/my-project/pg-install) by extracting .deb packages
+- Configured PostgreSQL on port 5433 with unix_socket in /tmp
+- Created healthflow database
+- Installed Redis 8 in user space (/home/z/my-project/redis-install) on port 6380
+- Changed Prisma provider from sqlite to postgresql
+- Updated .env with PostgreSQL connection string and all required env vars
+- Created .env.example template
+- Ran prisma migrate dev --name init_postgresql (66 tables created)
+- Created comprehensive seed script (prisma/seed.ts) with:
+  - 10 Guinean hospitals (CHU Donka, Ignace Deen, HGR Kankan, etc.)
+  - 8 system roles with 30 permissions
+  - 92 role-permission assignments
+  - 5 demo users with bcryptjs hashed passwords
+  - 8 departments at CHU Donka with 40 rooms and 69 beds
+  - 18 lab tests with GNF pricing
+  - 22 medications with stocks
+  - 11 PEV Guinea vaccination schedules
+  - 3 insurance companies (NSIA, Sunu, SONIGUI)
+  - 25 system configurations
+  - 5 demo patients with allergies, antecedents, and portal accounts
+- Ran prisma db seed successfully (all data seeded in 2.94s)
+- Updated db.ts for PostgreSQL with proper logging and graceful shutdown
+- Created /home/z/my-project/start-services.sh for infrastructure startup
+- Created src/lib/redis.ts with RedisOTPStore, RedisRateLimiter, RedisAuditBuffer
 
 Stage Summary:
-- Generated PDF: /home/z/my-project/download/HealthFlow_Guinea_Audit_Rapport.pdf (14 pages, 157KB)
-- 6 critical vulnerabilities identified: OTP in API response, CORS wildcard, base64 "encryption", DJB2 hashing, spoofable HTTP headers, disabled CSRF
-- 5-phase roadmap proposed: Phase 8 (Security), Phase 9 (Architecture), Phase 10 (National Integrations), Phase 11 (AI/Telemedicine), Phase 12 (National Deployment)
-- Key recommendation: System is at prototype stage and cannot go to production without fixing critical security issues first
+- PostgreSQL 17 running on port 5433 with healthflow database
+- Redis 8 running on port 6380
+- 66 tables migrated from SQLite schema to PostgreSQL
+- All seed data loaded (10 hospitals, 5 users, 5 patients, etc.)
+- Redis client with in-memory fallback for production resilience
+
 ---
-Task ID: 2
+Task ID: 9.2
 Agent: Main Agent
-Task: Implement critical security fixes (SEC-01 through SEC-12)
+Task: Phase 9.2 - Validation Zod + Auth fixes + Audit persistence
 
 Work Log:
-- SEC-01: Removed OTP from API response, added SMS provider integration (Orange/Twilio), crypto-secure OTP generation, phone format validation
-- SEC-02: Replaced CORS wildcard (*) with origin-based allowlist from CORS_ALLOWED_ORIGINS env var
-- SEC-03: Replaced base64 "encryption" with Web Crypto API (AES-GCM 256-bit) for client, AES-256-CBC for server. Never falls back to base64.
-- SEC-04: Replaced DJB2 hash with PBKDF2 (100k iterations, SHA-512) for server, iterative hardened hash for client. Added constant-time comparison.
-- SEC-05: JWT session verification in extractContext(). Headers only trusted in DEMO_MODE. Production defaults to 'Patient' role (least privilege).
-- SEC-06: CSRF protection re-enabled in secureApiHandler and middleware.ts. Custom header pattern for API clients.
-- SEC-07/11: NEXTAUTH_SECRET mandatory in production (fail-fast). Docker-compose uses ${VAR:?error} syntax. Default role changed to 'Patient'.
-- SEC-08: CSP tightened: removed unsafe-eval, script-src uses nonce-based approach, added frame-ancestors/form-action/base-uri/object-src directives
-- SEC-12: ignoreBuildErrors: false, reactStrictMode: true, noImplicitAny: true, excluded skills/examples from tsconfig
-- Fixed 16+ TypeScript errors that were previously hidden by ignoreBuildErrors
-- Created .env.example with all required environment variables
-- Removed IP leak from response headers
-- Removed SQL injection regex (Prisma handles this)
+- Created 14 Zod validation schema files covering all API modules
+- Fixed critical security bug: users POST route was using hashed_${body.password} instead of bcryptjs
+- Added Zod validation to users POST route
+- Updated OTP route to use RedisOTPStore instead of in-memory Map
+- Added Zod validation to OTP send/verify routes
+- Updated audit-logger.ts to persist to PostgreSQL via Prisma with Redis buffer fallback
+- Updated health check endpoint to verify PostgreSQL and Redis connectivity
+- Fixed audit-log-viewer.tsx to fetch audit data from API (async)
+- Fixed security-dashboard.tsx to fetch stats from API (async)
 
 Stage Summary:
-- All 8 critical/high security vulnerabilities fixed
-- Build passes with 0 TypeScript errors (strict mode enabled)
-- Production deployment now requires NEXTAUTH_SECRET and POSTGRES_PASSWORD env vars
-- DEMO_MODE env var controls development conveniences
+- 14 Zod validation schema files covering all API modules
+- Critical password hashing bug fixed (bcryptjs with 12 salt rounds)
+- OTP store migrated from in-memory Map to Redis with fallback
+- Audit logs persisted to PostgreSQL with Redis buffer for resilience
+
 ---
-Task ID: 8
+Task ID: 9.3
 Agent: Main Agent
-Task: Phase 8 - Sécurisation et Conformité - Implémentation des 6 correctifs critiques
+Task: Phase 9.3 - Authentification Réelle (SMS, OTP, Login, JWT, Refresh Tokens)
 
 Work Log:
-- Analysé le codebase existant (auth.ts, security.ts, middleware.ts, api-middleware.ts, audit-logger)
-- Installé bcryptjs + @types/bcryptjs pour le hachage sécurisé des mots de passe
-- SEC-01: Vérifié que l'OTP n'est jamais retourné dans la réponse API (déjà corrigé)
-- SEC-02: Ajouté configuration CORS restrictive dans middleware.ts - whitelist de domaines autorisés, plus de wildcard (*)
-- SEC-03: Amélioré le chiffrement AES-256-CBC → AES-256-GCM (authenticated encryption) côté serveur, supprimé le fallback DJB2
-- SEC-04: Implémenté bcryptjs (cost factor 12) pour le hachage des mots de passe, avec fallback PBKDF2 (100k iterations SHA-512), supprimé le fallback DJB2
-- SEC-05: Amélioré la vérification JWT côté serveur - les headers HTTP ne sont plus fiables en production, rôle par défaut = 'Patient' (least privilege)
-- SEC-06: Ajouté endpoint GET /api/auth/csrf avec double-submit cookie pattern, CSRF protection active en production
-- Créé le module audit-logger.ts complet (était manquant mais importé par d'autres composants)
-- Créé le fichier .env.example avec toutes les variables d'environnement documentées
-- Corrigé toutes les erreurs TypeScript (0 erreurs après npx tsc --noEmit)
-- Serveur de dev lancé et testé avec succès
+- Created unified SMS provider service (src/lib/sms-provider.ts):
+  - Orange SMS API (primary for Guinea)
+  - Twilio SMS (international fallback)
+  - Vonage/Nexmo (alternative fallback)
+  - Demo provider (console logging for development)
+  - Automatic failover: primary → fallback → demo
+  - Helper methods: sendOTP, sendAppointmentReminder, sendLabResultsNotification
+- Created secure OTP service (src/lib/otp-service.ts):
+  - Uses crypto.randomInt() instead of Math.random() for OTP generation
+  - Redis-backed storage with TTL (5 minutes)
+  - Rate limiting: max 5 OTP requests per phone per 15 minutes
+  - Max 3 verification attempts per OTP
+  - NEVER returns OTP code in API responses
+  - Full audit trail for send/verify/rate-limited events
+- Refactored auth/otp/route.ts to use otp-service (secure OTP)
+- Refactored patient-auth/register/route.ts:
+  - No OTP stored in database (uses Redis)
+  - OTP never returned in response
+  - Account creation + OTP send decoupled
+- Refactored patient-auth/otp/route.ts:
+  - Added Zod validation
+  - Uses secure OTP service
+  - Anti-enumeration: same response for missing accounts
+  - OTP never in response
+- Refactored patient-auth/verify/route.ts:
+  - Uses Redis OTP verification
+  - Account lockout after 5 failed attempts (15 min)
+  - JWT_SECRET fails fast in production
+  - Proper JWT with issuer/audience claims
+- Added staff email+password login:
+  - New route: /api/auth/login (POST)
+  - bcryptjs password verification with 12 salt rounds
+  - Account lockout after 5 failed attempts
+  - Returns JWT token with permissions
+- Added password change route: /api/auth/change-password
+- Added token refresh route: /api/auth/refresh
+- Updated NextAuth config (src/lib/auth.ts):
+  - Provider 1: Email+Password (staff) with bcryptjs
+  - Provider 2: Phone+OTP (staff & patients) with Redis
+  - Session duration reduced from 24h to 12h
+  - Token refresh every 4 hours with user re-verification
+  - USER_DEACTIVATED detection on token refresh
+- Updated .env with new variables (JWT_SECRET, SMS fallback, Vonage)
+- Fixed sentry.ts for optional @sentry/nextjs (no build errors when not installed)
+- Added type declaration for @sentry/nextjs (src/types/sentry.d.ts)
 
 Stage Summary:
-- 6 vulnérabilités critiques corrigées (SEC-01 à SEC-06)
-- bcryptjs installé et intégré pour le hachage des mots de passe
-- CORS restrictif avec whitelist de domaines autorisés
-- CSRF token endpoint fonctionnel (GET /api/auth/csrf)
-- Module audit-logger créé et compatible avec les composants existants
-- Chiffrement AES-256-GCM avec auth tag (au lieu de CBC)
-- Fallback DJB2 complètement supprimé du hachage de mots de passe
-- Serveur de dev opérationnel sur http://localhost:3000
+- 4 SMS providers with automatic failover (Orange, Twilio, Vonage, Demo)
+- Cryptographically secure OTP generation (crypto.randomInt)
+- OTP stored in Redis (NOT in database, NOT in response)
+- Staff email+password login with bcryptjs
+- JWT refresh tokens with session revocation support
+- Account lockout after 5 failed attempts
+- JWT_SECRET and NEXTAUTH_SECRET fail fast in production
+- All auth routes use Zod validation
 
 ---
-Task ID: 9
+Task ID: 9.4
 Agent: Main Agent
-Task: Architecture Multi-Hôpital avec Services Autonomes pour la Guinée
+Task: Phase 9.4 - Tests (Jest + RTL)
 
 Work Log:
-- Créé le modèle de données hiérarchique (hospital-model.ts): Hospital → HospitalService, avec types GuineaRegion, ServiceType, ServiceUrgency, MultiHospitalRole, etc.
-- Créé le store multi-hôpital (hospital-store.ts) avec 9 hôpitaux réels de Guinée (CHU Donka, CHU Ignace Deen, Kipé, HGR Kindia, CHU Kankan, CHU Nzérékoré, HGR Labé, HGR Boké, HGR Mamou, HGR Faranah)
-- Chaque hôpital a ses services autonomes (15 services pour les CHU, 8 pour les HGR)
-- Hiérarchie de rôles: Directeur Général → Directeur Régional → Directeur Hôpital → Chef de Service → Personnel
-- Dashboard multi-hôpital créé (1448 lignes): Vue Nationale, Vue Hôpital, Vue Service, Panneau Gestionnaire Cross-Service
-- Système de délégation: un gestionnaire peut prendre la direction d'un service si le chef est absent
-- Système de transfert inter-services: transfert de patients entre services
-- Intégré dans la navigation (sidebar: Déploiement National → Multi-Hôpitaux)
-- Intégré dans le routeur de page (page.tsx)
-- 0 erreurs TypeScript
-- Serveur de dev fonctionnel et stable
+- Created jose mock (src/test/__mocks__/jose.ts) for ESM compatibility
+- Updated jest.config.ts with moduleNameMapper for jose
+- Created test suites:
+  - src/lib/__tests__/otp-service.test.ts (11 tests)
+    - generateSecureOtp: 6-digit, custom length, non-deterministic, no leading 0
+    - sendOtpToPhone: success, phone normalization, OTP never in response, rate limiting
+    - verifyOtp: wrong OTP, non-existent phone
+  - src/lib/__tests__/sms-provider.test.ts (9 tests)
+    - normalizeGuineaPhone: +224, 224, bare, leading 0, spaces, dashes
+    - DemoSMSProvider: send, sendOTP
+  - src/lib/__tests__/validations.test.ts (30+ tests)
+    - Auth schemas: OTP send/verify, login, password reset, user create
+    - Patient schemas: registration, account, update
+  - src/lib/__tests__/security.test.ts (11 tests)
+    - bcryptjs hashing, verification, different salts, special chars, Unicode
+    - Input validation: SQL injection, phone format, email format
+  - src/app/api/__tests__/auth-api.test.ts (10 tests)
+    - Auth login: missing email/password, invalid email
+    - OTP: invalid phone, valid phone, OTP never in response
+    - Patient auth: invalid registration, invalid phone
+    - Password: hash/verify/reject
+  - src/lib/__tests__/redis.test.ts (existing, updated)
+    - RedisOTPStore: store/verify, wrong OTP, non-existent, single-use, attempts, lockout, rate limit
+    - RedisRateLimiter: allow/block/reset
 
 Stage Summary:
-- Architecture multi-hôpital complète avec 9 hôpitaux réels de Guinée
-- Services autonomes par hôpital (15 pour CHU, 8 pour HGR)
-- Panneau gestionnaire cross-service pour direction centralisée
-- Système de délégation et transfert inter-services
-- Dashboard riche avec vues Nationale / Hôpital / Service / Gestionnaire
-- Hiérarchie de rôles multi-niveaux
+- 352 tests passing across 13 test suites
+- Zero TypeScript errors
+- Production build successful
+- Test coverage: OTP service, SMS provider, validation schemas, security, auth API routes, Redis
 
 ---
-Task ID: 3
+Task ID: 9.5
 Agent: Main Agent
-Task: Unify the Two Role Systems and Create a Unified Auth/Hospital Store
+Task: Phase 9.5 - CI/CD + Monitoring
 
 Work Log:
-- Read all 5 existing files: rbac.ts, hospital-model.ts, store.ts, hospital-store.ts, rls.ts
-- Created `src/lib/unified-rbac.ts` — the unified role system:
-  - Defined `ClinicalRole` (7 clinical roles: medecin, infirmier, laborantin, pharmacien, secretaire, asc, patient)
-  - Defined `ManagementScope` (5 levels: none, chef_service, directeur_hopital, directeur_regional, directeur_general)
-  - Defined `UnifiedRole = ClinicalRole | 'admin'`
-  - Defined `UserScope` interface with clinicalRole, managementScope, scopeEntityId, hospitalId, serviceId, regionCode
-  - Defined `SCOPE_LEVEL` numeric hierarchy for management scope
-  - Added mapping helpers: `hfRoleToClinicalRole`, `clinicalRoleToHFRole`, `unifiedRoleToHFRole`
-  - Added French labels for all roles and scopes
-  - Implemented scope-aware permission functions:
-    - `canManageService(userScope, serviceId, serviceHospitalId)` — checks management scope against service
-    - `canManageHospital(userScope, hospitalId, hospitalRegion?)` — checks management scope against hospital
-    - `canManageRegion(userScope, regionCode)` — checks management scope against region
-    - `canOverrideService(userScope, serviceHeadId)` — checks if manager can override service head
-    - `getDelegatedScope(userScope, activeDelegations)` — returns effective scope with delegation support
-    - `getAccessibleDataScope(userScope)` — returns service/hospital/region/national data visibility
-    - `hasPermission(userScope, resource, action)` — scope-aware permission check
-    - `canPerformAction(userScope, resource, action, options)` — full scope-aware permission check with details
-    - `getPermission`, `getRolePermissions`, `getAccessibleViews` — all scope-aware
-    - `filterDataByScope` — scope-aware data filtering
-    - `buildUserScope` — helper to construct UserScope
-    - `getRoleDisplayLabel` — French display label
-  - Reuses PERMISSIONS_MATRIX from rbac.ts for clinical permissions
-- Updated `src/lib/store.ts` — added unified auth/hospital scope fields:
-  - Extended User interface with: hospitalId, serviceId, regionCode, managementScope, clinicalRole
-  - Added state: activeHospitalScope, activeServiceScope, scopeLevel
-  - Added actions: setActiveScope(level, entityId?), getUserScope()
-  - Default user set to Chef de Service at CHU Donka for demo
-  - Backward compatible — all existing fields and actions preserved
-- Created `src/components/app/hospital-scope-switcher.tsx`:
-  - React component showing current hospital/region/national context
-  - Uses shadcn/ui Select + Badge components + Lucide icons
-  - Dynamic scope icon: Globe (national), MapPin (regional), Building2 (hospital), Stethoscope (service)
-  - Color-coded badge per scope level (amber=national, purple=regional, teal=hospital, slate=service)
-  - Role-adaptive options:
-    - Directeur Général: "Vue Nationale" + region view + all hospitals
-    - Directeur Régional: Region view + hospitals in their region
-    - Directeur Hôpital: Their hospital only
-    - Chef de Service: Their service only
-    - Regular staff: Simple badge with hospital name
-  - All UI text in French
-- Integrated HospitalScopeSwitcher into app-shell.tsx header (before GlobalSearch)
-- Lint passes clean for all modified/new files (pre-existing errors in hospital-store.ts and security.ts are unrelated)
-- TypeScript compilation errors are pre-existing (bcryptjs module, hospital-store return types) — not introduced by this task
+- Created GitHub Actions CI/CD pipeline (.github/workflows/ci.yml):
+  - Job 1: Lint & Type Check
+  - Job 2: Unit & Integration Tests (with PostgreSQL 17 + Redis 8 services)
+  - Job 3: Build
+  - Job 4: Security Scan (npm audit)
+  - Job 5: Deploy (main branch only, SSH deploy)
+- Created Docker build workflow (.github/workflows/docker.yml):
+  - Multi-arch build with Docker Buildx
+  - Push to GitHub Container Registry (ghcr.io)
+  - Semantic versioning tags
+  - Build cache with GitHub Actions cache
+- Installed @sentry/nextjs package
+- Created sentry.client.config.ts (browser tracing, replay on error)
+- Created sentry.server.config.ts (Prisma integration, profiling)
+- Removed type declaration stub (real package installed now)
+- Updated sentry.ts in lib with proper types
 
 Stage Summary:
-- Unified role system created: ClinicalRole + ManagementScope + UserScope
-- All 7 scope-aware helper functions implemented
-- Store extended with scope state and actions (backward compatible)
-- Hospital scope switcher component added to header with role-adaptive UI
-- Existing rbac.ts and hospital-model.ts preserved for backward compatibility
-- No new lint errors introduced
+- Full CI/CD pipeline: lint → test → build → security scan → deploy
+- Docker image build and push to ghcr.io
+- Sentry error monitoring configured (client + server)
+- 352 tests still passing, zero TypeScript errors, production build successful
 
 ---
-Task ID: 7-8
+Task ID: 10
 Agent: Main Agent
-Task: Wire Delegations/Transfers + Apply RLS in API Routes with Hospital Scoping
+Task: Phase 10 - Intégrations Réelles (Mobile Money, DHIS2, WhatsApp, DICOM)
 
 Work Log:
-- Extended hospital-model.ts: Added `expiresAt`, `isEmergency`, approval tracking fields to ServiceDelegation; created DelegationAuditEntry interface
-- Overhauled hospital-store.ts delegation/transfer system:
-  - addDelegation() — validates user IDs differ, verifies service existence, creates audit entry, returns string|null
-  - approveDelegation(id, approverId, approverName) — two-step approval for 'En attente' delegations
-  - revokeDelegation(id, revokedByUserId?, revokedByUserName?) — with audit trail
-  - emergencyTakeover(serviceId, managerId, managerName, reason) — immediate Active status, 24h expiry, isEmergency flag, logged in audit
-  - getActiveDelegationsForService(serviceId) — service-scoped delegations
-  - getActiveDelegationsForHospital(hospitalId) — hospital-scoped delegations
-  - getActiveDelegations() — auto-expiration check on every call
-  - addTransfer() — validates fromServiceId !== toServiceId, audit trail
-  - updateTransferStatus() — validates state transitions (En attente → Accepté/Refusé/Annulé, Accepté → Annulé)
-  - Added auditLog to store state
-- Wired multi-hospital-dashboard.tsx dialogs and buttons:
-  - Transfer dialog: full state management, onChange handlers, calls addTransfer() with toast feedback
-  - Delegation dialog: duration-based expiry calculation, calls addDelegation() with toast feedback
-  - "Prendre en main" button: opens inline emergency takeover form, calls emergencyTakeover()
-  - "Révoquer" button: calls revokeDelegation() with director info and toast
-  - Enhanced transfers tab: shows real transfer data with status/priority badges
-- Updated /api/dashboard/route.ts with hospital scoping and RLS:
-  - Accepts hospitalId, region, scope, mode query parameters
-  - Filters Prisma queries by establishmentId when scoped
-  - RLS: non-admin users scoped to their establishment
-  - mode=comparison: returns stats grouped by hospital
-  - Structured response: scope, scopeEntity, stats, comparison?, timestamp
-- Updated /api/establishments/route.ts:
-  - PUT handler: update establishment with existence check
-  - DELETE handler: soft delete (isActive: false)
-  - GET /stats: aggregated stats per establishment
-  - GET /map-data: GeoJSON FeatureCollection for map visualization
-- Created /api/delegations/route.ts:
-  - GET: list with filters (hospitalId, serviceId, status, isActive), auto-expiration, RLS
-  - POST: create with validation (no self-delegation, required fields), duration-based expiry
-  - PUT: update status (approve, activate, revoke, expire) with authorization
-- Created /api/transfers/route.ts:
-  - GET: list with filters, priority-sorted, RLS scoping
-  - POST: create with validation (from ≠ to, required fields)
-  - PUT: update status (accept, reject, complete, cancel) with state transition validation
-- All text/labels in French where applicable
-- Backward compatible changes only
-- ESLint: 0 errors in modified files
-- TypeScript: 0 compilation errors in modified files
+- Rewrote mobile-money.ts with real API integrations:
+  - Orange Money API: OAuth2 token acquisition, payment initiation, status check, payment links, HMAC-SHA256 webhook verification
+  - MTN MoMo API: OAuth2 token, request-to-pay (Collection API), status check, account balance, webhook verification
+  - Both providers: sandbox/demo mode when credentials not configured, production mode with real HTTP calls
+  - Auto-detect provider from phone number (+2246XX=Orange, +2245XX=MTN)
+  - Transactions persisted to PostgreSQL Payment model
+  - Full audit trail for all payment operations
+- Updated /api/payments/mobile-money/route.ts:
+  - Added Zod validation schema
+  - Delegates to mobileMoneyService (real API or sandbox)
+  - Proper error handling with ZodError
+- Rewrote /api/payments/mobile-money/callback/route.ts:
+  - Verifies HMAC-SHA256 webhook signature
+  - Updates Payment status in database
+  - Updates linked Invoice status (PAID/PARTIALLY_PAID)
+  - Audit log for all callback events
+- Created DHIS2 integration service (src/lib/dhis2-service.ts):
+  - Connection testing, version detection
+  - Organisation units retrieval
+  - Report generation from REAL PostgreSQL data (consultations, diagnoses, emergencies, lab tests, revenue)
+  - Report submission to DHIS2 DataValueSets API
+  - Analytics queries
+  - mTrac alerts pull from DHIS2 tracker program
+  - Sync status tracking
+- Created WhatsApp Business API service (src/lib/whatsapp-service.ts):
+  - Twilio WhatsApp Business API integration
+  - Meta WhatsApp Cloud API integration
+  - 7 pre-defined message templates (appointment reminder, lab results, vaccination, payment, emergency, prescription, OTP)
+  - Demo mode when credentials not configured
+  - Helper methods for each notification type
+- Created Orthanc DICOM service (src/lib/orthanc-service.ts):
+  - Multi-server support (Donka PACS, Ignace Deen PACS)
+  - C-FIND study search via Orthanc REST API
+  - WADO-RS URL generation for DICOMweb
+  - STOW-RS DICOM upload
+  - OHIF viewer URL generation
+  - Demo studies in sandbox mode
+- Created client-safe mobile-money-utils.ts (separated from server-only mobile-money.ts)
+- Fixed build chain: mobile-money-form.tsx (client) → mobile-money-utils.ts (no ioredis/prisma)
+- Fixed audit-logger.ts: all imports of db/redis now use dynamic require() to prevent webpack from following
+- Fixed next.config.ts: added serverExternalPackages for ioredis, bcryptjs, @prisma/client
+- Updated .env with all integration credentials (Orange Money, MTN MoMo, WhatsApp, DHIS2, Orthanc)
 
 Stage Summary:
-- Complete delegation system with two-step approval, emergency takeover, auto-expiration, audit trail
-- Transfer system with state machine validation and priority management
-- All UI buttons wired to store actions with toast feedback
-- Dashboard API with hospital scoping, RLS, and comparison mode
-- Establishments API with PUT, DELETE, stats, and map-data endpoints
-- New delegation and transfer API routes with full CRUD and authorization
+- Mobile Money: Real Orange Money + MTN MoMo API with sandbox fallback
+- DHIS2: Real Guinea DHIS2 integration with data collection from PostgreSQL
+- WhatsApp: Twilio + Meta Cloud API with 7 templates
+- DICOM: Orthanc PACS integration with multi-server support
+- All integrations have sandbox/demo mode when credentials not configured
+- Build chain fixed: client components use mobile-money-utils.ts (no server deps)
+- 352 tests passing, zero TypeScript errors, production build successful
 
 ---
-Task ID: 6
-Agent: Adaptive Dashboard Agent
-Task: Create World-Class Adaptive Dashboard System
+Task ID: HOTFIX-1
+Agent: Main Agent
+Task: Fix API 500/403 errors (establishments + patient-auth/otp)
 
 Work Log:
-- Read existing files: dashboard.tsx, multi-hospital-dashboard.tsx, hospital-store.ts, hospital-model.ts, store.ts
-- Created deterministic seed data utility (`src/components/dashboard/shared/seed-utils.ts`):
-  - Hash-based pseudo-random number generation (NO Math.random())
-  - Deterministic weekly/monthly data generators
-  - National pathology data (8 diseases with trends)
-  - Disease alert data (5 alerts with WHO notification status)
-  - Critical medication stock data
-- Created 5 shared dashboard sub-components:
-  - `shared/kpi-card.tsx` — Reusable KPI card with gradient backgrounds, icon, trend indicator, 6 preset themes (clinical, financial, alert, management, critical, occupancy)
-  - `shared/occupancy-chart.tsx` — Recharts BarChart for bed occupancy with color-coded bars, warning/critical threshold lines, custom tooltip
-  - `shared/pathology-ranking.tsx` — Recharts horizontal BarChart for disease ranking + PathologyList for sidebars
-  - `shared/transfer-tracker.tsx` — Full inter-service transfer management with create dialog, status updates (Accept/Reject), priority badges
-  - `shared/delegation-panel.tsx` — Delegation management with quick-action buttons per service, "Prendre en main" wired to addDelegation(), "Révoquer" wired to revokeDelegation()
-- Created 4 scope-level dashboard components:
-  - `national-dashboard.tsx` — Guinea SVG map with 8 clickable regions, 6 national KPIs, regional comparison cards, hospital performance ranking (sortable), top 5 pathologies (Recharts BarChart), disease alerts with WHO status, weekly trends (Recharts AreaChart), real-time transfer tracking
-  - `regional-dashboard.tsx` — Regional KPIs vs national average, hospital cards with occupancy/urgency, epidemiological curve (Recharts LineChart), staff distribution (Recharts PieChart), stock alerts, occupancy chart
-  - `hospital-dashboard.tsx` — Hospital KPIs, 6-tab layout (Services, Finances, Lits, Délégations, Transferts, Stocks), service grid with autonomy badges, cross-service manager panel with DelegationPanel, bed management table, financial summary with revenue trends, weekly admission/revenue charts
-  - `service-dashboard.tsx` — Service-specific KPIs, patient list (deterministic Guinean names), visual bed grid, staff PieChart, autonomy indicator, budget vs actual, quick actions (Transfer, Delegate, Signal incident) with wired dialogs
-- Created adaptive dashboard main router (`src/components/app/modules/adaptive-dashboard.tsx`):
-  - Auto-detects user scope from role (Directeur Général → National, Directeur Régional → Regional, etc.)
-  - 4-level scope selector: Nationale, Régionale, Hôpital, Service
-  - Breadcrumb navigation with clickable path
-  - AnimatePresence transitions between scopes
-  - Auto-navigates to service/hospital scope when selections change in store
-- Wired into project:
-  - Added 'adaptive-dashboard' AppView to store.ts
-  - Added import and route in page.tsx
-  - Added "Dashboard Adaptatif" nav item in app-shell.tsx (Déploiement National section)
-  - Added view title mapping
-- Fixed lint issues: added MapPin import to hospital-dashboard, moved useMemo hooks before early return in service-dashboard
-- All new code lint-clean (only pre-existing errors remain in download/generate-roadmap.js and fhir-explorer.tsx)
-- All text in French
-- Dark mode support throughout
-- Responsive design (mobile-first with Tailwind grid/flex)
-- All actions wired: addDelegation(), revokeDelegation(), addTransfer(), updateTransferStatus()
+- Diagnosed /api/establishments 500 error: DATABASE_URL in shell environment was set to SQLite path (file:/home/z/my-project/db/custom.db), which Next.js respects over .env file. Prisma failed schema validation because the URL didn't start with postgresql://
+- Fixed db.ts: Added smart fallback that detects non-PostgreSQL DATABASE_URL and overrides it to the correct PostgreSQL connection string
+- Created instrumentation.ts: Force-overrides DATABASE_URL before any Prisma code loads (Next.js instrumentation runs first)
+- Diagnosed /api/patient-auth/otp 403 error: CSRF middleware blocked POST requests without Origin or X-Requested-With header
+- Fixed middleware.ts:
+  - Added ALLOWED_SUBDOMAINS for .space.chatglm.site (preview deployments) and .healthflow-gn.com
+  - Updated isAllowedOrigin() to always allow recognized subdomains (not just in dev mode)
+  - Enhanced CSRF Strategy 2: checks Referer header as additional signal for same-origin requests
+- Added X-Requested-With: XMLHttpRequest header to all mutating API calls:
+  - src/lib/api-client.ts (centralized client)
+  - src/lib/patient-api.ts (patient portal API)
+  - src/components/auth/sign-in-form.tsx (staff login)
+  - src/hooks/api/use-payments.ts (mobile money)
+  - src/lib/telemedicine.ts (signaling)
+  - src/components/ai/diagnostic-assistant.tsx
+  - src/components/ai/interaction-checker.tsx
+- Removed @prisma/client from serverExternalPackages (was causing Turbopack to load it before env vars were ready)
+- Verified both endpoints work: /api/establishments → 200 OK, /api/patient-auth/otp → 200 OK
+- Production build successful
 
 Stage Summary:
-- 10 new files created under `src/components/dashboard/` and `src/components/app/modules/`
-- 4 scope levels: National, Regional, Hospital, Service — each with rich data visualizations
-- All charts use Recharts (BarChart, LineChart, AreaChart, PieChart)
-- Deterministic seed data (hash-based, NO Math.random()) — same hospital always shows same stats
-- Delegation and transfer actions fully wired to hospital-store
-- Auto-scope detection based on user role
-- 5 shared reusable components for consistent UI
+- Root cause 1: Shell env DATABASE_URL=SQLite overrode .env PostgreSQL URL → Fixed in db.ts + instrumentation.ts
+- Root cause 2: CSRF middleware blocked POST without X-Requested-With header → Fixed in middleware + all API clients
+- Preview deployments (.space.chatglm.site) now always allowed in CORS/CSRF
+- 7 files updated with X-Requested-With header for CSRF compliance
+
+---
+Task ID: AUDIT-E2E
+Agent: Main Agent
+Task: Audit complet End-to-End + Implémentation Top 10 Actions Immédiates
+
+Work Log:
+- Conducted comprehensive E2E audit across 4 domains: API routes, Security/Auth, Frontend, Database/Build
+- Identified 35+ critical/high issues across the entire application
+- Prioritized Top 10 immediate actions and implemented all of them
+- TOP 1: Wrapped 5 critical API routes (patients, consultations, emergencies, laboratory, billing) with secureApiHandler (requireAuth + audit)
+- TOP 2: Fixed JWT secret mismatch in patient-auth/me/route.ts — unified to use same JWT_SECRET as patient-auth/verify with fail-fast in production
+- TOP 3: Removed default Dr. Mamadou Diallo user from store.ts (now empty/guest); Removed NODE_ENV === 'development' fallback from DEMO_MODE bypass in api-middleware.ts; Changed default demo headers to 'Patient' role instead of 'Médecin'
+- TOP 4: Created src/app/error.tsx (global error boundary with retry/home buttons) and src/app/loading.tsx (loading skeleton)
+- TOP 5: Fixed auth/otp/route.ts — when DB lookup fails, now returns 'Patient' role instead of 'Médecin'; Used crypto for QR code generation instead of Math.random in patients route
+- TOP 6: Removed hardcoded PostgreSQL URL from db.ts (now fails fast in production runtime, warns in dev); Removed hardcoded URL from instrumentation.ts; Made ENCRYPTION_KEY in security.ts fail-fast in production instead of using guessable fallback
+- TOP 7: Added Zod validation (consultationCreateSchema) to consultations POST route; Added Zod validation (emergencyCaseCreateSchema) to emergencies POST route; Added error sanitization (no internal error details leaked)
+- TOP 8: Removed Ranitidine from seed data (globally recalled drug — NDMA contamination, replaced with Famotidine); Fixed turnaroundHours: 0.5 → 1 (Int field); Added onDelete: Cascade to 6 critical Establishment/Department/Room/Bed/Patient relations; Removed duplicate @@index on fields that already have @unique
+- TOP 9: Added partialize to data-store.ts persist config — only user-created data is persisted to localStorage (not demo data), avoiding 5MB quota overflow
+- TOP 10: Sanitized error responses in consultations/emergencies routes (no internal error details leaked to client); Used crypto for audit ID generation instead of Math.random; Added ioredis as proper npm dependency
+- Fixed tsconfig.json to exclude jest.config.ts, prisma/seed.ts, and test files from Next.js build
+- Regenerated Prisma client after schema changes
+- Production build successful
+
+Stage Summary:
+- 10 critical security/quality actions implemented
+- 5 API routes now have authentication + audit logging
+- JWT secrets unified across all auth routes
+- No hardcoded credentials or DB URLs in production code
+- Error boundaries added to prevent full SPA crashes
+- Database cascading deletes added for data integrity
+- Removed recalled medication (Ranitidine) from seed data
+- localStorage quota overflow prevented
+- Error responses sanitized (no internal details leaked)
+- Production build successful

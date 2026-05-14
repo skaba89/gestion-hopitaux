@@ -1,0 +1,1 @@
+/home/z/my-project/pg-install/usr/lib/postgresql/17/bin/postgres "-D" "/home/z/my-project/pg-data"

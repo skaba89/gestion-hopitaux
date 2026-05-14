@@ -37,7 +37,7 @@ class ApiClient {
     this.baseUrl = '' // Relative URLs for same-origin requests
   }
 
-  private getAuthHeaders(): Record<string, string> {
+  private getAuthHeaders(method?: string): Record<string, string> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     }
@@ -48,6 +48,12 @@ class ApiClient {
       if (token) {
         headers['Authorization'] = `Bearer ${token}`
       }
+    }
+
+    // CSRF protection: add X-Requested-With header for mutating requests
+    // This allows the server middleware to distinguish AJAX from form submissions
+    if (method && ['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+      headers['X-Requested-With'] = 'XMLHttpRequest'
     }
 
     return headers
@@ -91,7 +97,7 @@ class ApiClient {
         ...fetchOptions,
         signal: controller.signal,
         headers: {
-          ...this.getAuthHeaders(),
+          ...this.getAuthHeaders(fetchOptions.method),
           ...fetchOptions.headers,
         },
       })

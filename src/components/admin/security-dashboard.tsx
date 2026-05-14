@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
   Shield, Lock, AlertTriangle, Users, Activity, Eye,
@@ -10,16 +10,49 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { calculateSecurityScore, getActiveSessionCount, destroyAllSessions, destroyUserSessions } from '@/lib/security'
-import { getAuditStats } from '@/lib/audit-logger'
+import { calculateSecurityScore, getActiveSessionCount, destroyAllSessions } from '@/lib/security-client'
 import { useToast } from '@/hooks/use-toast'
+
+interface AuditEntry {
+  id: string
+  userName: string
+  userRole: string
+  description: string
+  severity: string
+  action: string
+  createdAt: string
+}
+
+interface AuditStats {
+  totalEntries: number
+  deniedCount: number
+  criticalCount: number
+  csrfViolations: number
+  rateLimitHits: number
+  loginFailures: number
+  recentDenials: AuditEntry[]
+}
 
 const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.06 } } }
 const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } } }
 
 export function SecurityDashboard() {
   const { toast } = useToast()
-  const stats = getAuditStats()
+  const [stats, setStats] = useState<AuditStats>({
+    totalEntries: 0, deniedCount: 0, criticalCount: 0,
+    csrfViolations: 0, rateLimitHits: 0, loginFailures: 0, recentDenials: [],
+  })
+
+  useEffect(() => {
+    // Fetch stats from the audit API
+    fetch('/api/audit?stats=true')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data) setStats(data.data || data.stats || data)
+      })
+      .catch(() => {})
+  }, [])
+
   const securityScore = calculateSecurityScore({
     mfaEnabled: true,
     strongPassword: true,
@@ -93,7 +126,7 @@ export function SecurityDashboard() {
           { label: 'Sessions actives', value: getActiveSessionCount(), icon: Users, color: 'from-teal-500 to-emerald-600' },
           { label: 'Tentatives échouées', value: stats.deniedCount, icon: ShieldAlert, color: 'from-red-500 to-rose-600' },
           { label: 'Événements critiques', value: stats.criticalCount, icon: AlertTriangle, color: 'from-amber-500 to-orange-600' },
-          { label: 'Entrées d\'audit', value: stats.totalEntries, icon: Eye, color: 'from-slate-500 to-slate-700' },
+          { label: "Entrées d'audit", value: stats.totalEntries, icon: Eye, color: 'from-slate-500 to-slate-700' },
         ].map(stat => (
           <motion.div key={stat.label} variants={itemVariants}>
             <Card className="relative overflow-hidden border-slate-200/60 dark:border-slate-800/60">
@@ -122,8 +155,8 @@ export function SecurityDashboard() {
                 { name: 'Chiffrement AES-256', enabled: true, icon: Lock },
                 { name: 'Protection CSRF', enabled: true, icon: KeyRound },
                 { name: 'Sécurité au niveau des lignes (RLS)', enabled: true, icon: Shield },
-                { name: 'Contrôle d\'accès basé sur les rôles (RBAC)', enabled: true, icon: Users },
-                { name: 'Journal d\'audit', enabled: true, icon: Eye },
+                { name: "Contrôle d'accès basé sur les rôles (RBAC)", enabled: true, icon: Users },
+                { name: "Journal d'audit", enabled: true, icon: Eye },
                 { name: 'Limitation du taux de requêtes', enabled: true, icon: Activity },
                 { name: 'Authentification multi-facteurs', enabled: true, icon: KeyRound },
                 { name: 'En-têtes de sécurité', enabled: true, icon: ShieldAlert },
@@ -154,7 +187,7 @@ export function SecurityDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {stats.recentDenials.slice(0, 5).map(entry => (
+                {stats.recentDenials.slice(0, 5).map((entry: AuditEntry) => (
                   <div key={entry.id} className="flex items-center justify-between text-xs">
                     <span className="text-red-700 dark:text-red-300">{entry.userName} ({entry.userRole})</span>
                     <span className="text-red-600 dark:text-red-400">{entry.description}</span>

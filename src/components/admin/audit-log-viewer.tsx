@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
   Shield, AlertTriangle, Eye, Clock, Users, Lock, Unlock,
@@ -11,8 +11,41 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { getAuditLogs, getAuditStats, type AuditAction, type AuditSeverity } from '@/lib/audit-logger'
-import { calculateSecurityScore, getActiveSessionCount, destroyAllSessions } from '@/lib/security'
+import { getActiveSessionCount } from '@/lib/security-client'
+
+// Types matching the audit logger
+type AuditAction = 'CREATE' | 'READ' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'LOGOUT' | 'ACCESS_DENIED' | 'EXPORT' | 'PRINT' | 'MFA_CHALLENGE' | 'MFA_SUCCESS' | 'MFA_FAILURE' | 'SESSION_EXPIRED' | 'PASSWORD_CHANGE' | 'ROLE_CHANGE' | 'PERMISSION_CHANGE'
+type AuditSeverity = 'INFO' | 'WARNING' | 'CRITICAL'
+
+interface AuditEntry {
+  id: string
+  timestamp: string
+  createdAt: string
+  eventType: string
+  action: string
+  severity: AuditSeverity
+  userId: string
+  userName: string
+  userRole: string
+  resource: string
+  module: string
+  entityId?: string
+  description: string
+  details: string
+  ip: string
+  ipAddress: string
+  success: boolean
+}
+
+interface AuditStats {
+  totalEntries: number
+  deniedCount: number
+  criticalCount: number
+  csrfViolations: number
+  rateLimitHits: number
+  loginFailures: number
+  recentDenials: AuditEntry[]
+}
 
 const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.06 } } }
 const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } } }
@@ -47,18 +80,49 @@ export function AuditLogViewer() {
   const [filterModule, setFilterModule] = useState<string>('all')
   const [filterSeverity, setFilterSeverity] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
-
-  const logs = getAuditLogs({
-    action: filterAction !== 'all' ? filterAction as AuditAction : undefined,
-    module: filterModule !== 'all' ? filterModule : undefined,
-    severity: filterSeverity !== 'all' ? filterSeverity as AuditSeverity : undefined,
-    limit: 50,
+  const [logs, setLogs] = useState<AuditEntry[]>([])
+  const [stats, setStats] = useState<AuditStats>({
+    totalEntries: 0, deniedCount: 0, criticalCount: 0,
+    csrfViolations: 0, rateLimitHits: 0, loginFailures: 0, recentDenials: [],
   })
+  const [loading, setLoading] = useState(true)
 
-  const stats = getAuditStats()
+  // Fetch audit logs from API
+  const fetchLogs = async () => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams()
+      if (filterAction !== 'all') params.set('action', filterAction)
+      if (filterModule !== 'all') params.set('module', filterModule)
+      if (filterSeverity !== 'all') params.set('severity', filterSeverity)
+      params.set('limit', '50')
+
+      const [logsRes, statsRes] = await Promise.all([
+        fetch(`/api/audit?${params.toString()}`),
+        fetch('/api/audit?stats=true'),
+      ])
+
+      if (logsRes.ok) {
+        const logsData = await logsRes.json()
+        setLogs(logsData.data || logsData.entries || [])
+      }
+      if (statsRes.ok) {
+        const statsData = await statsRes.json()
+        setStats(statsData.data || statsData.stats || stats)
+      }
+    } catch (error) {
+      console.warn('Failed to fetch audit logs:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchLogs()
+  }, [filterAction, filterModule, filterSeverity])
 
   const filteredLogs = searchQuery
-    ? logs.filter(l =>
+    ? logs.filter((l: AuditEntry) =>
         l.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
         l.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         l.entityId?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -131,6 +195,9 @@ export function AuditLogViewer() {
                   <SelectItem value="CRITICAL">Critique</SelectItem>
                 </SelectContent>
               </Select>
+              <Button variant="outline" size="sm" className="h-9 text-xs" onClick={fetchLogs} title="Rafraîchir">
+                <RefreshCw className="size-3.5 mr-1" /> Rafraîchir
+              </Button>
               <Button variant="outline" size="sm" className="h-9 text-xs" title="Exporter CSV">
                 <Download className="size-3.5 mr-1" /> Exporter
               </Button>
@@ -141,42 +208,48 @@ export function AuditLogViewer() {
 
       {/* Log entries */}
       <motion.div variants={itemVariants} className="space-y-2">
-        {filteredLogs.map((log, i) => (
-          <motion.div
-            key={log.id}
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: i * 0.03 }}
-            className="p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700 transition-colors"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-start gap-3 min-w-0 flex-1">
-                <div className={`size-7 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  log.severity === 'CRITICAL' ? 'bg-red-100 dark:bg-red-950/40' :
-                  log.severity === 'WARNING' ? 'bg-amber-100 dark:bg-amber-950/40' :
-                  'bg-blue-100 dark:bg-blue-950/40'
-                }`}>
-                  {log.severity === 'CRITICAL' ? <AlertTriangle className="size-3.5 text-red-600" /> :
-                   log.action === 'ACCESS_DENIED' ? <Ban className="size-3.5 text-amber-600" /> :
-                   <Activity className="size-3.5 text-blue-600" />}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm text-slate-900 dark:text-white">{log.description}</p>
-                  <div className="flex items-center gap-2 mt-1 flex-wrap">
-                    <span className="text-[10px] text-slate-400">{log.userName} ({log.userRole})</span>
-                    <span className="text-[10px] text-slate-400">•</span>
-                    <span className="text-[10px] text-slate-400">{new Date(log.createdAt).toLocaleString('fr-FR')}</span>
-                    {log.ipAddress && <span className="text-[10px] text-slate-400">• IP: {log.ipAddress}</span>}
+        {loading ? (
+          <div className="text-center py-8 text-slate-400 text-sm">Chargement...</div>
+        ) : filteredLogs.length === 0 ? (
+          <div className="text-center py-8 text-slate-400 text-sm">Aucune entrée d'audit trouvée</div>
+        ) : (
+          filteredLogs.map((log, i) => (
+            <motion.div
+              key={log.id}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.03 }}
+              className="p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700 transition-colors"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3 min-w-0 flex-1">
+                  <div className={`size-7 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    log.severity === 'CRITICAL' ? 'bg-red-100 dark:bg-red-950/40' :
+                    log.severity === 'WARNING' ? 'bg-amber-100 dark:bg-amber-950/40' :
+                    'bg-blue-100 dark:bg-blue-950/40'
+                  }`}>
+                    {log.severity === 'CRITICAL' ? <AlertTriangle className="size-3.5 text-red-600" /> :
+                     log.action === 'ACCESS_DENIED' ? <Ban className="size-3.5 text-amber-600" /> :
+                     <Activity className="size-3.5 text-blue-600" />}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm text-slate-900 dark:text-white">{log.description}</p>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <span className="text-[10px] text-slate-400">{log.userName} ({log.userRole})</span>
+                      <span className="text-[10px] text-slate-400">•</span>
+                      <span className="text-[10px] text-slate-400">{new Date(log.createdAt).toLocaleString('fr-FR')}</span>
+                      {log.ipAddress && <span className="text-[10px] text-slate-400">• IP: {log.ipAddress}</span>}
+                    </div>
                   </div>
                 </div>
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <Badge className={`${severityStyles[log.severity as AuditSeverity] || severityStyles.INFO} text-[10px]`}>{log.severity}</Badge>
+                  <Badge variant="outline" className="text-[10px]">{actionLabels[log.action] || log.action}</Badge>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5 flex-shrink-0">
-                <Badge className={`${severityStyles[log.severity]} text-[10px]`}>{log.severity}</Badge>
-                <Badge variant="outline" className="text-[10px]">{actionLabels[log.action] || log.action}</Badge>
-              </div>
-            </div>
-          </motion.div>
-        ))}
+            </motion.div>
+          ))
+        )}
       </motion.div>
     </motion.div>
   )

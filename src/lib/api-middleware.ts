@@ -98,15 +98,17 @@ async function extractContext(request: NextRequest): Promise<ApiHandlerContext> 
     return { ...sessionContext, ip }
   }
 
-  // DEMO MODE: Allow header-based context ONLY when explicitly enabled
-  const isDemoMode = process.env.DEMO_MODE === 'true' || process.env.NODE_ENV === 'development'
+  // DEMO MODE: Allow header-based context ONLY when DEMO_MODE is explicitly 'true'
+  // SECURITY FIX: Removed NODE_ENV === 'development' fallback.
+  // In dev without DEMO_MODE, unauthenticated users get Patient role (least privilege).
+  const isDemoMode = process.env.DEMO_MODE === 'true'
   
   if (isDemoMode) {
-    // In demo/dev mode, extract from headers for convenience
+    // In demo mode, extract from headers for convenience
     // WARNING: This is insecure and should NEVER be used in production
-    const userId = request.headers.get('x-user-id') || 'USR-001'
-    const userName = request.headers.get('x-user-name') || 'Dr. Mamadou Diallo'
-    const roleStr = request.headers.get('x-user-role') || 'Médecin'
+    const userId = request.headers.get('x-user-id') || 'anonymous'
+    const userName = request.headers.get('x-user-name') || 'Utilisateur'
+    const roleStr = request.headers.get('x-user-role') || 'Patient'
     const establishmentId = request.headers.get('x-establishment-id') || undefined
 
     return {

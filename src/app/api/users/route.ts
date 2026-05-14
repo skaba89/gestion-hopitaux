@@ -1,6 +1,8 @@
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { paginatedResponse, errorResponse, getPaginationParams, corsHeaders } from '@/lib/api-utils'
+import { userCreateSchema, userUpdateSchema } from '@/lib/validations/user'
+import bcrypt from 'bcryptjs'
 
 // GET /api/users - List users
 export async function GET(request: NextRequest) {
@@ -16,9 +18,9 @@ export async function GET(request: NextRequest) {
 
     if (search) {
       where.OR = [
-        { firstName: { contains: search } },
-        { lastName: { contains: search } },
-        { email: { contains: search } },
+        { firstName: { contains: search, mode: 'insensitive' } },
+        { lastName: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
         { phone: { contains: search } },
         { professionalId: { contains: search } },
       ]
@@ -74,35 +76,60 @@ export async function GET(request: NextRequest) {
       db.user.count({ where }),
     ])
 
-    // Remove sensitive fields
+    // Remove password hash from response
     const sanitizedUsers = users.map(({ ...user }) => user)
 
     return paginatedResponse(sanitizedUsers, total, page, limit)
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to fetch users'
+    const message = err instanceof Error ? err.message : 'Échec du chargement des utilisateurs'
     return errorResponse(message, 500)
   }
 }
 
-// POST /api/users - Create user
+// POST /api/users - Create user with proper password hashing and Zod validation
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
+    const validated = userCreateSchema.parse(body)
 
-    // Hash password (in production, use bcrypt or similar)
-    const passwordHash = `hashed_${body.password}`
+    // Check for duplicate email
+    const existingUser = await db.user.findUnique({
+      where: { email: validated.email },
+    })
+    if (existingUser) {
+      return NextResponse.json(
+        { error: 'Un utilisateur avec cet email existe déjà' },
+        { status: 409 }
+      )
+    }
+
+    // Check for duplicate professionalId if provided
+    if (validated.professionalId) {
+      const existingPro = await db.user.findUnique({
+        where: { professionalId: validated.professionalId },
+      })
+      if (existingPro) {
+        return NextResponse.json(
+          { error: 'Un utilisateur avec cet identifiant professionnel existe déjà' },
+          { status: 409 }
+        )
+      }
+    }
+
+    // Hash password with bcrypt (12 salt rounds - production-grade)
+    const passwordHash = await bcrypt.hash(validated.password, 12)
 
     const user = await db.user.create({
       data: {
-        email: body.email,
+        email: validated.email,
         passwordHash,
-        firstName: body.firstName,
-        lastName: body.lastName,
-        phone: body.phone,
-        avatarUrl: body.avatarUrl,
-        professionalId: body.professionalId,
-        specialization: body.specialization,
-        isActive: body.isActive !== undefined ? body.isActive : true,
+        firstName: validated.firstName,
+        lastName: validated.lastName,
+        phone: validated.phone,
+        avatarUrl: validated.avatarUrl,
+        professionalId: validated.professionalId,
+        specialization: validated.specialization,
+        isActive: true,
         mfaEnabled: false,
       },
       select: {
@@ -119,31 +146,37 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // Assign role if provided
-    if (body.roleId) {
-      await db.userRole.create({
-        data: {
+    // Assign roles if provided
+    if (validated.roles && validated.roles.length > 0) {
+      await db.userRole.createMany({
+        data: validated.roles.map(r => ({
           userId: user.id,
-          roleId: body.roleId,
-          establishmentId: body.establishmentId,
-        },
+          roleId: r.roleId,
+          establishmentId: r.establishmentId,
+        })),
       })
     }
 
-    // Assign to establishment if provided
-    if (body.establishmentId) {
-      await db.userEstablishment.create({
-        data: {
+    // Assign to establishments if provided
+    if (validated.establishments && validated.establishments.length > 0) {
+      await db.userEstablishment.createMany({
+        data: validated.establishments.map(e => ({
           userId: user.id,
-          establishmentId: body.establishmentId,
-          isDefault: true,
-        },
+          establishmentId: e.establishmentId,
+          isDefault: e.isDefault,
+        })),
       })
     }
 
-    return paginatedResponse([user], 1, 1, 1)
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to create user'
+    return NextResponse.json({ data: user }, { status: 201 })
+  } catch (err: any) {
+    if (err.name === 'ZodError') {
+      return NextResponse.json(
+        { error: 'Données invalides', details: err.errors },
+        { status: 400 }
+      )
+    }
+    const message = err instanceof Error ? err.message : 'Échec de la création de l\'utilisateur'
     return errorResponse(message, 500)
   }
 }

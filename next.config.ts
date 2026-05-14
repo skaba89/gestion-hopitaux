@@ -2,12 +2,23 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  // SEC-12 FIX: Enable TypeScript checking in builds
-  // Previously ignoreBuildErrors: true was hiding real type errors
+  // Use webpack instead of Turbopack for production builds (Turbopack has issues with ioredis)
+  // Turbopack is still used for dev via `next dev`
   typescript: {
     ignoreBuildErrors: false,
   },
-  reactStrictMode: true, // SEC-12 FIX: Enable React strict mode
+  reactStrictMode: true,
+  // Server-only packages that must not be bundled for the client
+  serverExternalPackages: [
+    'ioredis',
+    'bcryptjs',
+    // NOTE: @prisma/client removed from serverExternalPackages
+    // Turbopack was loading it as external before process.env.DATABASE_URL
+    // was set, causing "URL must start with postgresql://" validation error.
+    // By bundling it, Turbopack can properly order env var initialization.
+    'canvas',
+    'sharp',
+  ],
   async headers() {
     return [
       {

@@ -58,7 +58,7 @@ export function SignInForm({ onSuccess, onPatientPortal }: SignInFormProps) {
 
       const response = await fetch('/api/auth/otp', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         body: JSON.stringify({ phone: normalizedPhone, otp: code }),
       })
 
@@ -112,7 +112,7 @@ export function SignInForm({ onSuccess, onPatientPortal }: SignInFormProps) {
     try {
       const response = await fetch('/api/auth/otp', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         body: JSON.stringify({ phone: `+224${phone.replace(/\D/g, '').slice(-9)}` }),
       })
 

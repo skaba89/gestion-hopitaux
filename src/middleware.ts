@@ -25,13 +25,21 @@ const ALLOWED_ORIGINS = [
   ...(process.env.ALLOWED_ORIGINS?.split(',').filter(Boolean) || []),
 ]
 
+// Subdomains that are always allowed (preview deployments, etc.)
+const ALLOWED_SUBDOMAINS = [
+  '.space.chatglm.site',   // Z.ai preview deployments
+  '.healthflow-gn.com',    // Production subdomains
+]
+
 // In development, also allow .space.chatglm.site subdomains
 function isAllowedOrigin(origin: string): boolean {
   if (ALLOWED_ORIGINS.includes(origin)) return true
-  // Allow preview deployments
-  if (process.env.NODE_ENV === 'development' && origin.includes('.space.chatglm.site')) return true
-  // Allow *.healthflow-gn.com subdomains
-  if (origin.endsWith('.healthflow-gn.com')) return true
+  // Allow recognized subdomains (always, not just in dev)
+  for (const subdomain of ALLOWED_SUBDOMAINS) {
+    if (origin.includes(subdomain)) return true
+  }
+  // Also check for http variants of preview URLs
+  if (origin.match(/^https?:\/\/[^/]+\.space\.chatglm\.site/)) return true
   return false
 }
 
@@ -80,26 +88,49 @@ export function middleware(request: NextRequest) {
   response.headers.set('Permissions-Policy', 'camera=(self), microphone=(self), geolocation=(self)')
 
   // SEC-08 FIX: Tightened Content Security Policy
-  const nonce = crypto.randomUUID ? Buffer.from(crypto.randomUUID()).toString('base64').slice(0, 24) : ''
-  const csp = [
-    "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}'`,
-    `style-src 'self' 'unsafe-inline'`,     // Style unsafe-inline still needed for Tailwind/shadcn
-    "img-src 'self' data: blob: https:",
-    "font-src 'self' data:",
-    "connect-src 'self' https: wss:",
-    "media-src 'self' blob:",
-    "frame-src 'none'",
-    "object-src 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    "frame-ancestors 'none'",
-  ].join('; ')
-  response.headers.set('Content-Security-Policy', csp)
-
-  // Set nonce for downstream use
-  if (nonce) {
-    response.headers.set('x-nonce', nonce)
+  // In development: relax CSP for Turbopack HMR (inline scripts, eval, WebSocket)
+  // In production: strict CSP with nonce-based script loading
+  const isDev = process.env.NODE_ENV === 'development'
+  
+  if (isDev) {
+    // Development CSP — relaxed for Turbopack HMR compatibility
+    const devCsp = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",  // Turbopack HMR needs inline + eval
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob: https:",
+      "font-src 'self' data:",
+      "connect-src 'self' https: wss: ws:",  // WebSocket for HMR
+      "media-src 'self' blob:",
+      "frame-src 'none'",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "frame-ancestors 'none'",
+    ].join('; ')
+    response.headers.set('Content-Security-Policy', devCsp)
+  } else {
+    // Production CSP — strict with nonce
+    const nonce = crypto.randomUUID ? Buffer.from(crypto.randomUUID()).toString('base64').slice(0, 24) : ''
+    const prodCsp = [
+      "default-src 'self'",
+      `script-src 'self' 'nonce-${nonce}'`,
+      `style-src 'self' 'unsafe-inline'`,     // Style unsafe-inline still needed for Tailwind/shadcn
+      "img-src 'self' data: blob: https:",
+      "font-src 'self' data:",
+      "connect-src 'self' https: wss:",
+      "media-src 'self' blob:",
+      "frame-src 'none'",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "frame-ancestors 'none'",
+    ].join('; ')
+    response.headers.set('Content-Security-Policy', prodCsp)
+    // Set nonce for downstream use (production only)
+    if (nonce) {
+      response.headers.set('x-nonce', nonce)
+    }
   }
 
   // HSTS (only in production)
@@ -221,8 +252,34 @@ export function middleware(request: NextRequest) {
       const hasCustomHeader = request.headers.get('x-requested-with') || 
                              request.headers.get('x-csrf-token')
       if (!reqOrigin && !hasCustomHeader) {
-        // Allow in development for convenience
-        if (process.env.NODE_ENV === 'production') {
+        // In development, allow without CSRF headers for convenience
+        // In production, also allow same-host requests (browser sends no origin for same-origin)
+        // But block cross-origin requests without origin/custom header
+        const referer = request.headers.get('referer')
+        if (referer) {
+          // If there's a referer, check it's from an allowed origin
+          try {
+            const refererHost = new URL(referer).host
+            if (host && refererHost === host) {
+              // Same-origin request (referer matches host) - allow
+            } else if (isAllowedOrigin(new URL(referer).origin)) {
+              // Referer from allowed origin - allow
+            } else if (process.env.NODE_ENV === 'production') {
+              return NextResponse.json(
+                { error: 'Requête non autorisée (CSRF)' },
+                { status: 403 }
+              )
+            }
+          } catch {
+            if (process.env.NODE_ENV === 'production') {
+              return NextResponse.json(
+                { error: 'Requête non autorisée' },
+                { status: 403 }
+              )
+            }
+          }
+        } else if (process.env.NODE_ENV === 'production') {
+          // No origin, no custom header, no referer in production - block
           return NextResponse.json(
             { error: 'En-tête de sécurité requis (CSRF)' },
             { status: 403 }

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>HealthFlow Guinea - Audit Stratégique</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  @page { size: 794px 1123px; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 794px; height: 1123px; overflow: hidden; background: #f8f9fa; }
+
+  .cover {
+    position: relative;
+    width: 794px;
+    height: 1123px;
+    font-family: 'Inter', sans-serif;
+  }
+
+  /* Layer 1: Background */
+  .bg-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    overflow: hidden;
+  }
+  .grid-pattern {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(73,98,123,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(73,98,123,0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+  }
+
+  /* Layer 2: Structure */
+  .struct-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+  }
+  .thick-line {
+    position: absolute;
+    left: 95px;
+    top: 112px;
+    bottom: 112px;
+    width: 6px;
+    background: #49627b;
+  }
+  .meta-line {
+    position: absolute;
+    left: 140px;
+    top: 700px;
+    width: 300px;
+    height: 1px;
+    background: rgba(73,98,123,0.4);
+  }
+
+  /* Layer 3: Content */
+  .content-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    padding: 0 60px;
+  }
+
+  .kicker {
+    position: absolute;
+    top: 168px;
+    left: 140px;
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(34,36,37,0.6);
+  }
+
+  .hero-title {
+    position: absolute;
+    top: 220px;
+    left: 140px;
+    max-width: 520px;
+    font-family: 'Playfair Display', serif;
+    font-size: 48px;
+    font-weight: 800;
+    line-height: 1.15;
+    color: #222425;
+  }
+
+  .summary {
+    position: absolute;
+    top: 460px;
+    left: 140px;
+    max-width: 460px;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.6;
+    color: rgba(34,36,37,0.85);
+  }
+
+  .meta-block {
+    position: absolute;
+    top: 730px;
+    left: 140px;
+  }
+  .meta-line-item {
+    font-size: 16px;
+    font-weight: 400;
+    color: rgba(34,36,37,0.85);
+    line-height: 2.0;
+  }
+
+  .footer {
+    position: absolute;
+    bottom: 56px;
+    left: 140px;
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(34,36,37,0.5);
+  }
+
+  .accent-block {
+    position: absolute;
+    top: 200px;
+    right: 60px;
+    width: 8px;
+    height: 80px;
+    background: #228f74;
+  }
+
+  .score-badge {
+    position: absolute;
+    bottom: 56px;
+    right: 60px;
+    text-align: right;
+  }
+  .score-number {
+    font-family: 'Playfair Display', serif;
+    font-size: 56px;
+    font-weight: 800;
+    color: #228f74;
+    line-height: 1;
+  }
+  .score-label {
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(34,36,37,0.5);
+    margin-top: 4px;
+  }
+</style>
+</head>
+<body>
+<div class="cover">
+  <!-- Layer 1: Background -->
+  <div class="bg-layer">
+    <div class="grid-pattern"></div>
+  </div>
+
+  <!-- Layer 2: Structure -->
+  <div class="struct-layer">
+    <div class="thick-line"></div>
+    <div class="meta-line"></div>
+    <div class="accent-block"></div>
+  </div>
+
+  <!-- Layer 3: Content -->
+  <div class="content-layer">
+    <div class="kicker">AUDIT STRATEGIQUE ET AXES D'EVOLUTION</div>
+    <div class="hero-title">HealthFlow<br>Guinea</div>
+    <div class="summary">
+      Analyse approfondie du systeme d'information hospitalier HealthFlow Guinea :
+      points forts, lacunes critiques, axes d'amelioration strategiques et feuille de route
+      pour devenir un leader mondial de la gestion hospitaliere avec comptes patients,
+      suivi medical et rendez-vous en ligne.
+    </div>
+    <div class="meta-block">
+      <div style="font-size:16px; color:rgba(34,36,37,0.85); margin-bottom:6px;">DataSphere Innovation</div>
+      <div style="font-size:16px; color:rgba(34,36,37,0.6);">Mai 2026</div>
+    </div>
+    <div class="footer">
+      <div class="score-badge">
+        <div class="score-number">7.3</div>
+        <div class="score-label">Score Global / 10</div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

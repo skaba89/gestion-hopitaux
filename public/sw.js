@@ -118,6 +118,13 @@ async function staleWhileRevalidate(request) {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url)
 
+  // CRITICAL: Never cache /_next/ paths — Turbopack regenerates chunks with
+  // new hashes on every code change. Caching them causes ChunkLoadError when
+  // the HTML references a new chunk hash but the SW serves a stale cached one.
+  if (url.pathname.startsWith('/_next/')) {
+    return // Let the browser handle it natively (no SW interception)
+  }
+
   // Skip non-GET requests for caching (POST, PUT, DELETE handled by sync queue)
   if (event.request.method !== 'GET') {
     // Queue mutation requests when offline

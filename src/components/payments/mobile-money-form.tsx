@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useDataStore, type MobileMoneyProvider, type PaymentReason } from '@/lib/data-store'
-import { detectProvider, isValidGuineaPhone, formatPhoneGuinea, generateReference, generateTransactionId } from '@/lib/mobile-money'
+import { detectProvider, isValidGuineaPhone, formatPhoneGuinea, generateReference, generateTransactionId } from '@/lib/mobile-money-utils'
 import { useToast } from '@/hooks/use-toast'
 
 interface MobileMoneyFormProps {

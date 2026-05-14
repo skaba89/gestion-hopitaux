@@ -50,7 +50,7 @@ export function useInitiatePayment() {
     }) => {
       const res = await fetch('/api/payments/mobile-money', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         body: JSON.stringify(params),
       })
       return res.json()

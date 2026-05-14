@@ -41,6 +41,10 @@
     "skills",
     "examples",
     "agent-ctx",
-    "download"
+    "download",
+    "jest.config.ts",
+    "prisma/seed.ts",
+    "**/__tests__/**",
+    "**/__mocks__/**"
   ]
 }

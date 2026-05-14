@@ -85,7 +85,7 @@ export function InteractionChecker() {
     try {
       const response = await fetch('/api/ai/interactions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         body: JSON.stringify({
           medications: selectedMeds,
           patientContext: {

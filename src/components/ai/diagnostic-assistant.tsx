@@ -84,7 +84,7 @@ export function DiagnosticAssistant() {
     try {
       const response = await fetch('/api/ai/diagnostic', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         body: JSON.stringify({
           symptoms: selectedSymptoms.map(s => `${s.name} (${s.duration}, sévérité ${s.severity}/10)`),
           patientContext,

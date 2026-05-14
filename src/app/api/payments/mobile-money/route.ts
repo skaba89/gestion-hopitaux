@@ -1,27 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { mobileMoneyService, generateTransactionId, generateReference, detectProvider, isValidGuineaPhone } from '@/lib/mobile-money'
+import { mobileMoneyService, isValidGuineaPhone, detectProvider } from '@/lib/mobile-money'
+import { z } from 'zod'
 
+// Validation schema for payment initiation
+const initiatePaymentSchema = z.object({
+  phoneNumber: z.string().min(8, 'Numéro de téléphone requis'),
+  amount: z.number().positive('Montant doit être positif'),
+  currency: z.enum(['GNF', 'USD']).default('GNF'),
+  reason: z.string().min(1, 'Raison du paiement requise').max(200),
+  invoiceId: z.string().optional(),
+  patientName: z.string().min(2, 'Nom du patient requis'),
+  patientId: z.string().min(1, 'ID patient requis'),
+  provider: z.enum(['Orange Money', 'MTN MoMo']).optional(),
+})
+
+/**
+ * POST /api/payments/mobile-money
+ * Initiate a Mobile Money payment via Orange Money or MTN MoMo
+ */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { phoneNumber, amount, currency, reason, invoiceId, patientName, patientId, provider } = body
+    const validated = initiatePaymentSchema.parse(body)
 
-    // Validate
-    if (!phoneNumber || !amount || !patientName) {
-      return NextResponse.json(
-        { success: false, message: 'Champs obligatoires manquants: phoneNumber, amount, patientName' },
-        { status: 400 }
-      )
-    }
-
-    if (!isValidGuineaPhone(phoneNumber)) {
+    if (!isValidGuineaPhone(validated.phoneNumber)) {
       return NextResponse.json(
         { success: false, message: 'Numéro de téléphone invalide. Format: +224 XXX XX XX XX' },
         { status: 400 }
       )
     }
 
-    const detectedProvider = provider || detectProvider(phoneNumber)
+    const detectedProvider = validated.provider || detectProvider(validated.phoneNumber)
     if (!detectedProvider) {
       return NextResponse.json(
         { success: false, message: 'Impossible de détecter le fournisseur. Orange (6XX) ou MTN (5XX) requis.' },
@@ -29,39 +38,49 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // In demo mode, simulate the transaction creation
-    const reference = generateReference(detectedProvider)
-    const transactionId = generateTransactionId()
-
-    // Simulate async processing
-    const success = Math.random() > 0.1
-    const txn = {
-      id: transactionId,
-      reference,
+    // Delegate to the real Mobile Money service (with sandbox fallback)
+    const result = await mobileMoneyService.initiatePayment({
+      phoneNumber: validated.phoneNumber,
+      amount: validated.amount,
+      currency: validated.currency,
+      reason: validated.reason,
+      invoiceId: validated.invoiceId || null,
+      patientName: validated.patientName,
+      patientId: validated.patientId,
       provider: detectedProvider,
-      phoneNumber,
-      amount: Number(amount),
-      currency: currency || 'GNF',
-      reason: reason || 'Facture',
-      invoiceId: invoiceId || null,
-      patientName,
-      patientId: patientId || '',
-      status: success ? 'En cours' as const : 'Échoué' as const,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      completedAt: null,
-      providerTransactionId: success ? `${detectedProvider === 'Orange Money' ? 'OM' : 'MTN'}-TXN-${Math.floor(Math.random() * 99999)}` : null,
-      paymentLink: success ? `https://pay.${detectedProvider === 'Orange Money' ? 'orange' : 'mtn'}.gf/${reference}` : null,
-    }
+    })
 
     return NextResponse.json({
-      success,
-      transaction: txn,
-      message: success
-        ? `Paiement ${detectedProvider} initié. Référence: ${reference}`
-        : 'Échec de l\'initiation du paiement.',
-    })
-  } catch (error) {
+      success: result.success,
+      transaction: {
+        id: result.transactionId,
+        reference: result.reference,
+        provider: result.provider,
+        phoneNumber: validated.phoneNumber,
+        amount: validated.amount,
+        currency: validated.currency,
+        reason: validated.reason,
+        invoiceId: validated.invoiceId || null,
+        patientName: validated.patientName,
+        patientId: validated.patientId,
+        status: result.status,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        completedAt: null,
+        providerTransactionId: null,
+        paymentLink: result.paymentLink,
+      },
+      message: result.message,
+    }, { status: result.success ? 200 : 422 })
+
+  } catch (error: any) {
+    if (error.name === 'ZodError') {
+      return NextResponse.json(
+        { success: false, message: 'Données invalides', details: error.errors },
+        { status: 400 }
+      )
+    }
+    console.error('[Mobile Money] Payment initiation error:', error)
     return NextResponse.json(
       { success: false, message: 'Erreur serveur', error: String(error) },
       { status: 500 }
@@ -69,6 +88,10 @@ export async function POST(request: NextRequest) {
   }
 }
 
+/**
+ * GET /api/payments/mobile-money?transactionId=xxx&provider=xxx
+ * Check Mobile Money transaction status
+ */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -82,23 +105,23 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // In demo mode, return a simulated status
-    const rand = Math.random()
-    let status: 'En attente' | 'En cours' | 'Réussi' | 'Échoué' | 'Remboursé'
-    if (rand < 0.5) status = 'Réussi'
-    else if (rand < 0.7) status = 'En cours'
-    else if (rand < 0.85) status = 'En attente'
-    else status = 'Échoué'
+    if (!['Orange Money', 'MTN MoMo'].includes(provider)) {
+      return NextResponse.json(
+        { success: false, message: 'Fournisseur invalide. Utilisez: Orange Money ou MTN MoMo' },
+        { status: 400 }
+      )
+    }
+
+    // Delegate to the real service
+    const result = await mobileMoneyService.checkTransactionStatus(transactionId, provider)
 
     return NextResponse.json({
       success: true,
-      transactionId,
-      status,
-      providerTransactionId: `${provider === 'Orange Money' ? 'OM' : 'MTN'}-TXN-${Math.floor(Math.random() * 99999)}`,
-      completedAt: status === 'Réussi' ? new Date().toISOString() : null,
-      message: status === 'Réussi' ? 'Transaction complétée' : `Statut: ${status}`,
+      ...result,
     })
+
   } catch (error) {
+    console.error('[Mobile Money] Status check error:', error)
     return NextResponse.json(
       { success: false, message: 'Erreur serveur', error: String(error) },
       { status: 500 }

@@ -352,7 +352,7 @@ export class TelemedicinePeerConnection {
 export async function sendSignalingMessage(message: Omit<SignalingMessage, 'id' | 'timestamp'>): Promise<void> {
   await fetch('/api/telemedicine/signaling?XTransformPort=3000', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
     body: JSON.stringify({
       ...message,
       id: `SIG-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,

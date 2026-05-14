@@ -1,0 +1,139 @@
+# ============================================================================
+# HealthFlow Guinea - CI/CD Pipeline
+# Triggers: Push to main/develop, Pull Requests to main/develop
+# Jobs: Lint → Type Check → Test → Build → Deploy (staging/prod)
+# ============================================================================
+
+name: HealthFlow CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  NODE_VERSION: '20'
+  DATABASE_URL: postgresql://healthflow:healthflow_test@localhost:5432/healthflow_test?schema=public
+  REDIS_URL: redis://localhost:6379
+  NEXTAUTH_SECRET: ci-test-secret-do-not-use-in-production
+  NEXTAUTH_URL: http://localhost:3000
+  ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+  SMS_PROVIDER: demo
+  DEMO_MODE: true
+
+jobs:
+  # ---- Job 1: Lint ----
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run lint
+
+  # ---- Job 2: Type Check ----
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm ci
+      - run: npx tsc --noEmit
+
+  # ---- Job 3: Test ----
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    needs: [lint, typecheck]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: healthflow
+          POSTGRES_PASSWORD: healthflow_test
+          POSTGRES_DB: healthflow_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npx prisma migrate deploy
+      - run: npm test -- --coverage --ci --forceExit
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+
+  # ---- Job 4: Build ----
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm run build
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: .next/standalone/
+
+  # ---- Job 5: Deploy Staging ----
+  deploy-staging:
+    name: Deploy Staging
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    environment: staging
+    steps:
+      - name: Deploy to staging
+        run: echo "Deploy to staging server would happen here"
+        # Add actual deployment steps (SSH, Docker push, etc.)
+
+  # ---- Job 6: Deploy Production ----
+  deploy-production:
+    name: Deploy Production
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+    steps:
+      - name: Deploy to production
+        run: echo "Deploy to production server would happen here"
+        # Add actual deployment steps (SSH, Docker push, etc.)
