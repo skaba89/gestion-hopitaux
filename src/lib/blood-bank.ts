@@ -817,6 +817,8 @@ export const DEMO_DONORS: Donor[] = (() => {
           ...data,
           id: donorId,
           donorCode,
+          dateOfBirth: data.dob,
+          weightKg: data.weight,
           rhFactor: data.bloodType.endsWith('+') ? '+' : '-',
           address: `${data.quartier}, ${data.prefecture}`,
           donationHistory,

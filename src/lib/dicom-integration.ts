@@ -277,7 +277,7 @@ class DICOMService {
         numberOfSeries: 1,
         numberOfInstances: 2,
         status: 'in-progress',
-        reportStatus: null,
+        reportStatus: 'draft',
         radiologist: null,
         reportText: null,
         reportDate: null,

@@ -438,6 +438,10 @@ export interface FHIRCapabilityStatement extends FHIRResource {
   kind: 'instance' | 'capability' | 'requirements'
   fhirVersion: string
   format: string[]
+  implementation?: {
+    description: string
+    url?: string
+  }
   rest?: {
     mode: 'client' | 'server'
     documentation?: string
@@ -957,7 +961,6 @@ export function buildPatientBundle(patient: Patient, consultation?: Consultation
     resourceType: 'Bundle',
     id: `hf-bundle-${patient.id}-${Date.now()}`,
     type: 'document',
-    timestamp: new Date().toISOString(),
     total: entries.length,
     link: [
       { relation: 'self', url: `https://healthflow-gn.com/fhir/Bundle/${patient.id}` },

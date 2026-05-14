@@ -1,10 +1,42 @@
-// HealthFlow Africa - Security Middleware
-// CSRF protection, rate limiting, security headers, session validation, IP logging
+// HealthFlow Guinea - Security Middleware (Hardened v2)
+// SEC-02 FIX: CORS restricted to allowed origins (no wildcard)
+// SEC-06 FIX: CSRF protection with origin checking + custom header pattern
+// SEC-08 FIX: Tightened CSP (removed unsafe-inline/unsafe-eval)
+// Rate limiting, security headers
 
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-// Rate limiting store (in-memory, per-instance)
+// ─────────── SEC-02: Allowed CORS Origins ───────────
+
+const ALLOWED_ORIGINS = [
+  // Production domains
+  'https://healthflow-gn.com',
+  'https://www.healthflow-gn.com',
+  'https://app.healthflow-gn.com',
+  'https://api.healthflow-gn.com',
+  // Staging
+  'https://staging.healthflow-gn.com',
+  // Development
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://127.0.0.1:3000',
+  // Preview deployments (chatglm.site)
+  ...(process.env.ALLOWED_ORIGINS?.split(',').filter(Boolean) || []),
+]
+
+// In development, also allow .space.chatglm.site subdomains
+function isAllowedOrigin(origin: string): boolean {
+  if (ALLOWED_ORIGINS.includes(origin)) return true
+  // Allow preview deployments
+  if (process.env.NODE_ENV === 'development' && origin.includes('.space.chatglm.site')) return true
+  // Allow *.healthflow-gn.com subdomains
+  if (origin.endsWith('.healthflow-gn.com')) return true
+  return false
+}
+
+// ─────────── Rate Limiting ───────────
+
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>()
 
 function checkRateLimit(key: string, maxRequests: number, windowMs: number): boolean {
@@ -44,25 +76,35 @@ export function middleware(request: NextRequest) {
   response.headers.set('X-Frame-Options', 'DENY')
   response.headers.set('X-Content-Type-Options', 'nosniff')
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
-  response.headers.set('X-XSS-Protection', '1; mode=block')
+  response.headers.set('X-XSS-Protection', '0') // Deprecated, CSP is better
   response.headers.set('Permissions-Policy', 'camera=(self), microphone=(self), geolocation=(self)')
 
-  // Content Security Policy
+  // SEC-08 FIX: Tightened Content Security Policy
+  const nonce = crypto.randomUUID ? Buffer.from(crypto.randomUUID()).toString('base64').slice(0, 24) : ''
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-    "style-src 'self' 'unsafe-inline'",
+    `script-src 'self' 'nonce-${nonce}'`,
+    `style-src 'self' 'unsafe-inline'`,     // Style unsafe-inline still needed for Tailwind/shadcn
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
-    "connect-src 'self' https:",
+    "connect-src 'self' https: wss:",
     "media-src 'self' blob:",
     "frame-src 'none'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
   ].join('; ')
   response.headers.set('Content-Security-Policy', csp)
 
+  // Set nonce for downstream use
+  if (nonce) {
+    response.headers.set('x-nonce', nonce)
+  }
+
   // HSTS (only in production)
   if (process.env.NODE_ENV === 'production') {
-    response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
+    response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')
   }
 
   // ─── Allow Static Assets & Internals ───
@@ -87,8 +129,39 @@ export function middleware(request: NextRequest) {
     return response
   }
 
-  // ─── Rate Limiting on API Routes ───
+  // ─── SEC-02 FIX: CORS for API Routes ───
   if (pathname.startsWith('/api/')) {
+    const origin = request.headers.get('origin')
+    
+    // Handle preflight requests
+    if (request.method === 'OPTIONS') {
+      const preflightResponse = new Response(null, { status: 204 })
+      
+      if (origin && isAllowedOrigin(origin)) {
+        preflightResponse.headers.set('Access-Control-Allow-Origin', origin)
+        preflightResponse.headers.set('Access-Control-Allow-Credentials', 'true')
+        preflightResponse.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS')
+        preflightResponse.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-CSRF-Token, X-Requested-With, x-csrf-token')
+        preflightResponse.headers.set('Access-Control-Max-Age', '86400') // 24h
+      } else if (!origin) {
+        // No origin (server-to-server, curl, Postman) - allow but restrict
+        preflightResponse.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS')
+        preflightResponse.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-CSRF-Token, X-Requested-With')
+      }
+      // If origin is present but not allowed: NO CORS headers = browser blocks it
+      
+      return preflightResponse
+    }
+
+    // SEC-02 FIX: Set CORS headers on actual responses only for allowed origins
+    if (origin && isAllowedOrigin(origin)) {
+      response.headers.set('Access-Control-Allow-Origin', origin)
+      response.headers.set('Access-Control-Allow-Credentials', 'true')
+      response.headers.set('Vary', 'Origin')
+    }
+    // NO wildcard (*) - rejected origins get no CORS headers = blocked by browser
+
+    // ─── Rate Limiting on API Routes ───
     const clientIp = request.headers.get('x-forwarded-for') ||
                      request.headers.get('x-real-ip') ||
                      'unknown'
@@ -113,29 +186,45 @@ export function middleware(request: NextRequest) {
       }
     }
 
-    // Log IP for audit purposes
-    response.headers.set('X-Request-IP', clientIp)
-  }
+    // Exempt CSRF token endpoint from CSRF check
+    if (pathname === '/api/auth/csrf' && request.method === 'GET') {
+      return response
+    }
 
-  // ─── CSRF Protection ───
-  // For POST/PUT/DELETE to API routes, check for Origin/Referer header
-  if (
-    pathname.startsWith('/api/') &&
-    ['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method)
-  ) {
-    const origin = request.headers.get('origin')
-    const referer = request.headers.get('referer')
-    const host = request.headers.get('host')
+    // ─── CSRF Protection (SEC-06 FIX: Always active for mutating requests) ───
+    if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method)) {
+      const reqOrigin = request.headers.get('origin')
+      const host = request.headers.get('host')
 
-    // In demo mode, allow requests without origin (direct API calls)
-    // In production, this would be stricter
-    if (origin && host) {
-      const originHost = new URL(origin).host
-      if (originHost !== host) {
-        // Allow cross-origin in development
+      // Strategy 1: Origin header validation
+      if (reqOrigin && host) {
+        try {
+          const originHost = new URL(reqOrigin).host
+          if (originHost !== host) {
+            // SEC-02 FIX: Also check against allowed origins list
+            if (!isAllowedOrigin(reqOrigin)) {
+              return NextResponse.json(
+                { error: 'Requête non autorisée (CSRF/CORS)' },
+                { status: 403 }
+              )
+            }
+          }
+        } catch {
+          return NextResponse.json(
+            { error: 'Requête non autorisée' },
+            { status: 403 }
+          )
+        }
+      }
+      
+      // Strategy 2: Custom request header pattern (for non-browser clients)
+      const hasCustomHeader = request.headers.get('x-requested-with') || 
+                             request.headers.get('x-csrf-token')
+      if (!reqOrigin && !hasCustomHeader) {
+        // Allow in development for convenience
         if (process.env.NODE_ENV === 'production') {
           return NextResponse.json(
-            { error: 'Requête non autorisée (CSRF)' },
+            { error: 'En-tête de sécurité requis (CSRF)' },
             { status: 403 }
           )
         }
@@ -143,7 +232,6 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // Allow the root page (SPA handles its own routing)
   return response
 }
 

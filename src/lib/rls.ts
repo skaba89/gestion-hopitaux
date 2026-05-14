@@ -141,7 +141,7 @@ export function filterPatientData<T extends Record<string, unknown>>(patient: T,
 export function maskSensitiveFields<T extends Record<string, unknown>>(data: T, role: HFRole): T {
   if (role === 'Administrateur' || role === 'Médecin') return data
 
-  const masked = { ...data }
+  const masked: Record<string, unknown> = { ...data }
   const sensitiveFields = ['nationalId', 'ssn', 'socialSecurityNumber']
   const medicalSensitiveFields = ['hivStatus', 'mentalHealthHistory', 'psychiatricHistory', 'substanceAbuseHistory']
 
@@ -164,7 +164,7 @@ export function maskSensitiveFields<T extends Record<string, unknown>>(data: T, 
     }
   }
 
-  return masked
+  return masked as T
 }
 
 /**

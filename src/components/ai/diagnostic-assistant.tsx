@@ -12,7 +12,8 @@ import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { SymptomSelector, type SelectedSymptom } from '@/components/ai/symptom-selector'
 import { PatientContextForm } from '@/components/ai/patient-context-form'
-import type { PatientContext, PossibleDiagnosis, OrientationLevel, DiagnosticResponse } from '@/lib/data-store'
+import type { PatientContext, PossibleDiagnosis, OrientationLevel } from '@/lib/data-store'
+import type { DiagnosticResponse } from '@/lib/ai-diagnostic'
 
 /* ─────────── Animation ─────────── */
 
@@ -175,11 +176,12 @@ Cet outil est une aide au diagnostic. Il ne remplace pas le jugement médical pr
     }
 
     const SpeechRecognition = (window as Record<string, unknown>).SpeechRecognition || (window as Record<string, unknown>).webkitSpeechRecognition
-    const recognition = new (SpeechRecognition as new () => SpeechRecognition)()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const recognition = new (SpeechRecognition as any)()
     recognition.lang = 'fr-FR'
     recognition.continuous = false
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
+    recognition.onresult = (event: { results: { [key: number]: { [key: number]: { transcript: string } } } }) => {
       const transcript = event.results[0][0].transcript
       setVoiceText(transcript)
       // Auto-add recognized symptoms

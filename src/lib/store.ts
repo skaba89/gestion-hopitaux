@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import type { ManagementScope, ClinicalRole, UserScope } from './unified-rbac'
 
 export type AppView =
   | 'landing'
@@ -43,6 +44,8 @@ export type AppView =
   | 'facilities-management'
   | 'national-supervision'
   | 'national-statistics'
+  | 'multi-hospital'
+  | 'adaptive-dashboard'
 
 interface User {
   name: string
@@ -50,6 +53,12 @@ interface User {
   establishment: string
   email: string
   phone: string
+  // ─── Unified Auth / Hospital Scope Fields ───
+  hospitalId?: string
+  serviceId?: string
+  regionCode?: string
+  managementScope: ManagementScope
+  clinicalRole: ClinicalRole
 }
 
 interface PortalUser {
@@ -58,6 +67,8 @@ interface PortalUser {
   isLoggedIn: boolean
 }
 
+type ScopeLevel = 'service' | 'hospital' | 'region' | 'national'
+
 interface AppState {
   currentView: AppView
   sidebarOpen: boolean
@@ -65,26 +76,42 @@ interface AppState {
   searchQuery: string
   notificationsOpen: boolean
   portalUser: PortalUser
+  // ─── Unified Auth / Hospital Scope State ───
+  activeHospitalScope: string | null
+  activeServiceScope: string | null
+  scopeLevel: ScopeLevel
+  // ─── Actions ───
   setCurrentView: (view: AppView) => void
   setSidebarOpen: (open: boolean) => void
   setSearchQuery: (query: string) => void
   setNotificationsOpen: (open: boolean) => void
   updateUser: (data: Partial<User>) => void
   setPortalUser: (data: Partial<PortalUser>) => void
+  setActiveScope: (level: ScopeLevel, entityId?: string) => void
+  getUserScope: () => UserScope
 }
 
-export const useStore = create<AppState>((set) => ({
+export const useStore = create<AppState>((set, get) => ({
   currentView: 'landing',
   sidebarOpen: true,
   searchQuery: '',
   notificationsOpen: false,
   portalUser: { accountId: null, phone: '', isLoggedIn: false },
+  // ─── Unified Auth / Hospital Scope Defaults ───
+  activeHospitalScope: null,
+  activeServiceScope: null,
+  scopeLevel: 'hospital',
   user: {
     name: 'Dr. Mamadou Diallo',
     role: 'Médecin',
     establishment: 'Hôpital Donka',
     email: 'm.diallo@healthflow-gn.com',
     phone: '+224 622 00 00 00',
+    hospitalId: 'H-CHU-DONKA',
+    serviceId: undefined,
+    regionCode: 'Conakry',
+    managementScope: 'chef_service',
+    clinicalRole: 'medecin',
   },
   setCurrentView: (view) => set({ currentView: view }),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
@@ -92,4 +119,37 @@ export const useStore = create<AppState>((set) => ({
   setNotificationsOpen: (open) => set({ notificationsOpen: open }),
   updateUser: (data) => set((s) => ({ user: { ...s.user, ...data } })),
   setPortalUser: (data) => set((s) => ({ portalUser: { ...s.portalUser, ...data } })),
+  // ─── Unified Scope Actions ───
+  setActiveScope: (level, entityId) =>
+    set((s) => {
+      const updates: Partial<AppState> = { scopeLevel: level }
+      if (level === 'national') {
+        updates.activeHospitalScope = null
+        updates.activeServiceScope = null
+      } else if (level === 'region') {
+        updates.activeHospitalScope = null
+        updates.activeServiceScope = null
+        // regionCode is already on the user, entityId could update it
+        if (entityId) {
+          updates.user = { ...s.user, regionCode: entityId }
+        }
+      } else if (level === 'hospital') {
+        updates.activeHospitalScope = entityId ?? s.user.hospitalId ?? null
+        updates.activeServiceScope = null
+      } else if (level === 'service') {
+        updates.activeServiceScope = entityId ?? s.user.serviceId ?? null
+      }
+      return updates
+    }),
+  getUserScope: () => {
+    const { user } = get()
+    return {
+      clinicalRole: user.clinicalRole,
+      managementScope: user.managementScope,
+      scopeEntityId: user.serviceId ?? user.hospitalId ?? user.regionCode,
+      hospitalId: user.hospitalId,
+      serviceId: user.serviceId,
+      regionCode: user.regionCode,
+    }
+  },
 }))

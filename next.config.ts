@@ -2,11 +2,12 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  /* config options here */
+  // SEC-12 FIX: Enable TypeScript checking in builds
+  // Previously ignoreBuildErrors: true was hiding real type errors
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
-  reactStrictMode: false,
+  reactStrictMode: true, // SEC-12 FIX: Enable React strict mode
   async headers() {
     return [
       {

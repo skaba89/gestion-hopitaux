@@ -1,37 +1,86 @@
-// HealthFlow Africa - Security Utilities
-// Encryption, hashing, token generation, input sanitization, rate limiting, CSRF
+// HealthFlow Guinea - Security Utilities (Hardened v2)
+// SEC-03 FIX: Real encryption using Web Crypto API (client) / Node.js crypto (server)
+// SEC-04 FIX: Password hashing using bcryptjs (server) / PBKDF2 (fallback)
+// SEC-06 FIX: CSRF token generation and validation
 
 // ─────────── Encryption ───────────
 
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'healthflow-guinea-32byte-encrypt-k'
-const ALGORITHM = 'aes-256-cbc'
+const ALGORITHM = 'aes-256-gcm'
 
 /**
- * Encrypt sensitive field data at rest
- * Uses Web Crypto API when available, falls back to base64
+ * SEC-03 FIX: Encrypt sensitive field data using Web Crypto API
+ * Client-side: Uses SubtleCrypto (AES-GCM 256-bit)
+ * Falls back to server-side encryption via API if Web Crypto unavailable
  */
-export function encryptField(data: string, _key?: string): string {
+export async function encryptField(data: string, _key?: string): Promise<string> {
   try {
-    // Use btoa for basic encoding in browser/client context
-    return btoa(encodeURIComponent(data))
+    // Use Web Crypto API (available in modern browsers AND Node.js 18+)
+    if (typeof crypto !== 'undefined' && crypto.subtle) {
+      const encoder = new TextEncoder()
+      const keyMaterial = await crypto.subtle.importKey(
+        'raw',
+        encoder.encode(ENCRYPTION_KEY.slice(0, 32)),
+        { name: 'AES-GCM' },
+        false,
+        ['encrypt']
+      )
+      const iv = crypto.getRandomValues(new Uint8Array(12))
+      const encrypted = await crypto.subtle.encrypt(
+        { name: 'AES-GCM', iv },
+        keyMaterial,
+        encoder.encode(data)
+      )
+      // Combine IV + ciphertext and base64 encode
+      const combined = new Uint8Array(iv.length + new Uint8Array(encrypted).length)
+      combined.set(iv)
+      combined.set(new Uint8Array(encrypted), iv.length)
+      return btoa(String.fromCharCode(...combined))
+    }
+    // Fallback: delegate to server-side encryption
+    return await encryptFieldServer(data, _key)
   } catch {
-    return data
+    // Last resort: log warning and return server-encrypted data
+    console.warn('[SECURITY] Client encryption failed, use server-side encryption')
+    return await encryptFieldServer(data, _key)
   }
 }
 
 /**
- * Decrypt encrypted field data
+ * SEC-03 FIX: Decrypt field data using Web Crypto API
  */
-export function decryptField(encryptedData: string, _key?: string): string {
+export async function decryptField(encryptedData: string, _key?: string): Promise<string> {
   try {
-    return decodeURIComponent(atob(encryptedData))
+    if (typeof crypto !== 'undefined' && crypto.subtle) {
+      const encoder = new TextEncoder()
+      const keyMaterial = await crypto.subtle.importKey(
+        'raw',
+        encoder.encode(ENCRYPTION_KEY.slice(0, 32)),
+        { name: 'AES-GCM' },
+        false,
+        ['decrypt']
+      )
+      const combined = new Uint8Array(
+        atob(encryptedData).split('').map(c => c.charCodeAt(0))
+      )
+      const iv = combined.slice(0, 12)
+      const ciphertext = combined.slice(12)
+      const decrypted = await crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv },
+        keyMaterial,
+        ciphertext
+      )
+      return new TextDecoder().decode(decrypted)
+    }
+    return await decryptFieldServer(encryptedData, _key)
   } catch {
-    return encryptedData
+    return await decryptFieldServer(encryptedData, _key)
   }
 }
 
 /**
- * Encrypt using Node.js crypto (server-side only)
+ * Encrypt using Node.js crypto (server-side only) - AES-256-GCM with authentication tag
+ * SEC-03 IMPROVEMENT: Upgraded from CBC to GCM mode (authenticated encryption)
  */
 export async function encryptFieldServer(data: string, key?: string): Promise<string> {
   try {
@@ -41,105 +90,179 @@ export async function encryptFieldServer(data: string, key?: string): Promise<st
     const cipher = crypto.createCipheriv(ALGORITHM, Buffer.from(encryptionKey.slice(0, 32)), iv)
     let encrypted = cipher.update(data, 'utf8', 'hex')
     encrypted += cipher.final('hex')
-    return iv.toString('hex') + ':' + encrypted
+    const authTag = cipher.getAuthTag()
+    // Format: iv:authTag:ciphertext (all hex-encoded)
+    return iv.toString('hex') + ':' + authTag.toString('hex') + ':' + encrypted
   } catch {
-    return btoa(encodeURIComponent(data))
+    // NEVER fall back to base64 encoding as "encryption"
+    throw new Error('[SECURITY] Server-side encryption failed - data will NOT be stored unencrypted')
   }
 }
 
 /**
- * Decrypt using Node.js crypto (server-side only)
+ * Decrypt using Node.js crypto (server-side only) - AES-256-GCM with auth tag verification
  */
 export async function decryptFieldServer(encryptedData: string, key?: string): Promise<string> {
   try {
     const crypto = await import('crypto')
     const encryptionKey = key || ENCRYPTION_KEY
     const parts = encryptedData.split(':')
-    const iv = Buffer.from(parts[0], 'hex')
-    const encrypted = parts[1]
-    const decipher = crypto.createDecipheriv(ALGORITHM, Buffer.from(encryptionKey.slice(0, 32)), iv)
-    let decrypted = decipher.update(encrypted, 'hex', 'utf8')
-    decrypted += decipher.final('utf8')
-    return decrypted
+    
+    // Support both old CBC format (2 parts) and new GCM format (3 parts)
+    if (parts.length === 3) {
+      // GCM format: iv:authTag:ciphertext
+      const iv = Buffer.from(parts[0], 'hex')
+      const authTag = Buffer.from(parts[1], 'hex')
+      const encrypted = parts[2]
+      const decipher = crypto.createDecipheriv(ALGORITHM, Buffer.from(encryptionKey.slice(0, 32)), iv)
+      decipher.setAuthTag(authTag)
+      let decrypted = decipher.update(encrypted, 'hex', 'utf8')
+      decrypted += decipher.final('utf8')
+      return decrypted
+    } else if (parts.length === 2) {
+      // Legacy CBC format: iv:ciphertext (backward compatibility)
+      const iv = Buffer.from(parts[0], 'hex')
+      const encrypted = parts[1]
+      const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(encryptionKey.slice(0, 32)), iv)
+      let decrypted = decipher.update(encrypted, 'hex', 'utf8')
+      decrypted += decipher.final('utf8')
+      return decrypted
+    }
+    
+    throw new Error('Invalid encrypted data format')
   } catch {
-    try { return decodeURIComponent(atob(encryptedData)) } catch { return encryptedData }
+    throw new Error('[SECURITY] Server-side decryption failed')
   }
 }
 
 // ─────────── Password Hashing ───────────
 
 /**
- * Secure password hashing using SHA-256 with salt
- * (For non-NextAuth passwords - NextAuth uses bcrypt via providers)
+ * SEC-04 FIX: Secure password hashing using bcryptjs (server-side)
+ * Uses bcrypt with cost factor 12 (adaptive, GPU-resistant)
+ * Falls back to PBKDF2 with 100,000 iterations if bcrypt unavailable
+ * 
+ * CRITICAL: The old DJB2 fallback has been completely removed.
+ * Password hashing now ALWAYS uses a proper cryptographic hash function.
  */
-export function hashPassword(password: string): string {
-  // Simple client-safe hashing (in production, use server-side bcrypt)
-  const salt = generateSecureToken(16)
-  const hash = simpleHash(password + salt)
+export async function hashPassword(password: string): Promise<string> {
+  // Primary: bcryptjs (server-side API routes)
+  try {
+    const bcrypt = await import('bcryptjs')
+    const salt = await bcrypt.genSalt(12) // Cost factor 12 (~250ms)
+    return await bcrypt.hash(password, salt)
+  } catch {
+    // Fallback: PBKDF2 with 100,000 iterations (still cryptographically sound)
+    console.warn('[SECURITY] bcryptjs unavailable, using PBKDF2 fallback')
+    return await hashPasswordPBKDF2(password)
+  }
+}
+
+/**
+ * Verify password against stored hash
+ * Supports both bcrypt ($2a$/$2b$ format) and PBKDF2 (salt:hash format)
+ */
+export async function verifyPassword(password: string, storedHash: string): Promise<boolean> {
+  // Check if it's a bcrypt hash
+  if (storedHash.startsWith('$2a$') || storedHash.startsWith('$2b$')) {
+    try {
+      const bcrypt = await import('bcryptjs')
+      return await bcrypt.compare(password, storedHash)
+    } catch {
+      console.error('[SECURITY] bcrypt comparison failed')
+      return false
+    }
+  }
+  
+  // Legacy PBKDF2 format: salt:hash
+  const colonIndex = storedHash.indexOf(':')
+  if (colonIndex === -1) return false
+  const salt = storedHash.slice(0, colonIndex)
+  const hash = storedHash.slice(colonIndex + 1)
+  const computedHash = await pbkdf2Hash(password, salt)
+  // Constant-time comparison to prevent timing attacks
+  return constantTimeEqual(computedHash, hash)
+}
+
+/**
+ * PBKDF2-based password hashing (server-side fallback)
+ * Uses 100,000 iterations with SHA-512 and a 32-byte random salt
+ */
+async function hashPasswordPBKDF2(password: string): Promise<string> {
+  const salt = generateSecureToken(32)
+  const hash = await pbkdf2Hash(password, salt)
   return `${salt}:${hash}`
 }
 
 /**
- * Verify password against hash
+ * PBKDF2 hash computation
  */
-export function verifyPassword(password: string, storedHash: string): boolean {
-  const [salt, hash] = storedHash.split(':')
-  const computedHash = simpleHash(password + salt)
-  return hash === computedHash
+async function pbkdf2Hash(password: string, salt: string): Promise<string> {
+  try {
+    const crypto = await import('crypto')
+    const derived = crypto.pbkdf2Sync(password, salt, 100000, 64, 'sha512')
+    return derived.toString('hex')
+  } catch {
+    // This should NEVER happen on server-side, but if it does, refuse to proceed
+    throw new Error('[SECURITY] PBKDF2 unavailable - cannot hash password safely')
+  }
 }
 
-// Simple hash function (not crypto-grade, but works in all environments)
-function simpleHash(str: string): string {
-  let hash = 0
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i)
-    hash = ((hash << 5) - hash) + char
-    hash = hash & hash
+/**
+ * Constant-time string comparison to prevent timing attacks
+ */
+export function constantTimeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false
+  let result = 0
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i)
   }
-  return Math.abs(hash).toString(16).padStart(8, '0')
+  return result === 0
 }
 
 // ─────────── Token Generation ───────────
 
 /**
  * Generate cryptographically secure token
+ * SEC FIX: No more Math.random() fallback
  */
 export function generateSecureToken(length: number = 32): string {
   try {
     const array = new Uint8Array(length)
-    if (typeof window !== 'undefined' && window.crypto?.getRandomValues) {
-      window.crypto.getRandomValues(array)
+    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+      crypto.getRandomValues(array)
     } else {
-      // Fallback for SSR
-      for (let i = 0; i < length; i++) {
-        array[i] = Math.floor(Math.random() * 256)
-      }
+      // SEC FIX: Throw instead of using Math.random()
+      throw new Error('[SECURITY] No secure random number generator available')
     }
     return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('')
   } catch {
-    return Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2)
+    throw new Error('[SECURITY] Failed to generate secure token - this is a critical error')
   }
 }
 
 /**
  * Generate CSRF token
+ * SEC-06 FIX: CSRF tokens with double-submit cookie pattern
  */
 export function generateCSRFToken(): string {
-  return `csrf_${generateSecureToken(24)}`
+  return `csrf_${generateSecureToken(32)}`
 }
 
 /**
  * Validate CSRF token
+ * SEC-06 FIX: Use constant-time comparison to prevent timing attacks
  */
 export function validateCSRFToken(token: string, expectedToken: string): boolean {
   if (!token || !expectedToken) return false
-  return token === expectedToken
+  return constantTimeEqual(token, expectedToken)
 }
 
 // ─────────── Input Sanitization ───────────
 
 /**
- * Sanitize input against XSS and SQL injection
+ * Sanitize input against XSS
+ * Note: SQL injection is handled by Prisma parameterized queries
  */
 export function sanitizeInput(input: string): string {
   if (typeof input !== 'string') return ''
@@ -152,10 +275,8 @@ export function sanitizeInput(input: string): string {
     .replace(/'/g, '&#x27;')
     .replace(/\//g, '&#x2F;')
     .replace(/\\/g, '&#x5C;')
-    .replace(/--/g, '') // SQL comment
-    .replace(/;\s*(DROP|DELETE|UPDATE|INSERT|ALTER|CREATE|EXEC)/gi, '') // SQL injection
-    .replace(/<script[^>]*>.*?<\/script>/gi, '') // Script tags
-    .replace(/on\w+\s*=/gi, '') // Event handlers
+    .replace(/<script[^>]*>.*?<\/script>/gi, '')
+    .replace(/on\w+\s*=/gi, '')
     .trim()
 }
 
@@ -208,31 +329,32 @@ export function rateLimiter(key: string, maxRequests: number, windowMs: number):
 
 // ─────────── Session Validation ───────────
 
-const activeSessions = new Map<string, { userId: string; createdAt: number; expiresAt: number; ip?: string }>()
+const activeSessions = new Map<string, { userId: string; createdAt: number; expiresAt: number; ip?: string; userRole?: string }>()
 
 /**
  * Validate session
  */
-export function validateSession(sessionId: string): { valid: boolean; userId?: string } {
+export function validateSession(sessionId: string): { valid: boolean; userId?: string; userRole?: string } {
   const session = activeSessions.get(sessionId)
   if (!session) return { valid: false }
   if (Date.now() > session.expiresAt) {
     activeSessions.delete(sessionId)
     return { valid: false }
   }
-  return { valid: true, userId: session.userId }
+  return { valid: true, userId: session.userId, userRole: session.userRole }
 }
 
 /**
  * Create session
  */
-export function createSession(userId: string, ttlMs: number = 86400000, ip?: string): string {
+export function createSession(userId: string, ttlMs: number = 86400000, ip?: string, userRole?: string): string {
   const sessionId = generateSecureToken(32)
   activeSessions.set(sessionId, {
     userId,
     createdAt: Date.now(),
     expiresAt: Date.now() + ttlMs,
     ip,
+    userRole,
   })
   return sessionId
 }
@@ -241,7 +363,6 @@ export function createSession(userId: string, ttlMs: number = 86400000, ip?: str
  * Get active session count
  */
 export function getActiveSessionCount(): number {
-  // Clean up expired sessions
   for (const [key, session] of activeSessions) {
     if (Date.now() > session.expiresAt) {
       activeSessions.delete(key)
@@ -279,7 +400,7 @@ export function destroyAllSessions(): number {
  * Check IP against whitelist
  */
 export function checkIPWhitelist(ip: string, allowedIPs: string[]): boolean {
-  if (allowedIPs.length === 0) return true // No whitelist = all allowed
+  if (allowedIPs.length === 0) return true
   return allowedIPs.includes(ip) || allowedIPs.includes('*')
 }
 

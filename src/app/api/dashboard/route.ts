@@ -1,5 +1,8 @@
+import { NextRequest } from 'next/server'
 import { db } from '@/lib/db'
 import { successResponse, errorResponse, corsHeaders } from '@/lib/api-utils'
+import { applyRLS, type RLSContext } from '@/lib/rls'
+import { toHFRole } from '@/lib/rbac'
 
 // Mock/demo data for when database is empty
 const mockDashboardStats = {
@@ -61,9 +64,36 @@ const mockDashboardStats = {
   ],
 }
 
-// GET /api/dashboard - Aggregate statistics for dashboard
-export async function GET() {
+type DashboardScope = 'national' | 'regional' | 'hospital' | 'service'
+
+interface DashboardResponse {
+  scope: DashboardScope
+  scopeEntity: { id: string; name: string }
+  stats: Record<string, unknown>
+  comparison?: Array<{ hospitalId: string; hospitalName: string; stats: Record<string, unknown> }>
+  timestamp: string
+}
+
+function extractUserContext(request: NextRequest): RLSContext {
+  const isDemoMode = process.env.DEMO_MODE === 'true' || process.env.NODE_ENV === 'development'
+  const userId = isDemoMode ? (request.headers.get('x-user-id') || 'USR-001') : 'anonymous'
+  const userRole = isDemoMode ? toHFRole(request.headers.get('x-user-role') || 'Médecin') : 'Patient'
+  const establishmentId = isDemoMode ? (request.headers.get('x-establishment-id') || undefined) : undefined
+  return { userId, role: userRole, establishmentId }
+}
+
+// GET /api/dashboard - Aggregate statistics for dashboard with hospital scoping
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url)
+    const hospitalId = searchParams.get('hospitalId') || ''
+    const region = searchParams.get('region') || ''
+    const scope = (searchParams.get('scope') || 'national') as DashboardScope
+    const mode = searchParams.get('mode') || ''
+
+    const userContext = extractUserContext(request)
+    const rlsFilter = applyRLS(userContext, 'patients')
+
     const now = new Date()
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
     const startOfWeek = new Date(now)
@@ -71,6 +101,45 @@ export async function GET() {
     startOfWeek.setHours(0, 0, 0, 0)
     const startOfDay = new Date(now)
     startOfDay.setHours(0, 0, 0, 0)
+
+    // Build establishment filter based on scope
+    let establishmentFilter: Record<string, unknown> = {}
+    let scopeEntity = { id: 'national', name: 'Nationale — République de Guinée' }
+    let currentScope: DashboardScope = 'national'
+
+    if (hospitalId) {
+      // Scoped to a specific hospital
+      establishmentFilter = { establishmentId: hospitalId }
+      const estab = await db.establishment.findUnique({ where: { id: hospitalId }, select: { id: true, name: true } })
+      scopeEntity = estab ? { id: estab.id, name: estab.name } : { id: hospitalId, name: hospitalId }
+      currentScope = 'hospital'
+    } else if (region) {
+      // Scoped to a region — find all establishments in that region
+      const regionalEstabs = await db.establishment.findMany({
+        where: { region, isActive: true },
+        select: { id: true },
+      })
+      const estabIds = regionalEstabs.map(e => e.id)
+      establishmentFilter = { establishmentId: { in: estabIds } }
+      scopeEntity = { id: region, name: region }
+      currentScope = 'regional'
+    } else if (scope === 'national') {
+      currentScope = 'national'
+    }
+
+    // Apply RLS: non-admin users scoped to their establishment
+    if (userContext.role !== 'Administrateur' && userContext.establishmentId && !hospitalId) {
+      establishmentFilter = { establishmentId: userContext.establishmentId }
+      const estab = await db.establishment.findUnique({ where: { id: userContext.establishmentId }, select: { id: true, name: true } })
+      scopeEntity = estab ? { id: estab.id, name: estab.name } : { id: userContext.establishmentId, name: userContext.establishmentId }
+      currentScope = 'hospital'
+    }
+
+    // Build where clauses for scoped queries
+    const patientWhere = { isActive: true, ...establishmentFilter }
+    const appointmentWhere = { ...establishmentFilter }
+    const bedWhere = { ...establishmentFilter }
+    const emergencyWhere = { ...establishmentFilter }
 
     // Try to get real data from database
     const [
@@ -89,15 +158,15 @@ export async function GET() {
       appointmentsByStatus,
       emergencyByTriage,
     ] = await Promise.all([
-      db.patient.count({ where: { isActive: true } }),
-      db.patient.count({ where: { isActive: true, createdAt: { gte: startOfMonth } } }),
-      db.appointment.count({ where: { appointmentDate: { gte: startOfDay } } }),
-      db.appointment.count({ where: { appointmentDate: { gte: startOfWeek } } }),
-      db.bed.count(),
-      db.bed.count({ where: { status: 'AVAILABLE' } }),
+      db.patient.count({ where: patientWhere }),
+      db.patient.count({ where: { ...patientWhere, createdAt: { gte: startOfMonth } } }),
+      db.appointment.count({ where: { ...appointmentWhere, appointmentDate: { gte: startOfDay } } }),
+      db.appointment.count({ where: { ...appointmentWhere, appointmentDate: { gte: startOfWeek } } }),
+      db.bed.count({ where: bedWhere }),
+      db.bed.count({ where: { ...bedWhere, status: 'AVAILABLE' } }),
       db.shortageAlert.count({ where: { status: 'ACTIVE', alertType: { in: ['CRITICAL', 'OUT_OF_STOCK'] } } }),
       db.labRequest.count({ where: { status: { in: ['REQUESTED', 'SAMPLE_COLLECTED', 'IN_PROGRESS'] } } }),
-      db.emergencyCase.count({ where: { arrivalDate: { gte: startOfDay } } }),
+      db.emergencyCase.count({ where: { ...emergencyWhere, arrivalDate: { gte: startOfDay } } }),
       db.payment.aggregate({
         where: { status: 'COMPLETED', createdAt: { gte: startOfMonth } },
         _sum: { amount: true },
@@ -138,15 +207,54 @@ export async function GET() {
     // If database is empty, return mock data
     const isDataEmpty = totalPatients === 0 && totalBeds === 0
 
-    if (isDataEmpty) {
-      return successResponse(mockDashboardStats)
+    const response: DashboardResponse = {
+      scope: currentScope,
+      scopeEntity,
+      stats: isDataEmpty ? mockDashboardStats : stats,
+      timestamp: new Date().toISOString(),
     }
 
-    return successResponse(stats)
+    // Comparison mode: return stats grouped by hospital
+    if (mode === 'comparison') {
+      const allEstablishments = await db.establishment.findMany({
+        where: { isActive: true },
+        select: { id: true, name: true },
+      })
+
+      const comparison = await Promise.all(
+        allEstablishments.map(async (estab) => {
+          const [patCount, bedCount, availBeds] = await Promise.all([
+            db.patient.count({ where: { isActive: true, establishmentId: estab.id } }),
+            db.bed.count({ where: { establishmentId: estab.id } }),
+            db.bed.count({ where: { establishmentId: estab.id, status: 'AVAILABLE' } }),
+          ])
+          return {
+            hospitalId: estab.id,
+            hospitalName: estab.name,
+            stats: {
+              totalPatients: patCount,
+              totalBeds: bedCount,
+              availableBeds: availBeds,
+              bedOccupancyRate: bedCount > 0 ? Math.round(((bedCount - availBeds) / bedCount) * 1000) / 10 : 0,
+            },
+          }
+        })
+      )
+
+      response.comparison = comparison
+    }
+
+    return successResponse(response)
   } catch (err) {
     // Fallback to mock data on any error
     console.error('Dashboard error:', err)
-    return successResponse(mockDashboardStats)
+    const fallbackResponse: DashboardResponse = {
+      scope: 'national',
+      scopeEntity: { id: 'national', name: 'Nationale — République de Guinée' },
+      stats: mockDashboardStats,
+      timestamp: new Date().toISOString(),
+    }
+    return successResponse(fallbackResponse)
   }
 }
 

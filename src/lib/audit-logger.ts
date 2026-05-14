@@ -1,195 +1,163 @@
-// HealthFlow Africa - Audit Logger
-// Comprehensive audit logging for all data access and modifications
-// Supports offline storage (IndexedDB) + API sync, tamper-proof hash chain
+// HealthFlow Guinea - Audit Logger (v2)
+// Centralized audit logging for security events, access control, and compliance
+// Stores audit entries in-memory (use database/external service in production)
 
-export type AuditAction = 'CREATE' | 'READ' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'LOGOUT' | 'EXPORT' | 'PRINT' | 'ACCESS_DENIED' | 'MFA_CHALLENGE' | 'MFA_SUCCESS' | 'MFA_FAILURE' | 'SESSION_EXPIRED' | 'PASSWORD_CHANGE' | 'ROLE_CHANGE' | 'PERMISSION_CHANGE'
+export type AuditEventType = 
+  | 'ACCESS_GRANTED' 
+  | 'ACCESS_DENIED' 
+  | 'LOGIN_SUCCESS' 
+  | 'LOGIN_FAILED' 
+  | 'LOGOUT'
+  | 'PASSWORD_CHANGE'
+  | 'ROLE_CHANGE'
+  | 'DATA_EXPORT'
+  | 'DATA_MODIFICATION'
+  | 'CSRF_VIOLATION'
+  | 'RATE_LIMIT_HIT'
+  | 'SESSION_CREATED'
+  | 'SESSION_DESTROYED'
+  | 'ENCRYPTION_FAILURE'
+  | 'SUSPICIOUS_ACTIVITY'
+
+export type AuditAction =
+  | 'CREATE' | 'READ' | 'UPDATE' | 'DELETE'
+  | 'LOGIN' | 'LOGOUT' | 'ACCESS_DENIED'
+  | 'EXPORT' | 'PRINT'
+  | 'MFA_CHALLENGE' | 'MFA_SUCCESS' | 'MFA_FAILURE'
+  | 'SESSION_EXPIRED' | 'PASSWORD_CHANGE' | 'ROLE_CHANGE' | 'PERMISSION_CHANGE'
 
 export type AuditSeverity = 'INFO' | 'WARNING' | 'CRITICAL'
 
-export interface AuditLogEntry {
+export interface AuditEntry {
   id: string
+  timestamp: string
+  createdAt: string
+  eventType: AuditEventType
+  action: AuditAction | string
+  severity: AuditSeverity
   userId: string
   userName: string
   userRole: string
-  action: AuditAction
+  resource: string
   module: string
-  entity: string
   entityId?: string
-  establishmentId?: string
-  ipAddress?: string
-  userAgent?: string
-  oldValue?: string // JSON of previous state
-  newValue?: string // JSON of new state
   description: string
-  severity: AuditSeverity
-  hash?: string // Tamper-proof hash
-  previousHash?: string
-  createdAt: string
-  syncedAt?: string // When synced to server
+  details: string
+  ip: string
+  ipAddress: string
+  success: boolean
 }
 
-// In-memory audit log store (demo mode)
-const auditLogStore: AuditLogEntry[] = []
-let lastHash = 'GENESIS'
+// In-memory audit log (replace with database in production)
+const auditLog: AuditEntry[] = []
+const MAX_AUDIT_ENTRIES = 10000
 
-/**
- * Generate a simple hash for tamper-proof chain
- */
-function generateHash(entry: Omit<AuditLogEntry, 'hash'>): string {
-  const data = `${entry.id}${entry.userId}${entry.action}${entry.module}${entry.entityId || ''}${entry.createdAt}${lastHash}`
-  // Simple hash function (in production would use crypto.subtle)
-  let hash = 0
-  for (let i = 0; i < data.length; i++) {
-    const char = data.charCodeAt(i)
-    hash = ((hash << 5) - hash) + char
-    hash = hash & hash
-  }
-  return Math.abs(hash).toString(16).padStart(8, '0')
+function generateAuditId(): string {
+  return `AUD-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 }
 
-/**
- * Create audit log entry
- */
-function createEntry(
-  userId: string,
-  userName: string,
-  userRole: string,
-  action: AuditAction,
-  module: string,
-  entity: string,
-  description: string,
-  options?: {
-    entityId?: string
-    establishmentId?: string
-    ipAddress?: string
-    userAgent?: string
-    oldValue?: string
-    newValue?: string
-    severity?: AuditSeverity
+function determineSeverity(eventType: AuditEventType, success: boolean): AuditSeverity {
+  if (['CSRF_VIOLATION', 'SUSPICIOUS_ACTIVITY', 'ENCRYPTION_FAILURE'].includes(eventType)) return 'CRITICAL'
+  if (['ACCESS_DENIED', 'LOGIN_FAILED', 'RATE_LIMIT_HIT'].includes(eventType)) return 'WARNING'
+  return 'INFO'
+}
+
+function determineAction(eventType: AuditEventType): AuditAction | string {
+  const mapping: Record<string, AuditAction | string> = {
+    'ACCESS_GRANTED': 'READ',
+    'ACCESS_DENIED': 'ACCESS_DENIED',
+    'LOGIN_SUCCESS': 'LOGIN',
+    'LOGIN_FAILED': 'LOGIN',
+    'LOGOUT': 'LOGOUT',
+    'PASSWORD_CHANGE': 'PASSWORD_CHANGE',
+    'ROLE_CHANGE': 'ROLE_CHANGE',
+    'DATA_EXPORT': 'EXPORT',
+    'DATA_MODIFICATION': 'UPDATE',
+    'CSRF_VIOLATION': 'ACCESS_DENIED',
+    'RATE_LIMIT_HIT': 'ACCESS_DENIED',
+    'SESSION_CREATED': 'LOGIN',
+    'SESSION_DESTROYED': 'LOGOUT',
+    'ENCRYPTION_FAILURE': 'ACCESS_DENIED',
+    'SUSPICIOUS_ACTIVITY': 'ACCESS_DENIED',
   }
-): AuditLogEntry {
-  const entry: AuditLogEntry = {
-    id: `AUD-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    userId,
-    userName,
-    userRole,
+  return mapping[eventType] || eventType
+}
+
+interface AuditEntryInput {
+  eventType: AuditEventType
+  userId: string
+  userName: string
+  userRole: string
+  resource: string
+  action?: AuditAction | string
+  details: string
+  ip: string
+  success: boolean
+  entityId?: string
+}
+
+function addAuditEntry(entry: AuditEntryInput): void {
+  const eventType = entry.eventType
+  const severity = determineSeverity(eventType, entry.success)
+  const action = determineAction(eventType)
+  const timestamp = new Date().toISOString()
+  const description = entry.details
+  
+  const fullEntry: AuditEntry = {
+    id: generateAuditId(),
+    timestamp,
+    createdAt: timestamp,
+    eventType: entry.eventType,
     action,
-    module,
-    entity,
-    entityId: options?.entityId,
-    establishmentId: options?.establishmentId,
-    ipAddress: options?.ipAddress,
-    userAgent: options?.userAgent,
-    oldValue: options?.oldValue,
-    newValue: options?.newValue,
+    severity,
+    userId: entry.userId,
+    userName: entry.userName,
+    userRole: entry.userRole,
+    resource: entry.resource,
+    module: entry.resource,
+    entityId: entry.entityId,
     description,
-    severity: options?.severity || 'INFO',
-    previousHash: lastHash,
-    createdAt: new Date().toISOString(),
+    details: entry.details,
+    ip: entry.ip,
+    ipAddress: entry.ip,
+    success: entry.success,
   }
-
-  entry.hash = generateHash(entry)
-  lastHash = entry.hash
-
-  return entry
+  
+  auditLog.unshift(fullEntry)
+  
+  // Trim old entries
+  if (auditLog.length > MAX_AUDIT_ENTRIES) {
+    auditLog.length = MAX_AUDIT_ENTRIES
+  }
 }
 
 /**
- * Log data access
+ * Log a successful access event
  */
 export function logAccess(
   userId: string,
   userName: string,
   userRole: string,
   resource: string,
-  recordId: string,
-  details?: string
-): AuditLogEntry {
-  const entry = createEntry(
-    userId, userName, userRole,
-    'READ', resource, resource,
-    details || `Accès à ${resource} #${recordId}`,
-    { entityId: recordId, severity: 'INFO' }
-  )
-  auditLogStore.push(entry)
-  persistToAPI(entry)
-  return entry
-}
-
-/**
- * Log data modification
- */
-export function logModification(
-  userId: string,
-  userName: string,
-  userRole: string,
-  resource: string,
-  recordId: string,
-  before: unknown,
-  after: unknown
-): AuditLogEntry {
-  const entry = createEntry(
-    userId, userName, userRole,
-    'UPDATE', resource, resource,
-    `Modification de ${resource} #${recordId}`,
-    {
-      entityId: recordId,
-      oldValue: JSON.stringify(before),
-      newValue: JSON.stringify(after),
-      severity: 'WARNING',
-    }
-  )
-  auditLogStore.push(entry)
-  persistToAPI(entry)
-  return entry
-}
-
-/**
- * Log authentication events
- */
-export function logAuth(
-  userId: string,
-  userName: string,
-  userRole: string,
-  event: 'LOGIN' | 'LOGOUT' | 'MFA_CHALLENGE' | 'MFA_SUCCESS' | 'MFA_FAILURE' | 'SESSION_EXPIRED' | 'PASSWORD_CHANGE',
-  details: string
-): AuditLogEntry {
-  const severity: AuditSeverity = ['MFA_FAILURE', 'SESSION_EXPIRED'].includes(event) ? 'WARNING' : 'INFO'
-  const entry = createEntry(
-    userId, userName, userRole,
-    event, 'auth', 'session',
+  action: string,
+  details: string,
+  ip: string = '127.0.0.1'
+): void {
+  addAuditEntry({
+    eventType: 'ACCESS_GRANTED',
+    userId,
+    userName,
+    userRole,
+    resource,
+    action: action as AuditAction,
     details,
-    { severity }
-  )
-  auditLogStore.push(entry)
-  persistToAPI(entry)
-  return entry
+    ip,
+    success: true,
+  })
 }
 
 /**
- * Log data exports
- */
-export function logExport(
-  userId: string,
-  userName: string,
-  userRole: string,
-  resource: string,
-  format: string,
-  recordCount: number
-): AuditLogEntry {
-  const entry = createEntry(
-    userId, userName, userRole,
-    'EXPORT', resource, resource,
-    `Export de ${recordCount} enregistrements ${resource} en format ${format}`,
-    { severity: 'WARNING' }
-  )
-  auditLogStore.push(entry)
-  persistToAPI(entry)
-  return entry
-}
-
-/**
- * Log permission denials
+ * Log a permission denial
  */
 export function logPermissionDenial(
   userId: string,
@@ -197,89 +165,188 @@ export function logPermissionDenial(
   userRole: string,
   resource: string,
   action: string,
-  reason: string
-): AuditLogEntry {
-  const entry = createEntry(
-    userId, userName, userRole,
-    'ACCESS_DENIED', resource, resource,
-    `Accès refusé: ${action} sur ${resource} — ${reason}`,
-    { severity: 'CRITICAL' }
+  reason: string,
+  ip: string = '127.0.0.1'
+): void {
+  addAuditEntry({
+    eventType: 'ACCESS_DENIED',
+    userId,
+    userName,
+    userRole,
+    resource,
+    action: action as AuditAction,
+    details: reason,
+    ip,
+    success: false,
+  })
+  
+  console.warn(
+    `[AUDIT] PERMISSION DENIED: User ${userName} (${userRole}) attempted ${action} on ${resource}. Reason: ${reason}`
   )
-  auditLogStore.push(entry)
-  persistToAPI(entry)
-  return entry
 }
 
 /**
- * Log record creation
+ * Log authentication events
  */
-export function logCreation(
+export function logAuthEvent(
+  eventType: 'LOGIN_SUCCESS' | 'LOGIN_FAILED' | 'LOGOUT',
+  userId: string,
+  userName: string,
+  details: string = '',
+  ip: string = '127.0.0.1'
+): void {
+  addAuditEntry({
+    eventType,
+    userId,
+    userName,
+    userRole: '',
+    resource: 'auth',
+    action: eventType.toLowerCase() as AuditAction,
+    details,
+    ip,
+    success: eventType !== 'LOGIN_FAILED',
+  })
+}
+
+/**
+ * Log CSRF violation
+ */
+export function logCSRFViolation(
+  ip: string,
+  origin: string,
+  target: string
+): void {
+  addAuditEntry({
+    eventType: 'CSRF_VIOLATION',
+    userId: 'unknown',
+    userName: 'unknown',
+    userRole: '',
+    resource: target,
+    action: 'ACCESS_DENIED',
+    details: `Origin: ${origin}`,
+    ip,
+    success: false,
+  })
+  
+  console.error(
+    `[AUDIT] CSRF VIOLATION: IP ${ip} with origin ${origin} attempted request to ${target}`
+  )
+}
+
+/**
+ * Log rate limit hit
+ */
+export function logRateLimitHit(
+  userId: string,
+  ip: string,
+  endpoint: string
+): void {
+  addAuditEntry({
+    eventType: 'RATE_LIMIT_HIT',
+    userId,
+    userName: '',
+    userRole: '',
+    resource: endpoint,
+    action: 'ACCESS_DENIED',
+    details: 'Rate limit exceeded',
+    ip,
+    success: false,
+  })
+}
+
+/**
+ * Log data modification
+ */
+export function logDataModification(
   userId: string,
   userName: string,
   userRole: string,
   resource: string,
-  recordId: string,
-  data: unknown
-): AuditLogEntry {
-  const entry = createEntry(
-    userId, userName, userRole,
-    'CREATE', resource, resource,
-    `Création de ${resource} #${recordId}`,
-    { entityId: recordId, newValue: JSON.stringify(data), severity: 'INFO' }
-  )
-  auditLogStore.push(entry)
-  persistToAPI(entry)
-  return entry
+  action: string,
+  details: string,
+  ip: string = '127.0.0.1'
+): void {
+  addAuditEntry({
+    eventType: 'DATA_MODIFICATION',
+    userId,
+    userName,
+    userRole,
+    resource,
+    action: action as AuditAction,
+    details,
+    ip,
+    success: true,
+  })
 }
 
-/**
- * Log record deletion
- */
-export function logDeletion(
-  userId: string,
-  userName: string,
-  userRole: string,
-  resource: string,
-  recordId: string,
-  data: unknown
-): AuditLogEntry {
-  const entry = createEntry(
-    userId, userName, userRole,
-    'DELETE', resource, resource,
-    `Suppression de ${resource} #${recordId}`,
-    { entityId: recordId, oldValue: JSON.stringify(data), severity: 'CRITICAL' }
-  )
-  auditLogStore.push(entry)
-  persistToAPI(entry)
-  return entry
-}
+// ─────────── Query Functions ───────────
 
 /**
- * Get all audit logs (admin only)
+ * Get audit logs with optional filters (alias for backward compatibility)
  */
 export function getAuditLogs(filters?: {
+  action?: AuditAction | string
   userId?: string
-  action?: AuditAction
   module?: string
   entityId?: string
   severity?: AuditSeverity
   startDate?: string
   endDate?: string
   limit?: number
-}): AuditLogEntry[] {
-  let logs = [...auditLogStore]
+}): AuditEntry[] {
+  let entries = [...auditLog]
+  
+  if (filters?.action) {
+    entries = entries.filter(e => e.action === filters.action)
+  }
+  if (filters?.userId) {
+    entries = entries.filter(e => e.userId === filters.userId)
+  }
+  if (filters?.module) {
+    entries = entries.filter(e => e.module === filters.module || e.resource === filters.module)
+  }
+  if (filters?.entityId) {
+    entries = entries.filter(e => e.entityId === filters.entityId)
+  }
+  if (filters?.severity) {
+    entries = entries.filter(e => e.severity === filters.severity)
+  }
+  if (filters?.startDate) {
+    entries = entries.filter(e => e.timestamp >= filters.startDate!)
+  }
+  if (filters?.endDate) {
+    entries = entries.filter(e => e.timestamp <= filters.endDate!)
+  }
+  
+  return entries.slice(0, filters?.limit ?? 100)
+}
 
-  if (filters?.userId) logs = logs.filter(l => l.userId === filters.userId)
-  if (filters?.action) logs = logs.filter(l => l.action === filters.action)
-  if (filters?.module) logs = logs.filter(l => l.module === filters.module)
-  if (filters?.entityId) logs = logs.filter(l => l.entityId === filters.entityId)
-  if (filters?.severity) logs = logs.filter(l => l.severity === filters.severity)
-  if (filters?.startDate) logs = logs.filter(l => l.createdAt >= filters.startDate!)
-  if (filters?.endDate) logs = logs.filter(l => l.createdAt <= filters.endDate!)
-
-  logs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-
-  return filters?.limit ? logs.slice(0, filters.limit) : logs
+/**
+ * Get audit entries (alternative alias)
+ */
+export function getAuditEntries(filters?: {
+  eventType?: AuditEventType
+  userId?: string
+  resource?: string
+  success?: boolean
+  limit?: number
+}): AuditEntry[] {
+  let entries = [...auditLog]
+  
+  if (filters?.eventType) {
+    entries = entries.filter(e => e.eventType === filters.eventType)
+  }
+  if (filters?.userId) {
+    entries = entries.filter(e => e.userId === filters.userId)
+  }
+  if (filters?.resource) {
+    entries = entries.filter(e => e.resource === filters.resource)
+  }
+  if (filters?.success !== undefined) {
+    entries = entries.filter(e => e.success === filters.success)
+  }
+  
+  return entries.slice(0, filters?.limit ?? 100)
 }
 
 /**
@@ -287,95 +354,23 @@ export function getAuditLogs(filters?: {
  */
 export function getAuditStats(): {
   totalEntries: number
-  criticalCount: number
   deniedCount: number
-  topUsers: { userId: string; userName: string; count: number }[]
-  topModules: { module: string; count: number }[]
-  recentDenials: AuditLogEntry[]
+  criticalCount: number
+  csrfViolations: number
+  rateLimitHits: number
+  loginFailures: number
+  recentDenials: AuditEntry[]
 } {
-  const logs = auditLogStore
-  const denied = logs.filter(l => l.action === 'ACCESS_DENIED')
-  const critical = logs.filter(l => l.severity === 'CRITICAL')
-
-  // Top users by action count
-  const userCounts = new Map<string, { userName: string; count: number }>()
-  for (const l of logs) {
-    const existing = userCounts.get(l.userId)
-    if (existing) {
-      existing.count++
-    } else {
-      userCounts.set(l.userId, { userName: l.userName, count: 1 })
-    }
-  }
-
-  // Top modules
-  const moduleCounts = new Map<string, number>()
-  for (const l of logs) {
-    moduleCounts.set(l.module, (moduleCounts.get(l.module) || 0) + 1)
-  }
-
+  const denials = auditLog.filter(e => e.eventType === 'ACCESS_DENIED')
+  const criticals = auditLog.filter(e => e.severity === 'CRITICAL')
+  
   return {
-    totalEntries: logs.length,
-    criticalCount: critical.length,
-    deniedCount: denied.length,
-    topUsers: Array.from(userCounts.entries())
-      .map(([userId, data]) => ({ userId, userName: data.userName, count: data.count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 10),
-    topModules: Array.from(moduleCounts.entries())
-      .map(([module, count]) => ({ module, count }))
-      .sort((a, b) => b.count - a.count),
-    recentDenials: denied.slice(-10).reverse(),
+    totalEntries: auditLog.length,
+    deniedCount: denials.length,
+    criticalCount: criticals.length,
+    csrfViolations: auditLog.filter(e => e.eventType === 'CSRF_VIOLATION').length,
+    rateLimitHits: auditLog.filter(e => e.eventType === 'RATE_LIMIT_HIT').length,
+    loginFailures: auditLog.filter(e => e.eventType === 'LOGIN_FAILED').length,
+    recentDenials: denials.slice(0, 10),
   }
-}
-
-/**
- * Persist audit entry to API (non-blocking)
- */
-function persistToAPI(entry: AuditLogEntry): void {
-  // Attempt to sync to server API
-  if (typeof window !== 'undefined') {
-    fetch('/api/audit?XTransformPort=3000', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(entry),
-    }).catch(() => {
-      // Silently fail - will retry on next sync
-    })
-  }
-}
-
-/**
- * Verify hash chain integrity
- */
-export function verifyIntegrity(): { valid: boolean; brokenAt?: number } {
-  for (let i = 1; i < auditLogStore.length; i++) {
-    if (auditLogStore[i].previousHash !== auditLogStore[i - 1].hash) {
-      return { valid: false, brokenAt: i }
-    }
-  }
-  return { valid: true }
-}
-
-// Add demo audit entries
-const demoAuditEntries: Omit<AuditLogEntry, 'hash' | 'previousHash'>[] = [
-  { id: 'AUD-001', userId: 'USR-001', userName: 'Dr. Mamadou Diallo', userRole: 'Médecin', action: 'READ', module: 'patients', entity: 'patients', entityId: 'P-2024-001', description: 'Accès au dossier patient Aminata Diallo', severity: 'INFO', createdAt: '2026-05-10T08:15:00Z' },
-  { id: 'AUD-002', userId: 'USR-002', userName: 'Marie Condé', userRole: 'Secrétaire', action: 'CREATE', module: 'patients', entity: 'patients', entityId: 'P-2024-011', description: 'Création dossier patient nouveau', severity: 'INFO', createdAt: '2026-05-10T08:30:00Z' },
-  { id: 'AUD-003', userId: 'USR-003', userName: 'Ibrahim Touré', userRole: 'Laborantin', action: 'ACCESS_DENIED', module: 'patients', entity: 'patients', entityId: 'P-2024-001', description: 'Tentative d\'accès dossier patient sans autorisation', severity: 'CRITICAL', createdAt: '2026-05-10T09:00:00Z' },
-  { id: 'AUD-004', userId: 'USR-004', userName: 'Admin Système', userRole: 'Administrateur', action: 'EXPORT', module: 'patients', entity: 'patients', description: 'Export liste patients (150 enregistrements)', severity: 'WARNING', createdAt: '2026-05-10T09:15:00Z' },
-  { id: 'AUD-005', userId: 'USR-001', userName: 'Dr. Mamadou Diallo', userRole: 'Médecin', action: 'UPDATE', module: 'consultations', entity: 'consultations', entityId: 'CONS-001', description: 'Modification diagnostic consultation', severity: 'WARNING', createdAt: '2026-05-10T10:00:00Z' },
-  { id: 'AUD-006', userId: 'USR-005', userName: 'Fatoumata Bah', userRole: 'Infirmier', action: 'READ', module: 'patients', entity: 'patients', entityId: 'P-2024-002', description: 'Consultation dossier patient pour soins', severity: 'INFO', createdAt: '2026-05-10T10:30:00Z' },
-  { id: 'AUD-007', userId: 'USR-006', userName: 'Kadiatou Sylla', userRole: 'Pharmacien', action: 'ACCESS_DENIED', module: 'patients', entity: 'patients', description: 'Tentative accès données patients', severity: 'CRITICAL', createdAt: '2026-05-10T11:00:00Z' },
-  { id: 'AUD-008', userId: 'USR-001', userName: 'Dr. Mamadou Diallo', userRole: 'Médecin', action: 'LOGIN', module: 'auth', entity: 'session', description: 'Connexion réussie', severity: 'INFO', createdAt: '2026-05-10T07:00:00Z' },
-  { id: 'AUD-009', userId: 'USR-007', userName: 'Unknown', userRole: 'Patient', action: 'MFA_FAILURE', module: 'auth', entity: 'session', description: 'Échec authentification MFA - 3 tentatives', severity: 'WARNING', createdAt: '2026-05-10T11:30:00Z' },
-  { id: 'AUD-010', userId: 'USR-004', userName: 'Admin Système', userRole: 'Administrateur', action: 'ROLE_CHANGE', module: 'admin', entity: 'users', entityId: 'USR-005', description: 'Changement rôle: Infirmier → Médecin', severity: 'CRITICAL', createdAt: '2026-05-10T12:00:00Z' },
-]
-
-// Initialize demo data
-for (const entry of demoAuditEntries) {
-  const fullEntry = entry as AuditLogEntry
-  fullEntry.hash = generateHash(fullEntry)
-  fullEntry.previousHash = lastHash
-  lastHash = fullEntry.hash
-  auditLogStore.push(fullEntry)
 }

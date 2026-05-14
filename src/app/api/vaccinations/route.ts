@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
         take,
         include: {
           child: {
-            select: { id: true, firstName: true, lastName: true, dateOfBirth: true, patient: { select: { firstName: true, lastName: true } } },
+            select: { id: true, firstName: true, lastName: true, patient: { select: { firstName: true, lastName: true } } },
           },
           schedule: { select: { id: true, name: true, vaccineName: true, targetDisease: true, isMandatory: true } },
         },

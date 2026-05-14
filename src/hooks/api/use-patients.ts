@@ -30,7 +30,7 @@ export function usePatients(params: PatientListParams = {}) {
   const { patients } = useDataStore()
 
   const query = useQuery({
-    queryKey: patientKeys.list(params),
+    queryKey: patientKeys.list(params as Record<string, unknown>),
     queryFn: () => apiClient.get<Patient[]>('/api/patients', params as Record<string, string | number | boolean | undefined>),
     enabled: isOnline,
     placeholderData: (previousData) => previousData,

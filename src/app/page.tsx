@@ -44,6 +44,8 @@ import { DHIS2Connector } from '@/components/fhir/dhis2-connector'
 import { FacilitiesManagement } from '@/components/deployment/facilities-management'
 import { NationalSupervision } from '@/components/deployment/national-supervision'
 import { NationalStatistics } from '@/components/deployment/national-statistics'
+import { MultiHospitalDashboard } from '@/components/hospital/multi-hospital-dashboard'
+import { AdaptiveDashboard } from '@/components/app/modules/adaptive-dashboard'
 import { I18nProvider } from '@/i18n/provider'
 import { QueryProvider } from '@/lib/query-provider'
 import { PWARegistrar } from '@/components/app/pwa-registrar'
@@ -92,6 +94,8 @@ const viewComponents: Record<AppView, React.ComponentType> = {
   'facilities-management': FacilitiesManagement,
   'national-supervision': NationalSupervision,
   'national-statistics': NationalStatistics,
+  'multi-hospital': MultiHospitalDashboard,
+  'adaptive-dashboard': AdaptiveDashboard,
 }
 
 function AppContent() {

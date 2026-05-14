@@ -1194,7 +1194,7 @@ export function ADTMessageCenter() {
   }, [filterType, filterStatus])
 
   const selectedMessage = useMemo(() => {
-    return selectedMessageId ? adtService.getMessage(selectedMessageId) : null
+    return selectedMessageId ? adtService.getMessage(selectedMessageId) ?? null : null
   }, [selectedMessageId])
 
   const fhirBundle = useMemo(() => {

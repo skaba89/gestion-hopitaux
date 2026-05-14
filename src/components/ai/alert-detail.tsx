@@ -57,10 +57,10 @@ export function AlertDetail({ alert, onClose }: AlertDetailProps) {
       { date: alert.createdAt, label: 'Alerte signalée', type: 'alert' as const },
     ]
     if (alert.status === 'En investigation') {
-      items.push({ date: alert.updatedAt, label: 'Investigation en cours', type: 'investigation' as const })
+      items.push({ date: alert.updatedAt, label: 'Investigation en cours', type: 'case' as const })
     }
     if (alert.alertLevel === 'ÉPIDÉMIE') {
-      items.push({ date: alert.updatedAt, label: 'Épidémie déclarée', type: 'epidemic' as const })
+      items.push({ date: alert.updatedAt, label: 'Épidémie déclarée', type: 'alert' as const })
     }
     return items
   }, [alert])
@@ -164,9 +164,8 @@ export function AlertDetail({ alert, onClose }: AlertDetailProps) {
                 <div key={i} className="flex items-start gap-3">
                   <div className="flex flex-col items-center">
                     <div className={`size-3 rounded-full ${
-                      item.type === 'epidemic' ? 'bg-red-500' :
                       item.type === 'alert' ? 'bg-amber-500' :
-                      item.type === 'investigation' ? 'bg-purple-500' :
+                      item.type === 'case' ? 'bg-teal-500' :
                       'bg-teal-500'
                     }`} />
                     {i < timeline.length - 1 && <div className="w-px h-6 bg-slate-200 dark:bg-slate-700" />}

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { corsHeaders, successResponse, errorResponse } from '@/lib/api-utils'
+import { successResponse, errorResponse } from '@/lib/api-utils'
 
-// In-memory OTP store (in production, use Redis or DB)
-const otpStore = new Map<string, { otp: string; expiresAt: number; attempts: number }>()
+// In-memory OTP store (use Redis in production via REDIS_URL env var)
+// OTP is NEVER returned in the API response - sent only via SMS
+const otpStore = new Map<string, { otp: string; expiresAt: number; attempts: number; phoneLast4: string }>()
 
 // Rate limiting: max 3 OTP requests per phone per 15 minutes
 const rateLimitStore = new Map<string, { count: number; resetAt: number }>()
@@ -22,6 +23,90 @@ function cleanExpiredOtps() {
   }
 }
 
+/**
+ * Send OTP via SMS provider (Orange SMS API, Twilio, etc.)
+ * In demo mode, logs to console only.
+ * In production, integrates with real SMS gateway.
+ */
+async function sendOtpViaSms(phone: string, otp: string): Promise<boolean> {
+  // Production: integrate with SMS provider
+  const smsProvider = process.env.SMS_PROVIDER || 'demo'
+  
+  if (smsProvider === 'demo') {
+    // Demo mode: log OTP server-side only (never expose to client)
+    console.log(`[OTP DEMO] Code for ${phone.slice(-4).padStart(phone.length, '*')}: ${otp}`)
+    return true
+  }
+  
+  if (smsProvider === 'orange') {
+    // Orange SMS API integration
+    try {
+      const response = await fetch('https://api.orange.com/smsmessaging/v1/outbound/tel%3A%2B224000/requests', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.ORANGE_SMS_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          outboundSMSMessageRequest: {
+            address: `tel:+${phone}`,
+            senderAddress: 'tel:+224000',
+            outboundSMSTextMessage: { message: `HealthFlow: Votre code est ${otp}. Valide 5 min.` },
+          },
+        }),
+      })
+      return response.ok
+    } catch {
+      console.error('[SMS] Orange SMS API failed')
+      return false
+    }
+  }
+  
+  if (smsProvider === 'twilio') {
+    try {
+      const accountSid = process.env.TWILIO_ACCOUNT_SID
+      const authToken = process.env.TWILIO_AUTH_TOKEN
+      const response = await fetch(
+        `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Basic ' + Buffer.from(`${accountSid}:${authToken}`).toString('base64'),
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            To: `+${phone}`,
+            From: process.env.TWILIO_PHONE_NUMBER || '',
+            Body: `HealthFlow: Votre code est ${otp}. Valide 5 min.`,
+          }),
+        }
+      )
+      return response.ok
+    } catch {
+      console.error('[SMS] Twilio SMS API failed')
+      return false
+    }
+  }
+  
+  // Unknown provider: log warning
+  console.warn(`[SMS] Unknown provider: ${smsProvider}. OTP not sent.`)
+  return false
+}
+
+/**
+ * Generate cryptographically secure 6-digit OTP
+ */
+function generateSecureOtp(): string {
+  const array = new Uint32Array(1)
+  // Use crypto if available (Edge runtime / Node.js 18+)
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    crypto.getRandomValues(array)
+    return (100000 + (array[0] % 900000)).toString()
+  }
+  // Fallback (should not happen in modern runtimes)
+  return (100000 + Math.floor(Math.random() * 900000)).toString()
+}
+
 // POST /api/auth/otp - Generate and send OTP
 export async function POST(request: NextRequest) {
   try {
@@ -34,8 +119,11 @@ export async function POST(request: NextRequest) {
       return errorResponse('Numéro de téléphone requis', 400)
     }
 
-    // Normalize phone number
+    // Validate phone format (Guinea: 224XXXXXXXXX or +224XXXXXXXXX)
     const normalizedPhone = phone.replace(/\s/g, '').replace(/^\+224/, '224')
+    if (!/^224[6-7]\d{7}$/.test(normalizedPhone)) {
+      return errorResponse('Numéro de téléphone invalide. Format attendu: +224 6XX XX XX XX', 400)
+    }
 
     // Rate limiting check
     const rateLimit = rateLimitStore.get(normalizedPhone)
@@ -50,12 +138,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Generate 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString()
+    // Generate cryptographically secure OTP
+    const otp = generateSecureOtp()
     const expiresAt = now + 5 * 60 * 1000 // 5 minutes expiry
 
-    // Store OTP
-    otpStore.set(normalizedPhone, { otp, expiresAt, attempts: 0 })
+    // Store OTP (never sent back in response)
+    otpStore.set(normalizedPhone, { 
+      otp, 
+      expiresAt, 
+      attempts: 0, 
+      phoneLast4: normalizedPhone.slice(-4) 
+    })
 
     // Update rate limit
     if (rateLimit && rateLimit.resetAt > now) {
@@ -64,18 +157,23 @@ export async function POST(request: NextRequest) {
       rateLimitStore.set(normalizedPhone, { count: 1, resetAt: now + 15 * 60 * 1000 })
     }
 
-    // In production, send OTP via SMS (e.g., Twilio, Orange SMS API)
-    // For demo, we return the OTP in the response
-    console.log(`[OTP] Code for ${normalizedPhone}: ${otp}`)
+    // Send OTP via SMS (NEVER return OTP in response)
+    const smsSent = await sendOtpViaSms(normalizedPhone, otp)
 
+    // SEC-01 FIX: OTP is NEVER returned in the API response
+    // Only confirm that the OTP was sent (or will be sent)
     return NextResponse.json(
       {
         success: true,
-        message: 'Code OTP envoyé',
-        // In production, remove this:
-        data: { otp, phone: normalizedPhone },
+        message: smsSent 
+          ? 'Code OTP envoyé par SMS' 
+          : 'Code OTP généré. En mode démo, consultez les logs serveur.',
+        data: { 
+          phoneLast4: normalizedPhone.slice(-4), // Only last 4 digits for UX
+          expiresIn: 300, // seconds
+        },
       },
-      { status: 200, headers: corsHeaders() }
+      { status: 200 }
     )
   } catch (err) {
     const message = err instanceof Error ? err.message : "Erreur lors de l'envoi du code OTP"
@@ -182,5 +280,5 @@ export async function PUT(request: NextRequest) {
 
 // OPTIONS handler
 export async function OPTIONS() {
-  return new Response(null, { status: 204, headers: corsHeaders() })
+  return new Response(null, { status: 204 })
 }

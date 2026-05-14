@@ -56,6 +56,7 @@ import {
   Building2,
   Target,
   PieChart,
+  Hospital,
 } from 'lucide-react'
 import { useStore, type AppView } from '@/lib/store'
 import { useDataStore } from '@/lib/data-store'
@@ -98,6 +99,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar'
 import { hasPermission, toHFRole, type HFRole } from '@/lib/rbac'
+import { HospitalScopeSwitcher } from '@/components/app/hospital-scope-switcher'
 
 /* ─────────── Navigation Configuration ─────────── */
 
@@ -105,7 +107,7 @@ interface NavItem {
   view: AppView
   label: string
   icon: React.ComponentType<{ className?: string }>
-  requiredPermission?: { resource: Parameters<typeof hasPermission>[0]; action: Parameters<typeof hasPermission>[1] }
+  requiredPermission?: { resource: Parameters<typeof hasPermission>[1]; action: Parameters<typeof hasPermission>[2] }
 }
 
 const navGroups: { label: string; items: NavItem[] }[] = [
@@ -179,6 +181,8 @@ const navGroups: { label: string; items: NavItem[] }[] = [
   {
     label: 'Déploiement National',
     items: [
+      { view: 'adaptive-dashboard', label: 'Dashboard Adaptatif', icon: LayoutDashboard },
+      { view: 'multi-hospital', label: 'Multi-Hôpitaux', icon: Hospital, requiredPermission: { resource: 'admin', action: 'read' } },
       { view: 'national-supervision', label: 'Supervision', icon: Target, requiredPermission: { resource: 'admin', action: 'read' } },
       { view: 'facilities-management', label: 'Établissements', icon: Building2 },
       { view: 'national-statistics', label: 'Statistiques', icon: PieChart },
@@ -247,6 +251,8 @@ const viewTitles: Record<AppView, string> = {
   'facilities-management': 'Gestion des Établissements',
   'national-supervision': 'Supervision Nationale',
   'national-statistics': 'Statistiques Nationales',
+  'multi-hospital': 'Multi-Hôpitaux',
+  'adaptive-dashboard': 'Dashboard Adaptatif',
 }
 
 /* ─────────── Notification Icon Map ─────────── */
@@ -539,6 +545,8 @@ function TopHeader() {
       <Separator orientation="vertical" className="h-6" />
       <h1 className="text-base font-semibold text-slate-900 dark:text-white truncate">{title}</h1>
       <div className="flex-1" />
+
+      <HospitalScopeSwitcher />
 
       <GlobalSearch />
 

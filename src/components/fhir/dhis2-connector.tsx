@@ -293,7 +293,7 @@ export function DHIS2Connector() {
 
   /* ──────── Available periods ──────── */
   const availablePeriods = useMemo(() => {
-    const periods = []
+    const periods: { value: string; label: string }[] = []
     const now = new Date()
     for (let i = 0; i < 12; i++) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1)

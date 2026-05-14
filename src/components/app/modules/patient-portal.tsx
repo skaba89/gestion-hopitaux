@@ -458,7 +458,7 @@ function PatientDetail({ patientId }: { patientId: string }) {
 
   const patientAppointments = appointments.filter((a) => a.patientId === patientId)
   const upcoming = patientAppointments.filter((a) => a.status === 'Planifié' || a.status === 'Confirmé')
-  const past = patientAppointments.filter((a) => a.status === 'Terminée' || a.status === 'Annulé' || a.status === 'Non honoré')
+  const past = patientAppointments.filter((a) => a.status === 'Terminé' || a.status === 'Annulé' || a.status === 'Non honoré')
 
   const age = new Date().getFullYear() - new Date(patient.dateOfBirth).getFullYear()
 

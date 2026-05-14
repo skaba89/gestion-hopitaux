@@ -247,7 +247,6 @@ export function adtToFHIRBundle(msg: ADTMessage): FHIRBundle {
     resourceType: 'Bundle',
     id: `hf-adt-bundle-${msg.id}`,
     type: 'message',
-    timestamp: msg.timestamp,
     total: 2,
     link: [{ relation: 'self', url: `https://healthflow-gn.com/fhir/Bundle/hf-adt-bundle-${msg.id}` }],
     entry: [

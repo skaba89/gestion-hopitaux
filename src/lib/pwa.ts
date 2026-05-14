@@ -130,7 +130,7 @@ export function initNetworkListeners(): () => void {
     // Trigger background sync
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
       navigator.serviceWorker.ready.then((reg) => {
-        return reg.sync.register('healthflow-sync')
+        return (reg as any).sync.register('healthflow-sync')
       }).catch(console.error)
     }
     // Reset sync status after a delay

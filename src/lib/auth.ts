@@ -1,8 +1,18 @@
-// HealthFlow Africa - NextAuth Configuration
+// HealthFlow Guinea - NextAuth Configuration (Hardened)
 // Phone + OTP authentication for hospital staff
+// SEC-07 FIX: NEXTAUTH_SECRET is mandatory (no fallback)
+// SEC-11 FIX: Default role is 'Patient' (least privilege)
 
 import type { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
+
+// SEC-07 FIX: Fail fast if NEXTAUTH_SECRET is not set
+if (!process.env.NEXTAUTH_SECRET && process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE !== 'phase-production-build') {
+  throw new Error(
+    '[SECURITY] NEXTAUTH_SECRET environment variable is required in production. ' +
+    'Generate one with: openssl rand -base64 32'
+  )
+}
 
 interface ExtendedUser {
   id?: string
@@ -61,8 +71,8 @@ export const authOptions: NextAuthOptions = {
           const user: ExtendedUser = result.data
 
           return {
-            id: user.id,
-            name: user.name,
+            id: user.id ?? '',
+            name: user.name ?? null,
             email: user.email || `${user.phone}@healthflow-gn.com`,
             phone: user.phone,
             role: user.role,
@@ -90,7 +100,8 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         const extUser = user as unknown as ExtendedUser
         token.id = user.id
-        token.role = extUser.role || 'Médecin'
+        // SEC-11 FIX: Default to 'Patient' (least privilege) instead of 'Médecin'
+        token.role = extUser.role || 'Patient'
         token.phone = extUser.phone || ''
         token.establishmentId = extUser.establishmentId || ''
       }
@@ -107,6 +118,11 @@ export const authOptions: NextAuthOptions = {
       return session
     },
   },
-  secret: process.env.NEXTAUTH_SECRET || 'healthflow-guinea-secret-key-2024',
+  // SEC-07 FIX: In development, use a warning fallback. In production, MUST be set via env.
+  secret: process.env.NEXTAUTH_SECRET || (
+    process.env.NODE_ENV === 'development' 
+      ? 'healthflow-dev-only-secret-DO-NOT-USE-IN-PRODUCTION' 
+      : undefined
+  ),
   debug: process.env.NODE_ENV === 'development',
 }
