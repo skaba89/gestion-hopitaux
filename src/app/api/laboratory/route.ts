@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { db } from '@/lib/db'
 import { paginatedResponse, errorResponse, getPaginationParams, corsHeaders } from '@/lib/api-utils'
 import { secureApiHandler, ApiHandlerContext } from '@/lib/api-middleware'
+import { generateSecureToken } from '@/lib/security'
 
 // GET /api/laboratory - List lab requests and results
 export async function GET(request: NextRequest) {
@@ -84,7 +85,7 @@ export async function POST(request: NextRequest) {
     try {
       const body = await request.json()
 
-      const requestCode = `LAB-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`
+      const requestCode = `LAB-${Date.now()}-${generateSecureToken(4).toUpperCase()}`
 
       const labRequest = await db.labRequest.create({
         data: {

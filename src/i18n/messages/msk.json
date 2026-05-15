@@ -93,12 +93,25 @@
     "newPatient": "Baan kura",
     "newAppointment": "Ranveman kura",
     "emergencyEntry": "Sɔrɔti don",
-    "labRequest": "Labɔratuwa Ɩa sɔrɔ"
+    "labRequest": "Labɔratuwa Ɩa sɔrɔ",
+    "statsOverview": "Lisi min bɛ yɛrɛ",
+    "monthlyTrend": "Kalo fɛn min bɛ kɛ",
+    "weeklyAppointments": "Dɔgɔkun ranvemanw",
+    "patientDistribution": "Baanow bɛn bɔ yɔrɔ min",
+    "topDiagnoses": "Bana min bɛ lajɛ bɛɛ",
+    "bedOccupancy": "Litiw nafama",
+    "pendingTasks": "Baara min bɛ natira",
+    "criticalAlerts": "Kisili bɛna wɛrɛw"
   },
   "patients": {
     "title": "Baanow bolomara",
     "newPatient": "Baan kura",
     "searchPatient": "Baan Ɲinini...",
+    "patientList": "Baanow lisiti",
+    "patientDetails": "Baan kunnafoni",
+    "registerPatient": "Baan tɔmɛn",
+    "editPatient": "Baan yɛlɛma",
+    "archivePatient": "Baan bila dantigɛ la",
     "firstName": "Tɔgɔ",
     "lastName": "Siyamurun",
     "dateOfBirth": "Banga don",
@@ -107,78 +120,380 @@
     "female": "Muso",
     "phone": "Tɛlɛfɔni",
     "address": "Yɔrɔ",
+    "nationalId": "Kart min bɛ dɔn ta",
     "bloodType": "Jago",
+    "emergencyContact": "Sɔrɔti mɔgɔ",
+    "emergencyPhone": "Sɔrɔti tɛlɛfɔni",
     "allergies": "Alɛraji",
-    "medicalHistory": "Kɛnɛyɛla kunnafoni"
+    "medicalHistory": "Kɛnɛyɛla kunnafoni",
+    "surgicalHistory": "Opɛrasiyɔn kunnafoni",
+    "familyHistory": "Dɛmɛn kunnafoni",
+    "documents": "Kunnafoniw",
+    "qrCode": "Kod QR",
+    "registrationDate": "Tɔmɛn don",
+    "lastVisit": "Na lajɛ bɔ",
+    "reason": "Sabu",
+    "activePatients": "Baanw min bɛ baara kɛ",
+    "inactivePatients": "Baanw min baara si kɛ",
+    "archivedPatients": "Baanw min bila dantigɛ la",
+    "severity": {
+      "minor": "Piti",
+      "major": "Bɛ bɛn bɛ",
+      "critical": "Bɛna bɛ ti"
+    }
   },
   "appointments": {
     "title": "Ranvemanw",
     "newAppointment": "Ranveman kura",
     "todayAppointments": "Bi ranvemanw",
+    "upcomingAppointments": "Ranvemanw min na bɛ",
+    "pastAppointments": "Ranvemanw min bɛ kɛ",
+    "patientName": "Baan tɔgɔ",
     "doctor": "Dɔkɛtɔrɔ",
     "date": "Don",
     "time": "Wati",
+    "duration": "Wati o bɛ kɛ",
+    "type": "Sɔrɔ",
+    "reason": "Sabu",
+    "notes": "Marifɛnw",
     "confirmAppointment": "Ranveman tiyɛn",
-    "cancelAppointment": "Ranveman jinɛ"
+    "cancelAppointment": "Ranveman jinɛ",
+    "rescheduleAppointment": "Ranveman yɛlɛma",
+    "status": {
+      "planned": "Bɛ labɛn",
+      "confirmed": "Tiyɛnnen",
+      "inProgress": "Bɛ kɛ",
+      "completed": "Dɔnnen",
+      "cancelled": "Jinɛnnen",
+      "noShow": "Na ma na"
+    },
+    "types": {
+      "consultation": "Kɛnɛbolo lajɛ",
+      "checkup": "Yɛlɛma lajɛ",
+      "followUp": "Na lajɛ kɔfɛ",
+      "prenatal": "Denbana lajɛ",
+      "emergency": "Sɔrɔti"
+    }
   },
   "consultations": {
     "title": "Kɛnɛbolo lajɛ",
     "newConsultation": "Kɛnɛbolo lajɛ kura",
+    "patientName": "Baan tɔgɔ",
     "doctor": "Dɔkɛtɔrɔ",
+    "reason": "Lajɛ sabu",
     "diagnosis": "Bana min bɛ",
+    "prescriptions": "Ordonnansi",
     "vitals": "Jatigɛw",
     "bloodPressure": "Jago warija",
+    "heartRate": "Nɛnɛ bololabaara",
     "temperature": "Ɲɛnɛ",
-    "weight": "Boya"
+    "oxygenSaturation": "Oksijɛn satirasiyɔn",
+    "weight": "Boya",
+    "height": "Jan",
+    "bmi": "IMC",
+    "medication": "Fura",
+    "dosage": "Dɔzaaji",
+    "duration": "Wati o bɛ kɛ",
+    "instructions": "Fɛn min bɛ kɛ",
+    "status": {
+      "pending": "Bɛ natira",
+      "inProgress": "Bɛ kɛ",
+      "completed": "Dɔnnen"
+    }
+  },
+  "laboratory": {
+    "title": "Labɔratuwa",
+    "newRequest": "Sɔrɔti kura",
+    "requestDetails": "Sɔrɔti kunnafoni",
+    "results": "Rɛzilta",
+    "validateResult": "Rɛzilta tiyɛn",
+    "patientName": "Baan tɔgɔ",
+    "doctor": "Dɔkɛtɔrɔ min fɔ",
+    "testType": "Tɛst sɔrɔ",
+    "priority": "Fɛn fɔlɔ",
+    "normalRange": "Nɔrmaal nafa",
+    "abnormal": "Nɔrmaal si tɛ",
+    "normal": "Nɔrmaal",
+    "status": {
+      "pending": "Bɛ natira",
+      "inProgress": "Bɛ kɛ",
+      "completed": "Dɔnnen",
+      "validated": "Tiyɛnnen"
+    },
+    "priorityLevels": {
+      "normal": "Nɔrmaal",
+      "urgent": "Sɔrɔti",
+      "stat": "Sɔrɔti bɛna"
+    }
+  },
+  "pharmacy": {
+    "title": "Faramasi",
+    "medications": "Furaw",
+    "addMedication": "Fura farala",
+    "stockEntry": "Fura don",
+    "stockExit": "Fura bɔ",
+    "stockAlerts": "Fura kisili",
+    "expirationTracking": "Dɔn min na bɛn",
+    "name": "Tɔgɔ",
+    "category": "Sɔrɔ",
+    "dosage": "Dɔzaaji",
+    "stock": "Furaw ja",
+    "unit": "Yɔrɔ",
+    "price": "Saran",
+    "expiryDate": "Dɔn min na bɛn",
+    "supplier": "Mɔgɔ min bɛ ta",
+    "quantity": "Hakɛ",
+    "lowStock": "Furaw piti",
+    "criticalStock": "Furaw bɛna piti",
+    "outOfStock": "Furaw si tɛ",
+    "categories": {
+      "analgesic": "Dolokili fura",
+      "antibiotic": "Antibiyotik",
+      "antimalarial": "Antipaludéen",
+      "antihypertensive": "Antihypertenseur",
+      "antidiabetic": "Antidiabétik",
+      "antiemetic": "Antiémétik",
+      "bronchodilator": "Bronchodilatateur",
+      "supplement": "Fura wɛrɛ"
+    }
+  },
+  "hospitalization": {
+    "title": "Lɔpitalun na",
+    "beds": "Litiw",
+    "admission": "Don",
+    "discharge": "Bɔ",
+    "bedNumber": "Liti nimɔrɔ",
+    "service": "Sɛrvisi",
+    "patient": "Baan",
+    "admissionDate": "Don don",
+    "dischargeDate": "Bɔ don",
+    "bedStatus": {
+      "available": "Bɛ yɔrɔ",
+      "occupied": "Mɔgɔ bɛ a la",
+      "reserved": "Bɛ labɛn",
+      "cleaning": "Bɛ jɛn"
+    },
+    "services": {
+      "internalMedicine": "Kɛnɛbolo sɛrvisi",
+      "surgery": "Opɛrasiyɔn",
+      "maternity": "Denbaga yɔrɔ",
+      "pediatrics": "Denbaw sɛrvisi",
+      "icu": "Réanimation"
+    }
+  },
+  "emergencies": {
+    "title": "Sɔrɔtiw",
+    "newCase": "Kɛma kura",
+    "triage": "Tiraji",
+    "takeCharge": "I yɛrɛ bɔ a la",
+    "patientName": "Baan tɔgɔ",
+    "arrivalTime": "Na wati",
+    "reason": "Sabu",
+    "attendingDoctor": "Dɔkɛtɔrɔ min bɛ a lajɛ",
+    "triageLevels": {
+      "red": "Wulen - Bɛna bɛ ti",
+      "orange": "Oranje - Bɛ bɛn bɛ",
+      "yellow": "Jɛman - Bɛ natira",
+      "green": "Bila - Piti",
+      "blue": "Bulu - Sɔrɔti si tɛ"
+    },
+    "status": {
+      "pending": "Bɛ natira",
+      "takenCharge": "Mɔgɔ bɛ a la",
+      "inProgress": "Bɛ kɛ",
+      "completed": "Dɔnnen",
+      "transferred": "Nɛnɛ"
+    }
+  },
+  "maternity": {
+    "title": "Denbaga yɔrɔ",
+    "pregnancies": "Denbana",
+    "newPregnancy": "Denbana kura",
+    "motherName": "Denba tɔgɔ",
+    "term": "Wati o bɛ na",
+    "dueDate": "Banga don min labɛn",
+    "riskLevel": "Jɛbaara nafa",
+    "lastVisit": "Na lajɛ bɔ",
+    "prenatalVisits": "Denbana lajɛw",
+    "addVisit": "Lajɛ farala",
+    "delivery": "Bangali",
+    "riskLevels": {
+      "low": "Piti",
+      "medium": "Cɛmancɛ",
+      "high": "Bɛ bɛn"
+    },
+    "status": {
+      "active": "Bɛ kɛ",
+      "completed": "Dɔnnen",
+      "postpartum": "Bangali kɔfɛ lajɛ"
+    }
+  },
+  "vaccination": {
+    "title": "Pikiri",
+    "records": "Pikiri kunnafoni",
+    "newRecord": "Kunnafoni kura",
+    "childName": "Denba tɔgɔ",
+    "dateOfBirth": "Banga don",
+    "vaccines": "Pikiriw",
+    "administerVaccine": "Pikiri di",
+    "scheduledDate": "Dɔn min labɛn",
+    "administeredDate": "Dɔn min di",
+    "vaccineStatus": {
+      "planned": "Bɛ labɛn",
+      "done": "Dɔnnen",
+      "overdue": "Dɔn bɛna"
+    }
+  },
+  "billing": {
+    "title": "Saran",
+    "invoices": "Faktɛriw",
+    "newInvoice": "Faktɛri kura",
+    "patientName": "Baan tɔgɔ",
+    "date": "Don",
+    "items": "Fɛnw",
+    "description": "Fɛn min bɛ kɛ",
+    "quantity": "Hakɛ",
+    "unitPrice": "Yɔrɔ saran",
+    "total": "Bɛɛ saran",
+    "paymentMethod": "Saran sɔrɔ",
+    "paidAmount": "Saran min di",
+    "remainingAmount": "Saran min na bɛ",
+    "payInvoice": "Faktɛri saran di",
+    "printInvoice": "Faktɛri silɛ",
+    "status": {
+      "pending": "Bɛ natira",
+      "paid": "Di",
+      "partial": "Dɔɔnin",
+      "cancelled": "Jinɛnnen"
+    },
+    "paymentMethods": {
+      "cash": "Wari",
+      "mobileMoney": "Mobile Money",
+      "bankTransfer": "Banki nɛnɛ",
+      "insurance": "Asiransi"
+    }
+  },
+  "teleconsultation": {
+    "title": "Tɛlɛkɔnsiltasiyɔn",
+    "newSession": "Sɛsiyɔn kura",
+    "patientName": "Baan tɔgɔ",
+    "doctor": "Dɔkɛtɔrɔ",
+    "date": "Don",
+    "time": "Wati",
+    "type": "Sɔrɔ",
+    "notes": "Marifɛnw",
+    "startSession": "Sɛsiyɔn daminɛ",
+    "endSession": "Sɛsiyɔn ban",
+    "types": {
+      "video": "Vidɛo",
+      "audio": "Ɔdio",
+      "chat": "Kɔkɔbaara"
+    },
+    "status": {
+      "planned": "Bɛ labɛn",
+      "inProgress": "Bɛ kɛ",
+      "completed": "Dɔnnen",
+      "cancelled": "Jinɛnnen"
+    }
+  },
+  "analytics": {
+    "title": "Lisi",
+    "reports": "Rapɔriw",
+    "trends": "Fɛn min bɛ kɛ",
+    "metrics": "Nafama",
+    "generateReport": "Rapɔri sɔrɔ",
+    "period": "Wati",
+    "compare": "Yɛlɛma lajɛ",
+    "patientStats": "Baanow lisi",
+    "financialStats": "Wari lisi",
+    "operationalStats": "Baara lisi",
+    "daily": "Bi bi",
+    "weekly": "Dɔgɔkun dɔgɔkun",
+    "monthly": "Kalo kalo",
+    "yearly": "San san"
+  },
+  "administration": {
+    "title": "Bolomara",
+    "users": "Mɔgɔw",
+    "roles": "Baatigɛw",
+    "permissions": "Hakɛw",
+    "establishments": "Yɔrɔw",
+    "departments": "Sɛrvisiw",
+    "auditLog": "Kunnafoni lisiti",
+    "addUser": "Mɔgɔ farala",
+    "editUser": "Mɔgɔ yɛlɛma",
+    "userRoles": "Mɔgɔ baatigɛw",
+    "systemSettings": "Sistɛm yɛlɛmaw",
+    "backup": "Dantigɛ",
+    "restore": "Sɛgɛn na"
+  },
+  "settings": {
+    "title": "Yɛlɛmaw",
+    "profile": "Pɔrofil",
+    "language": "Kan",
+    "theme": "Ladala",
+    "notifications": "Kunnafoniw",
+    "security": "Ladala kɛnɛ",
+    "changePassword": "Mot de passe yɛlɛma",
+    "twoFactor": "Fɛn fila tiyɛn",
+    "lightMode": "Jɛ fitiri",
+    "darkMode": "Wulen fitiri",
+    "systemMode": "Sistɛm fitiri",
+    "notificationPreferences": "Kunnafoni cuɲɛw",
+    "emailNotifications": "Imɛri kunnafoniw",
+    "smsNotifications": "SMS kunnafoniw",
+    "pushNotifications": "Push kunnafoniw",
+    "general": "Kulu kulu",
+    "accessibility": "Yɔrɔ min bɛ sɔrɔ",
+    "dataManagement": "Kunnafoni bolomara",
+    "resetData": "Kunnafoni jɛ",
+    "exportData": "Kunnafoni bɔ"
+  },
+  "patientPortal": {
+    "title": "Baan yɔrɔ",
+    "login": "Don",
+    "familyAccounts": "Dɛmɛn kaŋtɛw",
+    "myAppointments": "N ranvemanw",
+    "myRecords": "N kunnafoniw",
+    "myPrescriptions": "N ordonnansiw",
+    "myInvoices": "N faktɛriw",
+    "bookAppointment": "Ranveman labɛn",
+    "relationship": "Dɛmɛn bɛn bɔ",
+    "relationships": {
+      "self": "N yɛrɛ",
+      "spouse": "Cɛ/Muso",
+      "child": "Denba",
+      "parent": "Fa/Ba",
+      "sibling": "Bɛrɛ/Muso",
+      "other": "Wɛrɛ"
+    }
   },
   "auth": {
     "signIn": "Don",
     "signOut": "Bɔ",
+    "signUp": "Tɔmɛn",
+    "forgotPassword": "Mot de passe bɔma",
+    "resetPassword": "Mot de passe sɛgɛn",
     "phoneNumber": "Tɛlɛfɔni nimɔrɔ",
     "otpCode": "Kɔdi OTP",
     "enterOtp": "Kɔdi OTP sɛbɛn",
     "sendOtp": "Kɔdi ci",
     "resendOtp": "Kɔdi ci kɔfɛ",
+    "verifyOtp": "Kɔdi tiyɛn",
+    "otpSent": "Kɔdi OTP ci ra",
+    "otpSentTo": "Kɔdi ci ra a la",
+    "invalidOtp": "Kɔdi OTP ladanbɛ",
+    "otpExpired": "Kɔdi OTP bɛna",
+    "resendIn": "Ci kɔfɛ",
+    "seconds": "sɛkɔndiw",
     "welcomeBack": "I bɛ danbe",
+    "enterCredentials": "I kunnafoni sɛbɛn",
     "loginSuccess": "Don dɔnnen",
-    "loginFailed": "Don ma dɔn"
-  },
-  "settings": {
-    "title": "Yɛlɛmaw",
-    "language": "Kan",
-    "theme": "Ladala",
-    "profile": "Pɔrofil"
-  },
-  "emergencies": {
-    "title": "Sɔrɔtiw",
-    "newCase": "Kɛma kura",
-    "triage": "Tiraji"
-  },
-  "pharmacy": {
-    "title": "Faramasi",
-    "medications": "Furaw",
-    "stock": "Furaw ja"
-  },
-  "hospitalization": {
-    "title": "Lɔpitalun na",
-    "beds": "Litiw",
-    "admission": "Don"
-  },
-  "maternity": {
-    "title": "Denbaga yɔrɔ",
-    "pregnancies": "Denbana"
-  },
-  "vaccination": {
-    "title": "Pikiri",
-    "vaccines": "Pikiriw"
-  },
-  "billing": {
-    "title": "Saran"
-  },
-  "teleconsultation": {
-    "title": "Tɛlɛkɔnsiltasiyɔn"
-  },
-  "laboratory": {
-    "title": "Labɔratuwa"
+    "loginFailed": "Don ma dɔn",
+    "sessionExpired": "Sɛsiyɔn bɛna",
+    "logoutSuccess": "Bɔ dɔnnen",
+    "countryCode": "+224",
+    "patientSpace": "Baan yɔrɔ",
+    "staffSpace": "Baarakɛla yɔrɔ"
   }
 }

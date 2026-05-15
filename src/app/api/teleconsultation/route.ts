@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { db } from '@/lib/db'
 import { paginatedResponse, errorResponse, getPaginationParams, corsHeaders } from '@/lib/api-utils'
+import { generateSecureToken } from '@/lib/security'
 
 // GET /api/teleconsultation - List teleconsultation sessions
 export async function GET(request: NextRequest) {
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
         status: body.status || 'SCHEDULED',
         meetingUrl: body.meetingUrl,
         meetingId,
-        meetingPassword: body.meetingPassword || Math.random().toString(36).substring(2, 10),
+        meetingPassword: body.meetingPassword || generateSecureToken(4),
         chiefComplaint: body.chiefComplaint,
         followUpNeeded: body.followUpNeeded || false,
         followUpDate: body.followUpDate ? new Date(body.followUpDate) : undefined,

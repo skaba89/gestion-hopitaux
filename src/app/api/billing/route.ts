@@ -2,6 +2,8 @@ import { NextRequest } from 'next/server'
 import { db } from '@/lib/db'
 import { paginatedResponse, errorResponse, getPaginationParams, corsHeaders } from '@/lib/api-utils'
 import { secureApiHandler, ApiHandlerContext } from '@/lib/api-middleware'
+import { invoiceCreateSchema } from '@/lib/validations/billing'
+import { generateSecureToken } from '@/lib/security'
 
 // GET /api/billing - List invoices
 export async function GET(request: NextRequest) {
@@ -64,46 +66,40 @@ export async function POST(request: NextRequest) {
   return secureApiHandler(async (request: NextRequest, context: ApiHandlerContext) => {
     try {
       const body = await request.json()
-      const invoiceNumber = `INV-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`
 
-      // Calculate totals from items
-      const items = body.items || []
-      const subtotal = items.reduce((sum: number, item: { totalPrice: number }) => sum + (item.totalPrice || 0), 0)
-      const taxAmount = body.taxAmount || 0
-      const discountAmount = body.discountAmount || 0
+      // Zod validation — uses invoiceCreateSchema from validations/billing.ts
+      const validated = invoiceCreateSchema.parse(body)
+
+      // SEC FIX: Use crypto-based secure token instead of Math.random()
+      const invoiceNumber = `INV-${Date.now()}-${generateSecureToken(4).toUpperCase()}`
+
+      // Calculate totals from validated items
+      const subtotal = validated.items.reduce((sum, item) => sum + (item.totalPrice || 0), 0)
+      const taxAmount = validated.taxAmount
+      const discountAmount = validated.discountAmount
       const totalAmount = subtotal + taxAmount - discountAmount
 
       const invoice = await db.invoice.create({
         data: {
           invoiceNumber,
-          patientId: body.patientId,
-          establishmentId: body.establishmentId,
-          admissionId: body.admissionId,
-          consultationId: body.consultationId,
-          invoiceDate: body.invoiceDate ? new Date(body.invoiceDate) : undefined,
-          dueDate: body.dueDate ? new Date(body.dueDate) : undefined,
+          patientId: validated.patientId,
+          establishmentId: validated.establishmentId,
+          admissionId: validated.admissionId,
+          consultationId: validated.consultationId,
+          invoiceDate: validated.invoiceDate,
+          dueDate: validated.dueDate,
           subtotal,
           taxAmount,
           discountAmount,
           totalAmount,
-          insuranceCoverageAmount: body.insuranceCoverageAmount || 0,
-          patientResponsibility: totalAmount - (body.insuranceCoverageAmount || 0),
-          status: body.status || 'DRAFT',
-          insuranceId: body.insuranceId,
-          notes: body.notes,
-          issuedById: body.issuedById,
+          insuranceCoverageAmount: validated.insuranceCoverageAmount,
+          patientResponsibility: totalAmount - validated.insuranceCoverageAmount,
+          status: validated.status,
+          insuranceId: validated.insuranceId,
+          notes: validated.notes,
+          issuedById: validated.issuedById,
           items: {
-            create: items.map((item: {
-              description: string
-              category: string
-              quantity?: number
-              unitPrice: number
-              totalPrice: number
-              discountPercent?: number
-              notes?: string
-              relatedEntityId?: string
-              relatedEntityType?: string
-            }) => ({
+            create: validated.items.map((item) => ({
               description: item.description,
               category: item.category,
               quantity: item.quantity || 1,
@@ -124,12 +120,16 @@ export async function POST(request: NextRequest) {
       })
 
       return paginatedResponse([invoice], 1, 1, 1)
-    } catch (err) {
+    } catch (err: any) {
+      if (err.name === 'ZodError') {
+        return errorResponse('Données invalides: ' + err.errors.map((e: any) => e.message).join(', '), 400)
+      }
       const message = err instanceof Error ? err.message : 'Failed to create invoice'
       return errorResponse(message, 500)
     }
   }, {
     requireAuth: true,
+    permission: { resource: 'billing' as any, action: 'create' as any },
     audit: { resource: 'billing', action: 'CREATE' },
   })(request)
 }

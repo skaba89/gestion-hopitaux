@@ -39,16 +39,22 @@
     "warning": "Reeno",
     "info": "Habo",
     "required": "Nnguɗaama",
+    "invalidEmail": "Imeel moƴƴaani",
+    "invalidPhone": "Telefoŋ moƴƴaani",
     "today": "Hannde",
     "yesterday": "Haŋkitii",
     "tomorrow": "Jaŋngo",
+    "thisWeek": "Yontere ndee",
+    "thisMonth": "Lewru nduu",
+    "thisYear": "Hitaande ndee",
     "online": "Neerɗo",
     "offline": "Alaa neerɗo",
     "syncing": "Hawtindo...",
     "pending": "Ina fadi",
     "completed": "Gasii",
     "active": "Ina golla",
-    "inactive": "Hoto gollo"
+    "inactive": "Hoto gollo",
+    "archived": "Daaƴaama"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -63,22 +69,49 @@
     "vaccination": "Peewngol",
     "billing": "Kaalis",
     "teleconsultation": "Telekonsiltasiyoŋ",
+    "analytics": "Limle",
     "administration": "Ardungal",
     "settings": "Teeltannde",
-    "patientPortal": "Marɗo yeso"
+    "patientPortal": "Marɗo yeso",
+    "principal": "Ardino",
+    "medical": "Keɓal",
+    "management": "Yoggitorde",
+    "system": "Yannde"
   },
   "dashboard": {
     "title": "Dashboard",
     "welcome": "A jaaraama",
     "totalPatients": "Marɗoɓe fof",
     "appointmentsToday": "Jaajol hannde",
+    "bedsOccupied": "Lette ɗee",
+    "pendingResults": "Njeñte ina fadi",
+    "revenue": "Ngalu ñalnde",
+    "emergenciesActive": "Kesi gollɗi",
+    "stockAlerts": "Jeertinnde mooɓre",
+    "recentActivity": "Golle cakkitiiɗe",
+    "quickActions": "Golle jaajɗe",
     "newPatient": "Marɗo keso",
-    "newAppointment": "Jaajol keso"
+    "newAppointment": "Jaajol keso",
+    "emergencyEntry": "Naatnal kesum",
+    "labRequest": "Ɗaɓɓitannde labo",
+    "statsOverview": "Yiyngo limle",
+    "monthlyTrend": "Fannu lewru",
+    "weeklyAppointments": "Jaaje yontere",
+    "patientDistribution": "Rennditagol marɗoɓe",
+    "topDiagnoses": "Ñawuɗi ɓurɗi",
+    "bedOccupancy": "Toɓɓere lette",
+    "pendingTasks": "Golle ina fadi",
+    "criticalAlerts": "Jeertinɗe mawɗe"
   },
   "patients": {
     "title": "Marɗoɓe",
     "newPatient": "Marɗo keso",
     "searchPatient": "Marɗo yiilo...",
+    "patientList": "Doggol marɗoɓe",
+    "patientDetails": "Ceeɓe marɗo",
+    "registerPatient": "Winndita marɗo",
+    "editPatient": "Waylu marɗo",
+    "archivePatient": "Daaƴ marɗo",
     "firstName": "Innde",
     "lastName": "Ɓiɗɗo",
     "dateOfBirth": "Ñalngu jibinannde",
@@ -86,51 +119,381 @@
     "male": "Gorko",
     "female": "Debbo",
     "phone": "Telefoŋ",
+    "address": "Òfnde",
+    "nationalId": "Nannditol leydi",
     "bloodType": "Ɓiiƴam",
-    "allergies": "Aleerji"
+    "emergencyContact": "Jokkondiral kesum",
+    "emergencyPhone": "Telefoŋ kesum",
+    "allergies": "Aleerji",
+    "medicalHistory": "Taare saɗto",
+    "surgicalHistory": "Taare opereeji",
+    "familyHistory": "Taariik ɓesngu",
+    "documents": "Piilanɗe",
+    "qrCode": "Kod QR",
+    "registrationDate": "Ñalngu winnditagol",
+    "lastVisit": "Yillitaare sakkitiinde",
+    "reason": "Sababu",
+    "activePatients": "Marɗoɓe gollɗi",
+    "inactivePatients": "Marɗoɓe ngoppɗi",
+    "archivedPatients": "Marɗoɓe daaƴaaɓe",
+    "severity": {
+      "minor": "Fototaako",
+      "major": "Mawɗo",
+      "critical": "Ɓurtuɗo"
+    }
   },
   "appointments": {
     "title": "Jaajol",
     "newAppointment": "Jaajol keso",
+    "todayAppointments": "Jaaje hannde",
+    "upcomingAppointments": "Jaaje arayɗe",
+    "pastAppointments": "Jaaje ɓennuɗe",
+    "patientName": "Innde marɗo",
     "doctor": "Doktoor",
     "date": "Ñalnde",
-    "time": "Sabbo"
+    "time": "Sabbo",
+    "duration": "Duwaare",
+    "type": "Fannu",
+    "reason": "Sababu",
+    "notes": "Binndanɗe",
+    "confirmAppointment": "Tabbitin jaajol",
+    "cancelAppointment": "Haaytu jaajol",
+    "rescheduleAppointment": "Waylu jaajol",
+    "status": {
+      "planned": "Yuɓɓinaama",
+      "confirmed": "Tabbitinaama",
+      "inProgress": "Ina yahra",
+      "completed": "Gasii",
+      "cancelled": "Haaytaama",
+      "noShow": "Araani"
+    },
+    "types": {
+      "consultation": "Yaɓɓito",
+      "checkup": "Yiiltinnde",
+      "followUp": "Reentorde",
+      "prenatal": "Nasru reedu",
+      "emergency": "Kesum"
+    }
   },
   "consultations": {
     "title": "Yaɓɓito",
+    "newConsultation": "Yaɓɓito keso",
+    "patientName": "Innde marɗo",
     "doctor": "Doktoor",
-    "diagnosis": "Ñawu"
+    "reason": "Sababu yaɓɓito",
+    "diagnosis": "Ñawu",
+    "prescriptions": "Resepti",
+    "vitals": "Maandeeji nguurndam",
+    "bloodPressure": "Dowrol ƴiiƴam",
+    "heartRate": "Lecɓol ɓernde",
+    "temperature": "Nguleeki",
+    "oxygenSaturation": "Satire O₂",
+    "weight": "Leɗɗol",
+    "height": "Toowgol",
+    "bmi": "IMC",
+    "medication": "Leñol",
+    "dosage": "Dosi",
+    "duration": "Duwaare",
+    "instructions": "Jaɓɓagol",
+    "status": {
+      "pending": "Ina fadi",
+      "inProgress": "Ina yahra",
+      "completed": "Gasii"
+    }
+  },
+  "laboratory": {
+    "title": "Laboratuwaar",
+    "newRequest": "Ɗaɓɓitannde hesere",
+    "requestDetails": "Ceeɓe ɗaɓɓitannde",
+    "results": "Njeñte",
+    "validateResult": "Senndit njeñta",
+    "patientName": "Innde marɗo",
+    "doctor": "Doktoor rokkata",
+    "testType": "Fannu jarribo",
+    "priority": "Foɗɗorde",
+    "normalRange": "Keerol moƴƴol",
+    "abnormal": "Moƴƴaani",
+    "normal": "Moƴƴi",
+    "status": {
+      "pending": "Ina fadi",
+      "inProgress": "Ina yahra",
+      "completed": "Gasii",
+      "validated": "Sennditaama"
+    },
+    "priorityLevels": {
+      "normal": "Moƴƴol",
+      "urgent": "Ɗoya",
+      "stat": "Ko yaawi"
+    }
+  },
+  "pharmacy": {
+    "title": "Farmasi & Mooɓre",
+    "medications": "Leɗɗe",
+    "addMedication": "Ɓeydu leñol",
+    "stockEntry": "Naatgol mooɓre",
+    "stockExit": "Yaltugol mooɓre",
+    "stockAlerts": "Jeertinnde mooɓre",
+    "expirationTracking": "Reentinooɗum timmitol",
+    "name": "Innde",
+    "category": "Fannu",
+    "dosage": "Dosi",
+    "stock": "Mooɓre",
+    "unit": "Ɓeteeri",
+    "price": "Njoɓdi",
+    "expiryDate": "Ñalngu timmitol",
+    "supplier": "Jowitiiɗo",
+    "quantity": "Keadal",
+    "lowStock": "Mooɓre seeɗa",
+    "criticalStock": "Mooɓre caɗɗol",
+    "outOfStock": "Mooɓre gasii",
+    "categories": {
+      "analgesic": "Dolku",
+      "antibiotic": "Antibiyotik",
+      "antimalarial": "Antipaludéen",
+      "antihypertensive": "Antihypertenseur",
+      "antidiabetic": "Antidiabétique",
+      "antiemetic": "Antiémétique",
+      "bronchodilator": "Bronchodilatateur",
+      "supplement": "Ɓeydol"
+    }
+  },
+  "hospitalization": {
+    "title": "Opitaal",
+    "beds": "Lette",
+    "admission": "Naatnal",
+    "discharge": "Yaltinol",
+    "bedNumber": "Lette limtil",
+    "service": "Gollal",
+    "patient": "Marɗo",
+    "admissionDate": "Ñalngu naatnal",
+    "dischargeDate": "Ñalngu yaltinal",
+    "bedStatus": {
+      "available": "Heɓii",
+      "occupied": "Huutorii",
+      "reserved": "Suɓaama",
+      "cleaning": "Ina laɓɓi"
+    },
+    "services": {
+      "internalMedicine": "Keɓal nder",
+      "surgery": "Opereeji",
+      "maternity": "Nasru",
+      "pediatrics": "Sukaɓe",
+      "icu": "Hernitaare"
+    }
+  },
+  "emergencies": {
+    "title": "Kesi",
+    "newCase": "Kesum keso",
+    "triage": "Tirraas",
+    "takeCharge": "Yahdu e",
+    "patientName": "Innde marɗo",
+    "arrivalTime": "Sabbo aroogo",
+    "reason": "Sababu",
+    "attendingDoctor": "Doktoor toppitiiɗo",
+    "triageLevels": {
+      "red": "Boɗejo - Nguurndam saɗtii",
+      "orange": "Ooraas - Kesum mawɗo",
+      "yellow": "Ndeejo - Kesum caggal",
+      "green": "Haɗejo - Kesum seeɗa",
+      "blue": "Bulaajo - Hoto ɗoya"
+    },
+    "status": {
+      "pending": "Ina fadi",
+      "takenCharge": "Topporaama",
+      "inProgress": "Ina yahra",
+      "completed": "Gasii",
+      "transferred": "Neldiraa"
+    }
+  },
+  "maternity": {
+    "title": "Nasru",
+    "pregnancies": "Reeduji",
+    "newPregnancy": "Reedu hesere",
+    "motherName": "Innde yumma",
+    "term": "Yahdu",
+    "dueDate": "Ñalngu laabi",
+    "riskLevel": "Toɓɓere caɗeele",
+    "lastVisit": "Yillitaare sakkitiinde",
+    "prenatalVisits": "Yillitaaji reedu",
+    "addVisit": "Ɓeydu yillitaare",
+    "delivery": "Jibinannde",
+    "riskLevels": {
+      "low": "Seeɗa",
+      "medium": "Caggal",
+      "high": "Mawɗo"
+    },
+    "status": {
+      "active": "Ina yahra",
+      "completed": "Gasii",
+      "postpartum": "Reento caggal jibinannde"
+    }
+  },
+  "vaccination": {
+    "title": "Peewngol",
+    "records": "Karte peewngol",
+    "newRecord": "Karta hesere",
+    "childName": "Innde suka",
+    "dateOfBirth": "Ñalngu jibinannde",
+    "vaccines": "Peewnuɗe",
+    "administerVaccine": "Rokku peewngol",
+    "scheduledDate": "Ñalngu yuɓɓinaa",
+    "administeredDate": "Ñalngu rokke",
+    "vaccineStatus": {
+      "planned": "Yuɓɓinaama",
+      "done": "Waɗaama",
+      "overdue": "Hiiɗtii"
+    }
+  },
+  "billing": {
+    "title": "Kaalis & Yoɓe",
+    "invoices": "Konte",
+    "newInvoice": "Konta hesere",
+    "patientName": "Innde marɗo",
+    "date": "Ñalnde",
+    "items": "Ɓeɗe",
+    "description": "Cifagol",
+    "quantity": "Keadal",
+    "unitPrice": "Njoɓdi ɓeteeri",
+    "total": "Fof",
+    "paymentMethod": "Feere yoɓde",
+    "paidAmount": "Ngalu yoɓaama",
+    "remainingAmount": "Ngalu heddii",
+    "payInvoice": "Yoɓ konta",
+    "printInvoice": "Winndu konta",
+    "status": {
+      "pending": "Ina fadi",
+      "paid": "Yoɓaama",
+      "partial": "Yeeso",
+      "cancelled": "Haaytaama"
+    },
+    "paymentMethods": {
+      "cash": "Kaalis",
+      "mobileMoney": "Mobile Money",
+      "bankTransfer": "Neldol bank",
+      "insurance": "Asiraans"
+    }
+  },
+  "teleconsultation": {
+    "title": "Telekonsiltasiyoŋ",
+    "newSession": "Seesiyoŋ keso",
+    "patientName": "Innde marɗo",
+    "doctor": "Doktoor",
+    "date": "Ñalnde",
+    "time": "Sabbo",
+    "type": "Fannu",
+    "notes": "Binndanɗe",
+    "startSession": "Fuɗɗo sesiyoŋ",
+    "endSession": "Gasnii sesiyoŋ",
+    "types": {
+      "video": "Wideo",
+      "audio": "Oyo",
+      "chat": "Haala"
+    },
+    "status": {
+      "planned": "Yuɓɓinaama",
+      "inProgress": "Ina yahra",
+      "completed": "Gasii",
+      "cancelled": "Haaytaama"
+    }
+  },
+  "analytics": {
+    "title": "Limle",
+    "reports": "Raporteeji",
+    "trends": "Fannuje",
+    "metrics": "Maandeeji",
+    "generateReport": "Sos raporte",
+    "period": "Daburu",
+    "compare": "Yeeɓtu",
+    "patientStats": "Limle marɗoɓe",
+    "financialStats": "Limle kaalis",
+    "operationalStats": "Limle golle",
+    "daily": "Ñalnde kala",
+    "weekly": "Yontere kala",
+    "monthly": "Lewru kala",
+    "yearly": "Hitaande kala"
+  },
+  "administration": {
+    "title": "Ardungal",
+    "users": "Huutorɓe",
+    "roles": "Gollitte",
+    "permissions": "Jamirooje",
+    "establishments": "Mbahdiiji",
+    "departments": "Catal",
+    "auditLog": "Daftaruuji",
+    "addUser": "Ɓeydu huutorɗo",
+    "editUser": "Waylu huutorɗo",
+    "userRoles": "Gollitte huutorɗo",
+    "systemSettings": "Teeltannde yannde",
+    "backup": "Daɗnditol",
+    "restore": "Artir"
+  },
+  "settings": {
+    "title": "Teeltannde",
+    "profile": "Heftinirde",
+    "language": "Ɗemngal",
+    "theme": "Mbaadi",
+    "notifications": "Humpitooji",
+    "security": "Kisal",
+    "changePassword": "Waylu finnde",
+    "twoFactor": "Goongɗitingol ɗiɗaangol",
+    "lightMode": "Mbaadi leɗɗo",
+    "darkMode": "Mbaadi niɓɓo",
+    "systemMode": "Mbaadi yannde",
+    "notificationPreferences": "Cuɓoraaɗe humpitooji",
+    "emailNotifications": "Humpitooji imeel",
+    "smsNotifications": "Humpitooji SMS",
+    "pushNotifications": "Humpitooji push",
+    "general": "Kuuɓal",
+    "accessibility": "Heɓɓannde",
+    "dataManagement": "Yoggitorde keɓe",
+    "resetData": "Firlit keɓe",
+    "exportData": "Jiggo keɓe"
+  },
+  "patientPortal": {
+    "title": "Marɗo yeso",
+    "login": "Seŋo",
+    "familyAccounts": "Konte ɓesngu",
+    "myAppointments": "Jaaje am",
+    "myRecords": "Piilanɗe am",
+    "myPrescriptions": "Reseptiiji am",
+    "myInvoices": "Konte am",
+    "bookAppointment": "Yuɓɓin jaajol",
+    "relationship": "Jokkondiral ɓesngu",
+    "relationships": {
+      "self": "Miin",
+      "spouse": "Gorko/Debbo",
+      "child": "Ɓiɗɗo",
+      "parent": "Baaba/Inna",
+      "sibling": "Miñi/Mawɓe",
+      "other": "Goɗɗo"
+    }
   },
   "auth": {
     "signIn": "Seŋo",
     "signOut": "Yaltu",
+    "signUp": "Winndito",
+    "forgotPassword": "Finnde wirnaama",
+    "resetPassword": "Firlit finnde",
     "phoneNumber": "Telefoŋ",
     "otpCode": "Kod OTP",
-    "sendOtp": "Kod neldu",
-    "welcomeBack": "A jaaraama"
-  },
-  "settings": {
-    "title": "Teeltannde",
-    "language": "Ɗemngal",
-    "theme": "Mbaadi"
-  },
-  "emergencies": {
-    "title": "Kesi",
-    "newCase": "Kesum keso"
-  },
-  "pharmacy": {
-    "title": "Farmasi"
-  },
-  "hospitalization": {
-    "title": "Opitaal"
-  },
-  "maternity": {
-    "title": "Nasru"
-  },
-  "vaccination": {
-    "title": "Peewngol"
-  },
-  "billing": {
-    "title": "Kaalis"
+    "enterOtp": "Naatnu kod OTP",
+    "sendOtp": "Neldu kod",
+    "resendOtp": "Neldu kod keso",
+    "verifyOtp": "Senndit kod",
+    "otpSent": "Kod OTP neldaama",
+    "otpSentTo": "Kod neldaama to",
+    "invalidOtp": "Kod OTP moƴƴaani",
+    "otpExpired": "Kod OTP gasii",
+    "resendIn": "Neldirgol laati",
+    "seconds": "majaaje",
+    "welcomeBack": "A jaaraama",
+    "enterCredentials": "Naatnu maantore maa",
+    "loginSuccess": "Seŋagol moƴƴii",
+    "loginFailed": "Seŋagol waɗaani",
+    "sessionExpired": "Seŋre gasii",
+    "logoutSuccess": "Yaltagol moƴƴii",
+    "countryCode": "+224",
+    "patientSpace": "Norde marɗo",
+    "staffSpace": "Norde gollotooɓe"
   }
 }

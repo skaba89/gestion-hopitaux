@@ -559,6 +559,17 @@ export const useMultiHospitalStore = create<MultiHospitalState>()(
     }),
     {
       name: 'healthflow-multi-hospital',
+      // SECURITY FIX v2: Don't persist delegations, transfers, and audit logs
+      // to localStorage. These contain sensitive operational data that should
+      // come from the database via API calls in production.
+      // Only persist UI state and non-sensitive hospital structure data.
+      partialize: (state) => ({
+        hospitals: state.hospitals,
+        selectedHospitalId: state.selectedHospitalId,
+        selectedServiceId: state.selectedServiceId,
+        // ⚠️ delegations, transfers, auditLog EXCLUDED from localStorage
+        // These should be loaded from DB via API in production
+      }),
     }
   )
 )

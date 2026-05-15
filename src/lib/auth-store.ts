@@ -1,5 +1,7 @@
-// HealthFlow Africa - Auth Store (Zustand)
-// Manages authentication state on the client side
+// HealthFlow Africa - Auth Store (Zustand) — SECURITY FIX v2
+// SEC FIX: Token is NO LONGER persisted to localStorage.
+// JWT tokens are managed server-side via NextAuth httpOnly cookies.
+// Only non-sensitive display data (name, role) is persisted for UX.
 
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
@@ -17,6 +19,7 @@ export interface AuthUser {
 interface AuthState {
   user: AuthUser | null
   isAuthenticated: boolean
+  // Token is kept in memory ONLY — never persisted to localStorage
   token: string | null
   isLoading: boolean
   error: string | null
@@ -47,6 +50,7 @@ export const useAuthStore = create<AuthState>()(
       login: (user, token) => set({
         user,
         isAuthenticated: true,
+        // Token is set in memory but will NOT be persisted (see partialize below)
         token: token || null,
         error: null,
         isLoading: false,
@@ -70,10 +74,20 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'healthflow-auth',
+      // SECURITY FIX: Only persist non-sensitive display data.
+      // Token is EXCLUDED from localStorage — it lives in httpOnly cookies only.
       partialize: (state) => ({
-        user: state.user,
+        user: state.user ? {
+          id: state.user.id,
+          name: state.user.name,
+          email: state.user.email,
+          phone: state.user.phone,
+          role: state.user.role,
+          establishmentId: state.user.establishmentId,
+          avatarUrl: state.user.avatarUrl,
+        } : null,
         isAuthenticated: state.isAuthenticated,
-        token: state.token,
+        // ⚠️ token is INTENTIONALLY EXCLUDED from persistence
       }),
     }
   )

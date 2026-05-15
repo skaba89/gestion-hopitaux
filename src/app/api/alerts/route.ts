@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { db } from '@/lib/db'
 import { paginatedResponse, errorResponse, getPaginationParams, corsHeaders } from '@/lib/api-utils'
+import { generateSecureToken } from '@/lib/security'
 
 // GET /api/alerts - List health alerts
 export async function GET(request: NextRequest) {
@@ -117,7 +118,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const alertCode = `ALT-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`
+    const alertCode = `ALT-${Date.now()}-${generateSecureToken(4).toUpperCase()}`
 
     const alert = await db.epidemiologicalAlert.create({
       data: {

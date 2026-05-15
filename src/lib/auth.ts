@@ -218,17 +218,12 @@ export const authOptions: NextAuthOptions = {
             }
           }
 
-          // No user found in DB — return guest/patient role (least privilege)
-          return {
-            id: `guest-${Date.now()}`,
-            name: 'Invité',
-            email: '',
-            phone: phone,
-            role: 'Patient',
-            establishmentId: '',
-            permissions: [] as string[],
-            mfaEnabled: false,
-          }
+          // SECURITY FIX: No user found in DB — do NOT create a fake guest user.
+          // Guest users with non-cuid IDs break foreign key references and
+          // pollute the session store. Instead, require registration first.
+          throw new Error(
+            'Aucun compte trouvé pour ce numéro. Veuillez vous inscrire d\'abord.'
+          )
 
         } catch (error) {
           if (error instanceof Error) {

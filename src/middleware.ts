@@ -43,11 +43,29 @@ function isAllowedOrigin(origin: string): boolean {
   return false
 }
 
-// ─────────── Rate Limiting ───────────
+// ─────────── Rate Limiting (Redis-backed with in-memory fallback) ───────────
 
+import { getRedis, RedisRateLimiter } from '@/lib/redis'
+
+let middlewareRateLimiter: RedisRateLimiter | null = null
+
+async function checkRateLimit(key: string, maxRequests: number, windowMs: number): Promise<boolean> {
+  try {
+    if (!middlewareRateLimiter) {
+      middlewareRateLimiter = new RedisRateLimiter()
+    }
+    const result = await middlewareRateLimiter.check(key, maxRequests, Math.ceil(windowMs / 1000))
+    return result.allowed
+  } catch {
+    // Fallback to in-memory if Redis is unavailable
+    return checkRateLimitMemory(key, maxRequests, windowMs)
+  }
+}
+
+// In-memory fallback
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>()
 
-function checkRateLimit(key: string, maxRequests: number, windowMs: number): boolean {
+function checkRateLimitMemory(key: string, maxRequests: number, windowMs: number): boolean {
   const now = Date.now()
   const entry = rateLimitStore.get(key)
 
@@ -64,7 +82,7 @@ function checkRateLimit(key: string, maxRequests: number, windowMs: number): boo
   return true
 }
 
-// Clean up old rate limit entries periodically
+// Clean up old rate limit entries periodically (memory fallback only)
 if (typeof globalThis !== 'undefined') {
   setInterval(() => {
     const now = Date.now()
@@ -76,7 +94,7 @@ if (typeof globalThis !== 'undefined') {
   }, 60000)
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const response = NextResponse.next()
 
@@ -197,9 +215,9 @@ export function middleware(request: NextRequest) {
                      request.headers.get('x-real-ip') ||
                      'unknown'
 
-    // General API rate limit: 100 requests per minute per IP
+    // General API rate limit: 100 requests per minute per IP (now Redis-backed)
     const rateLimitKey = `api:${clientIp}`
-    if (!checkRateLimit(rateLimitKey, 100, 60000)) {
+    if (!await checkRateLimit(rateLimitKey, 100, 60000)) {
       return NextResponse.json(
         { error: 'Trop de requêtes. Veuillez réessayer plus tard.' },
         { status: 429 }
@@ -209,7 +227,7 @@ export function middleware(request: NextRequest) {
     // Stricter rate limit for auth endpoints: 10 requests per minute
     if (pathname.startsWith('/api/auth/')) {
       const authRateLimitKey = `auth:${clientIp}`
-      if (!checkRateLimit(authRateLimitKey, 10, 60000)) {
+      if (!await checkRateLimit(authRateLimitKey, 10, 60000)) {
         return NextResponse.json(
           { error: 'Trop de tentatives. Veuillez réessayer plus tard.' },
           { status: 429 }

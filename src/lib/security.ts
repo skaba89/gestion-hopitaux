@@ -1,7 +1,8 @@
-// HealthFlow Guinea - Security Utilities (Hardened v2)
+// HealthFlow Guinea - Security Utilities (Hardened v3)
 // SEC-03 FIX: Real encryption using Web Crypto API (client) / Node.js crypto (server)
 // SEC-04 FIX: Password hashing using bcryptjs (server) / PBKDF2 (fallback)
 // SEC-06 FIX: CSRF token generation and validation
+// v3 FIX: Rate limiting now uses Redis; constantTimeEqual is truly constant-time
 
 // ─────────── Encryption ───────────
 
@@ -222,12 +223,15 @@ async function pbkdf2Hash(password: string, salt: string): Promise<string> {
 
 /**
  * Constant-time string comparison to prevent timing attacks
+ * SECURITY FIX v3: Always compare full length even when strings differ in length,
+ * to avoid leaking length information via timing side-channels.
  */
 export function constantTimeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false
-  let result = 0
-  for (let i = 0; i < a.length; i++) {
-    result |= a.charCodeAt(i) ^ b.charCodeAt(i)
+  const maxLen = Math.max(a.length, b.length)
+  let result = a.length ^ b.length // Non-zero if lengths differ
+  for (let i = 0; i < maxLen; i++) {
+    // Safe charCodeAt returns NaN for out-of-range, which XOR converts to 0
+    result |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0)
   }
   return result === 0
 }
@@ -315,31 +319,59 @@ export function sanitizeObject<T extends Record<string, unknown>>(obj: T): T {
   return sanitized as T
 }
 
-// ─────────── Rate Limiting ───────────
+// ─────────── Rate Limiting (Redis-backed) ───────────
 
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>()
+import { getRedis, RedisRateLimiter } from './redis'
 
-/**
- * Generic rate limiter
- */
-export function rateLimiter(key: string, maxRequests: number, windowMs: number): { allowed: boolean; remaining: number; resetTime: number } {
-  const now = Date.now()
-  const entry = rateLimitStore.get(key)
+// Singleton Redis rate limiter instance
+let redisRateLimiter: RedisRateLimiter | null = null
 
-  if (!entry || now > entry.resetTime) {
-    rateLimitStore.set(key, { count: 1, resetTime: now + windowMs })
-    return { allowed: true, remaining: maxRequests - 1, resetTime: now + windowMs }
+async function getRedisRateLimiter(): Promise<RedisRateLimiter> {
+  if (!redisRateLimiter) {
+    redisRateLimiter = new RedisRateLimiter()
   }
-
-  if (entry.count >= maxRequests) {
-    return { allowed: false, remaining: 0, resetTime: entry.resetTime }
-  }
-
-  entry.count++
-  return { allowed: true, remaining: maxRequests - entry.count, resetTime: entry.resetTime }
+  return redisRateLimiter
 }
 
-// ─────────── Session Validation ───────────
+// In-memory fallback (single-instance only)
+const memoryRateLimitStore = new Map<string, { count: number; resetTime: number }>()
+
+/**
+ * Generic rate limiter — Redis-backed with in-memory fallback
+ * v3 FIX: Uses Redis when available for multi-instance support
+ */
+export async function rateLimiter(key: string, maxRequests: number, windowMs: number): Promise<{ allowed: boolean; remaining: number; resetTime: number }> {
+  try {
+    const limiter = await getRedisRateLimiter()
+    const result = await limiter.check(key, maxRequests, Math.ceil(windowMs / 1000))
+    return {
+      allowed: result.allowed,
+      remaining: result.remaining,
+      resetTime: Date.now() + result.resetIn * 1000,
+    }
+  } catch {
+    // Fallback to in-memory if Redis is unavailable
+    const now = Date.now()
+    const entry = memoryRateLimitStore.get(key)
+
+    if (!entry || now > entry.resetTime) {
+      memoryRateLimitStore.set(key, { count: 1, resetTime: now + windowMs })
+      return { allowed: true, remaining: maxRequests - 1, resetTime: now + windowMs }
+    }
+
+    if (entry.count >= maxRequests) {
+      return { allowed: false, remaining: 0, resetTime: entry.resetTime }
+    }
+
+    entry.count++
+    return { allowed: true, remaining: maxRequests - entry.count, resetTime: entry.resetTime }
+  }
+}
+
+// ─────────── Session Validation (Redis-backed) ───────────
+// NOTE: Sessions are primarily managed by NextAuth JWT strategy.
+// These functions are kept for backward compatibility but should be
+// migrated to Redis-backed storage in production.
 
 const activeSessions = new Map<string, { userId: string; createdAt: number; expiresAt: number; ip?: string; userRole?: string }>()
 

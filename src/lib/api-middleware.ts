@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { type HFRole, type Resource, type PermissionAction, canPerformAction, toHFRole } from './rbac'
-import { rateLimiter, sanitizeInput, validateCSRFToken, generateCSRFToken } from './security'
+import { rateLimiter as _rateLimiter, sanitizeInput, validateCSRFToken, generateCSRFToken } from './security'
 import { logAccess, logPermissionDenial, logAuthEvent, logCSRFViolation, logRateLimitHit } from './audit-logger'
 
 // ─────────── Types ───────────
@@ -184,7 +184,7 @@ export function withAudit(handler: ApiHandler, resource: string, action: string)
 export function withRateLimit(handler: ApiHandler, maxRequests: number, windowMs: number) {
   return async (request: NextRequest, context: ApiHandlerContext) => {
     const key = `${context.userId}:${request.nextUrl.pathname}`
-    const { allowed, remaining } = rateLimiter(key, maxRequests, windowMs)
+    const { allowed, remaining } = await _rateLimiter(key, maxRequests, windowMs)
 
     if (!allowed) {
       logRateLimitHit(context.userId, context.ip || '127.0.0.1', request.nextUrl.pathname)
@@ -281,10 +281,10 @@ export function secureApiHandler(handler: ApiHandler, config: SecureApiConfig = 
     // SEC-05 FIX: Extract context from verified JWT session
     const context = await extractContext(request)
 
-    // Rate limiting
+    // Rate limiting (now async — Redis-backed)
     if (config.rateLimit) {
       const key = `${context.userId}:${request.nextUrl.pathname}`
-      const { allowed, remaining } = rateLimiter(key, config.rateLimit.maxRequests, config.rateLimit.windowMs)
+      const { allowed, remaining } = await _rateLimiter(key, config.rateLimit.maxRequests, config.rateLimit.windowMs)
       if (!allowed) {
         logRateLimitHit(context.userId, context.ip || '127.0.0.1', request.nextUrl.pathname)
         return NextResponse.json(

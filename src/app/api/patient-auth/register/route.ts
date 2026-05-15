@@ -3,6 +3,7 @@ import { db } from '@/lib/db'
 import { patientAccountRegistrationSchema } from '@/lib/validations/patient'
 import { sendOtpToPhone } from '@/lib/otp-service'
 import { addSimpleAuditEntry } from '@/lib/audit-logger'
+import { generateSecureToken } from '@/lib/security'
 
 /**
  * POST /api/patient-auth/register
@@ -59,7 +60,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (!patient) {
-      const qrCode = `HF-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`
+      const qrCode = `HF-${Date.now()}-${generateSecureToken(3)}`
       patient = await db.patient.create({
         data: {
           firstName: validated.firstName,

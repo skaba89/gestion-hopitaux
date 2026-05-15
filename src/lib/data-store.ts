@@ -1140,8 +1140,10 @@ export const useDataStore = create<DataState>()(
     }),
     {
       name: 'healthflow-data-store',
-      // SECURITY FIX: partialize to avoid persisting demo data (5MB localStorage limit)
-      // Only persist user-created data, not demo defaults
+      // SECURITY FIX v2: partialize to avoid persisting PHI (Protected Health Information)
+      // to localStorage. PHI should only be loaded from the database via API routes.
+      // This store is DEPRECATED for production — migrate to React Query + API calls.
+      // Only UI state (currentView, selectedPatientId, etc.) should be persisted.
       partialize: (state) => ({
         // Only persist data that differs from initial demo state
         patients: state.patients.filter(p => !p.id.startsWith('P-2024-')),

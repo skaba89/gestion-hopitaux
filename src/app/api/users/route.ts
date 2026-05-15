@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { paginatedResponse, errorResponse, getPaginationParams, corsHeaders } from '@/lib/api-utils'
+import { secureApiHandler, ApiHandlerContext } from '@/lib/api-middleware'
 import { userCreateSchema, userUpdateSchema } from '@/lib/validations/user'
 import bcrypt from 'bcryptjs'
 
-// GET /api/users - List users
+// GET /api/users - List users (requires auth + admin)
 export async function GET(request: NextRequest) {
+  return secureApiHandler(async (request: NextRequest, context: ApiHandlerContext) => {
   try {
     const { searchParams } = new URL(request.url)
     const { page, limit, skip, take } = getPaginationParams(searchParams)
@@ -84,10 +86,16 @@ export async function GET(request: NextRequest) {
     const message = err instanceof Error ? err.message : 'Échec du chargement des utilisateurs'
     return errorResponse(message, 500)
   }
+  }, {
+    requireAuth: true,
+    permission: { resource: 'admin' as any, action: 'read' as any },
+    audit: { resource: 'users', action: 'READ' },
+  })(request)
 }
 
-// POST /api/users - Create user with proper password hashing and Zod validation
+// POST /api/users - Create user with proper password hashing and Zod validation (requires auth + admin)
 export async function POST(request: NextRequest) {
+  return secureApiHandler(async (request: NextRequest, context: ApiHandlerContext) => {
   try {
     const body = await request.json()
     const validated = userCreateSchema.parse(body)
@@ -179,6 +187,11 @@ export async function POST(request: NextRequest) {
     const message = err instanceof Error ? err.message : 'Échec de la création de l\'utilisateur'
     return errorResponse(message, 500)
   }
+  }, {
+    requireAuth: true,
+    permission: { resource: 'admin' as any, action: 'create' as any },
+    audit: { resource: 'users', action: 'CREATE' },
+  })(request)
 }
 
 export async function OPTIONS() {
