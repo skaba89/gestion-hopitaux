@@ -1,6 +1,6 @@
 // ============================================================================
 // HealthFlow Guinea - Unified SMS Provider
-// Supports: Orange SMS API, Twilio, Vonage, WhatsApp (Twilio), Demo mode
+// Supports: Orange SMS API, Twilio, Vonage, Telegram (FREE), WhatsApp (Twilio), Demo mode
 // ============================================================================
 
 export interface SMSResult {
@@ -218,6 +218,79 @@ class VonageSMSProvider implements SMSProvider {
 }
 
 // ============================================================================
+// Telegram Bot Provider — 100% FREE, unlimited messages
+// Setup: Chat with @BotFather → /newbot → get token
+// The "phone" parameter is used as chat_id or mapped via TELEGRAM_DEFAULT_CHAT_ID
+// ============================================================================
+
+class TelegramSMSProvider implements SMSProvider {
+  name = 'telegram'
+  private botToken: string
+  private defaultChatId: string
+  private baseUrl: string
+
+  constructor() {
+    this.botToken = process.env.TELEGRAM_BOT_TOKEN || ''
+    this.defaultChatId = process.env.TELEGRAM_DEFAULT_CHAT_ID || ''
+    this.baseUrl = `https://api.telegram.org/bot${this.botToken}`
+
+    if (!this.botToken) {
+      console.warn('[SMS] TELEGRAM_BOT_TOKEN not configured (free at @BotFather)')
+    }
+  }
+
+  async send(phone: string, message: string): Promise<SMSResult> {
+    if (!this.botToken) {
+      return { success: false, provider: this.name, error: 'TELEGRAM_BOT_TOKEN not configured' }
+    }
+
+    // Use phone as chat_id if it looks like a chat ID (numeric or starts with -),
+    // otherwise use the default chat ID
+    const chatId = /^-?\d+$/.test(phone) ? phone : this.defaultChatId
+
+    if (!chatId) {
+      return {
+        success: false,
+        provider: this.name,
+        error: 'No chat ID available. Set TELEGRAM_DEFAULT_CHAT_ID or pass numeric chat_id as phone parameter.',
+      }
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: message,
+          parse_mode: 'HTML',
+        }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.ok) {
+          return {
+            success: true,
+            provider: this.name,
+            messageId: String(data.result?.message_id || ''),
+            cost: 0, // 100% free!
+          }
+        }
+        return { success: false, provider: this.name, error: data.description || 'Telegram API error' }
+      }
+
+      const errorData = await response.json().catch(() => ({}))
+      return { success: false, provider: this.name, error: errorData.description || `HTTP ${response.status}` }
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Unknown error'
+      console.error('[SMS] Telegram send failed:', msg)
+      return { success: false, provider: this.name, error: msg }
+    }
+  }
+}
+
+// ============================================================================
 // Demo Provider — Logs to console only, for development/testing
 // ============================================================================
 
@@ -275,6 +348,9 @@ class SMSService {
       case 'vonage':
         providers.push(new VonageSMSProvider())
         break
+      case 'telegram':
+        providers.push(new TelegramSMSProvider())
+        break
       case 'demo':
         providers.push(new DemoSMSProvider())
         break
@@ -290,6 +366,7 @@ class SMSService {
         case 'orange': providers.push(new OrangeSMSProvider()); break
         case 'twilio': providers.push(new TwilioSMSProvider()); break
         case 'vonage': providers.push(new VonageSMSProvider()); break
+        case 'telegram': providers.push(new TelegramSMSProvider()); break
       }
     }
 
