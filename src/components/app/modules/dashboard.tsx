@@ -36,6 +36,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { useDataStore } from '@/lib/data-store'
 import { useStore } from '@/lib/store'
+import { useAuthStore } from '@/lib/auth-store'
 
 /* ─────────── Animation Variants ─────────── */
 
@@ -111,6 +112,7 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
 export function DashboardPage() {
   const { patients, appointments, medications, beds, emergencies } = useDataStore()
   const { setCurrentView } = useStore()
+  const authUser = useAuthStore((s) => s.user)
 
   const today = new Date()
   const todayISO = today.toISOString().split('T')[0]
@@ -320,7 +322,7 @@ export function DashboardPage() {
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
-            Bonjour, Dr. Mamadou Diallo
+            Bonjour, {authUser?.name || 'Dr. Mamadou Diallo'}
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
             <Activity className="size-4 text-teal-500" />

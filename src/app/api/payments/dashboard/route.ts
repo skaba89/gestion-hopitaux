@@ -70,7 +70,7 @@ export async function GET() {
     return NextResponse.json({ success: true, stats })
   } catch (error) {
     return NextResponse.json(
-      { success: false, message: 'Erreur serveur', error: String(error) },
+      { success: false, message: 'Erreur serveur', error: "Une erreur interne s'est produite" },
       { status: 500 }
     )
   }

@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { db } from '@/lib/db'
 import { paginatedResponse, errorResponse, getPaginationParams, corsHeaders } from '@/lib/api-utils'
 import { secureApiHandler, ApiHandlerContext } from '@/lib/api-middleware'
+import { labRequestCreateSchema } from '@/lib/validations/laboratory'
 import { generateSecureToken } from '@/lib/security'
 
 // GET /api/laboratory - List lab requests and results
@@ -85,24 +86,26 @@ export async function POST(request: NextRequest) {
     try {
       const body = await request.json()
 
+      // Zod validation — uses labRequestCreateSchema from validations/laboratory.ts
+      const validated = labRequestCreateSchema.parse(body)
+
       const requestCode = `LAB-${Date.now()}-${generateSecureToken(4).toUpperCase()}`
 
       const labRequest = await db.labRequest.create({
         data: {
           requestCode,
-          patientId: body.patientId,
-          requestingDoctorId: body.requestingDoctorId,
-          consultationId: body.consultationId,
-          establishmentId: body.establishmentId,
-          priority: body.priority || 'ROUTINE',
+          patientId: validated.patientId,
+          requestingDoctorId: validated.requestingDoctorId,
+          consultationId: validated.consultationId,
+          establishmentId: validated.establishmentId,
+          priority: validated.priority,
           status: 'REQUESTED',
-          clinicalInfo: body.clinicalInfo,
-          notes: body.notes,
+          clinicalInfo: validated.clinicalInfo,
+          notes: validated.notes,
           items: {
-            create: (body.tests || []).map((test: { testCatalogId: string; notes?: string }) => ({
-              testCatalogId: test.testCatalogId,
+            create: validated.testCatalogIds.map((testCatalogId: string) => ({
+              testCatalogId,
               status: 'PENDING',
-              notes: test.notes,
             })),
           },
         },
@@ -114,12 +117,16 @@ export async function POST(request: NextRequest) {
       })
 
       return paginatedResponse([labRequest], 1, 1, 1)
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to create lab request'
-      return errorResponse(message, 500)
+    } catch (err: any) {
+      if (err.name === 'ZodError') {
+        return errorResponse('Données invalides: ' + err.errors.map((e: any) => e.message).join(', '), 400)
+      }
+      console.error('[Laboratory] Create error:', err)
+      return errorResponse('Erreur lors de la création de la demande de laboratoire', 500)
     }
   }, {
     requireAuth: true,
+    permission: { resource: 'laboratory' as any, action: 'create' as any },
     audit: { resource: 'laboratory', action: 'CREATE' },
   })(request)
 }

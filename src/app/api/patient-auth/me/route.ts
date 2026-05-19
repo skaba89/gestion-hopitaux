@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { jwtVerify } from 'jose'
+import { patientUpdateSchema, notificationPrefsSchema } from '@/lib/validations/patient'
+import { corsHeaders } from '@/lib/api-utils'
+import { z } from 'zod'
 
 // SECURITY FIX: Unified JWT secret with fail-fast in production
 const JWT_SECRET = new TextEncoder().encode(
@@ -79,6 +82,12 @@ export async function GET(request: NextRequest) {
   })
 }
 
+// Extended schema for the full PUT body (patient fields + account preferences)
+const patientProfileUpdateSchema = patientUpdateSchema.extend({
+  preferredLanguage: z.enum(['fr', 'en', 'msk', 'sus', 'ff']).optional(),
+  notificationPrefs: notificationPrefsSchema.optional(),
+})
+
 export async function PUT(request: NextRequest) {
   const account = await getPatientFromToken(request)
   if (!account) {
@@ -87,39 +96,58 @@ export async function PUT(request: NextRequest) {
 
   try {
     const body = await request.json()
-    
+    const validated = patientProfileUpdateSchema.parse(body)
+
     // Update patient info
-    if (account.patientId && (body.firstName || body.lastName || body.address || body.city)) {
-      await db.patient.update({
-        where: { id: account.patientId },
-        data: {
-          firstName: body.firstName,
-          lastName: body.lastName,
-          address: body.address,
-          city: body.city,
-          region: body.region,
-          emergencyContactName: body.emergencyContactName,
-          emergencyContactPhone: body.emergencyContactPhone,
-          primaryLanguage: body.primaryLanguage,
-        }
-      })
+    if (account.patientId) {
+      const patientData: Record<string, unknown> = {}
+      if (validated.firstName !== undefined) patientData.firstName = validated.firstName
+      if (validated.lastName !== undefined) patientData.lastName = validated.lastName
+      if (validated.address !== undefined) patientData.address = validated.address
+      if (validated.city !== undefined) patientData.city = validated.city
+      if (validated.region !== undefined) patientData.region = validated.region
+      if (validated.emergencyContactName !== undefined) patientData.emergencyContactName = validated.emergencyContactName
+      if (validated.emergencyContactPhone !== undefined) patientData.emergencyContactPhone = validated.emergencyContactPhone
+      if (validated.primaryLanguage !== undefined) patientData.primaryLanguage = validated.primaryLanguage
+
+      if (Object.keys(patientData).length > 0) {
+        await db.patient.update({
+          where: { id: account.patientId },
+          data: patientData,
+        })
+      }
     }
 
     // Update account preferences
-    if (body.notificationPrefs) {
-      await db.patientAccount.update({
-        where: { id: account.id },
-        data: {
-          email: body.email,
-          preferredLanguage: body.preferredLanguage,
-          notificationPrefs: JSON.stringify(body.notificationPrefs),
-        }
-      })
+    if (validated.notificationPrefs || validated.email !== undefined || validated.preferredLanguage !== undefined) {
+      const accountData: Record<string, unknown> = {}
+      if (validated.email !== undefined) accountData.email = validated.email
+      if (validated.preferredLanguage !== undefined) accountData.preferredLanguage = validated.preferredLanguage
+      if (validated.notificationPrefs) {
+        accountData.notificationPrefs = JSON.stringify(validated.notificationPrefs)
+      }
+
+      if (Object.keys(accountData).length > 0) {
+        await db.patientAccount.update({
+          where: { id: account.id },
+          data: accountData,
+        })
+      }
     }
 
     return NextResponse.json({ success: true, message: 'Profil mis à jour' })
-  } catch (error) {
+  } catch (error: any) {
+    if (error.name === 'ZodError') {
+      return NextResponse.json(
+        { error: 'Données invalides', details: error.errors },
+        { status: 400 }
+      )
+    }
     console.error('Profile update error:', error)
     return NextResponse.json({ error: 'Erreur de mise à jour' }, { status: 500 })
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders() })
 }

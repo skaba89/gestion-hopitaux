@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import { useStore, type AppView } from '@/lib/store'
 import dynamic from 'next/dynamic'
 import { AppShell } from '@/components/app/app-shell'
@@ -86,6 +87,46 @@ function ModuleLoader() {
   )
 }
 
+// Error boundary for module components — prevents a single module crash from taking down the entire app
+class ModuleErrorBoundary extends React.Component<
+  { children: React.ReactNode; name?: string },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: React.ReactNode; name?: string }) {
+    super(props)
+    this.state = { hasError: false, error: null }
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error }
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex items-center justify-center h-64">
+          <div className="flex flex-col items-center gap-3 text-center p-6">
+            <div className="text-red-500 text-4xl">⚠️</div>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+              Erreur du module{this.props.name ? ` ${this.props.name}` : ''}
+            </h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md">
+              Une erreur inattendue s&apos;est produite. Veuillez réessayer ou contacter le support.
+            </p>
+            <button
+              onClick={() => this.setState({ hasError: false, error: null })}
+              className="mt-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm"
+            >
+              Réessayer
+            </button>
+          </div>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
+
 const viewComponents: Record<AppView, React.ComponentType> = {
   landing: LandingPage,
   dashboard: DashboardPage,
@@ -144,7 +185,9 @@ function AppContent() {
 
   return (
     <AppShell>
-      <PageComponent />
+      <ModuleErrorBoundary name={currentView}>
+        <PageComponent />
+      </ModuleErrorBoundary>
     </AppShell>
   )
 }

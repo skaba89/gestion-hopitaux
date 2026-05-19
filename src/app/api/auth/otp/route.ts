@@ -120,18 +120,13 @@ export async function PUT(request: NextRequest) {
       console.warn('[Auth] Database lookup failed:', dbError)
     }
 
-    // If no user found in DB, return minimal session data (patient role)
+    // If no user found in DB, return error — do NOT create a fake guest user
+    // SECURITY: Unregistered phone numbers must not gain authenticated sessions
     if (!user) {
-      user = {
-        id: `guest-${Date.now()}`,
-        name: 'Invité',
-        email: '',
-        phone: phone,
-        role: 'Patient',
-        establishmentId: '',
-        permissions: [],
-        mfaEnabled: false,
-      }
+      return errorResponse(
+        'Numéro non enregistré. Veuillez contacter l\'administration pour créer un compte.',
+        401
+      )
     }
 
     return successResponse(user, 'Connexion réussie')

@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     }
     console.error('[Mobile Money] Payment initiation error:', error)
     return NextResponse.json(
-      { success: false, message: 'Erreur serveur', error: String(error) },
+      { success: false, message: 'Erreur serveur', error: "Une erreur interne s'est produite" },
       { status: 500 }
     )
   }
@@ -123,7 +123,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('[Mobile Money] Status check error:', error)
     return NextResponse.json(
-      { success: false, message: 'Erreur serveur', error: String(error) },
+      { success: false, message: 'Erreur serveur', error: "Une erreur interne s'est produite" },
       { status: 500 }
     )
   }

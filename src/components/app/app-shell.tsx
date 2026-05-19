@@ -59,6 +59,7 @@ import {
   Hospital,
 } from 'lucide-react'
 import { useStore, type AppView } from '@/lib/store'
+import { useAuthStore } from '@/lib/auth-store'
 import { useDataStore } from '@/lib/data-store'
 import { NetworkStatus } from '@/components/app/network-status'
 import { LanguageSwitcher } from '@/components/app/language-switcher'
@@ -389,7 +390,10 @@ function AppSidebar() {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={() => setCurrentView('landing')}
+                  onClick={() => {
+                    useAuthStore.getState().logout()
+                    setCurrentView('landing')
+                  }}
                   className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
                 >
                   <LogOut className="mr-2 size-4" />
@@ -599,7 +603,10 @@ function TopHeader() {
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            onClick={() => setCurrentView('landing')}
+            onClick={() => {
+              useAuthStore.getState().logout()
+              setCurrentView('landing')
+            }}
             className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
           >
             <LogOut className="mr-2 size-4" />

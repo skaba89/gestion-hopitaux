@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: false, message: 'Action non reconnue' }, { status: 400 })
   } catch (error) {
     return NextResponse.json(
-      { success: false, message: 'Erreur serveur', error: String(error) },
+      { success: false, message: 'Erreur serveur', error: "Une erreur interne s'est produite" },
       { status: 500 }
     )
   }
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, message: 'Action non reconnue' }, { status: 400 })
   } catch (error) {
     return NextResponse.json(
-      { success: false, message: 'Erreur serveur', error: String(error) },
+      { success: false, message: 'Erreur serveur', error: "Une erreur interne s'est produite" },
       { status: 500 }
     )
   }
@@ -82,7 +82,7 @@ export async function PUT(request: NextRequest) {
     })
   } catch (error) {
     return NextResponse.json(
-      { success: false, message: 'Erreur serveur', error: String(error) },
+      { success: false, message: 'Erreur serveur', error: "Une erreur interne s'est produite" },
       { status: 500 }
     )
   }
