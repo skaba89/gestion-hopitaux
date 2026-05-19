@@ -1,10 +1,12 @@
 // ============================================================================
 // HealthFlow Guinea - Redis Module Tests
 // Tests: MemoryRedis fallback, RedisOTPStore, RedisRateLimiter
+// Uses the in-memory mock from setup.ts (which mirrors real behavior)
 // ============================================================================
 
-// The redis module is mocked in setup.ts, so we test the mock behavior
-// which mirrors the real implementation
+// We test through the actual RedisOTPStore and RedisRateLimiter classes
+// since they're what the application uses. The mock getRedis() returns
+// a stateful TestMemoryRedis instance.
 
 describe('RedisOTPStore', () => {
   let RedisOTPStore: any
@@ -12,6 +14,7 @@ describe('RedisOTPStore', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks()
+    // Re-import to get fresh module references
     const redis = await import('@/lib/redis')
     RedisOTPStore = redis.RedisOTPStore
     otpStore = new RedisOTPStore()
@@ -65,7 +68,7 @@ describe('RedisOTPStore', () => {
     await otpStore.verify('22462000004', '000000')
     await otpStore.verify('22462000004', '000000')
 
-    // 4th attempt should be locked
+    // 4th attempt should be locked (attempts > 3)
     const result = await otpStore.verify('22462000004', '123456')
     expect(result.valid).toBe(false)
     expect(result.attempts).toBeGreaterThan(3)
@@ -119,5 +122,23 @@ describe('RedisRateLimiter', () => {
     // Should be able to make requests again
     const result = await rateLimiter.check('reset-key', 5, 60)
     expect(result.allowed).toBe(true)
+  })
+})
+
+describe('getRedis', () => {
+  it('should return a Redis client', async () => {
+    const { getRedis } = await import('@/lib/redis')
+    const client = await getRedis()
+    expect(client).toBeDefined()
+    expect(typeof client.get).toBe('function')
+    expect(typeof client.set).toBe('function')
+    expect(typeof client.ping).toBe('function')
+  })
+
+  it('should respond to ping', async () => {
+    const { getRedis } = await import('@/lib/redis')
+    const client = await getRedis()
+    const result = await client.ping()
+    expect(result).toBe('PONG')
   })
 })

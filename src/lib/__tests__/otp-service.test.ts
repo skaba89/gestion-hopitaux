@@ -1,11 +1,12 @@
 // ============================================================================
 // HealthFlow Guinea - OTP Service Tests
 // Tests: generateSecureOtp, sendOtpToPhone, verifyOtp
+// Updated: Works with stateful Redis mock from setup.ts
 // ============================================================================
 
 import { generateSecureOtp } from '@/lib/otp-service'
 
-// Mock the SMS provider and Redis
+// Mock the SMS provider and audit logger (but NOT otp-service itself)
 jest.mock('@/lib/sms-provider', () => ({
   sendOTP: jest.fn().mockResolvedValue({ success: true, provider: 'demo', messageId: 'test-123' }),
   normalizeGuineaPhone: (phone: string) => {
@@ -61,13 +62,12 @@ describe('OTP Service', () => {
   })
 
   describe('sendOtpToPhone', () => {
-    // We need to re-import to get the mocked version
     let sendOtpToPhone: any
     let verifyOtp: any
 
     beforeEach(async () => {
       jest.clearAllMocks()
-      // Dynamic import to reset module state
+      // Dynamic import to get fresh module references
       const otpService = await import('@/lib/otp-service')
       sendOtpToPhone = otpService.sendOtpToPhone
       verifyOtp = otpService.verifyOtp

@@ -185,8 +185,11 @@ export async function getRedis(): Promise<RedisCommand> {
       },
       lazyConnect: true,
       connectTimeout: 5000,
+      enableReadyCheck: true,
     })
 
+    // FIX: Explicitly connect before pinging to avoid first-connect parse errors
+    await client.connect()
     await client.ping()
     redisClient = client as unknown as RedisCommand
     redisConnected = true

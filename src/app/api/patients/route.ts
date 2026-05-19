@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import crypto from 'crypto'
 import { db } from '@/lib/db'
 import { paginatedResponse, errorResponse, getPaginationParams, corsHeaders } from '@/lib/api-utils'
 import { patientRegistrationSchema } from '@/lib/validations/patient'
@@ -76,8 +77,7 @@ export async function POST(request: NextRequest) {
       const body = await request.json()
       const validated = patientRegistrationSchema.parse(body)
 
-      // Generate QR code using crypto (not Math.random)
-      const crypto = require('crypto')
+      // Generate QR code using crypto (imported at top)
       const qrCode = `PAT-${Date.now()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`
 
       const patient = await db.patient.create({

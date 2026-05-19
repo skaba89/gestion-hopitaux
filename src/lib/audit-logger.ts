@@ -113,9 +113,12 @@ async function persistAuditEntry(entry: AuditEntry): Promise<void> {
     // Use dynamic require to prevent webpack from following the import
     const { db } = require('@/lib/db') as typeof import('@/lib/db')
 
+    // FIX: Only use real user IDs (CUID format) for FK constraint compliance
+    // Filter out placeholder IDs: 'unknown', 'system', 'anonymous', 'demo-admin', etc.
+    const isRealUserId = entry.userId && entry.userId.startsWith('cl') && entry.userId.length > 10
     await db.auditLog.create({
       data: {
-        userId: entry.userId !== 'unknown' && entry.userId !== 'system' ? entry.userId : null,
+        userId: isRealUserId ? entry.userId : null,
         action: entry.action as string,
         module: entry.module,
         entity: entry.resource,
@@ -153,8 +156,10 @@ export async function flushAuditBuffer(): Promise<number> {
 
     const dbEntries = entries.map(e => {
       const entry = JSON.parse(e) as AuditEntry
+      // FIX: Only use real user IDs (CUID format) for FK constraint compliance
+      const isRealUserId = entry.userId && entry.userId.startsWith('cl') && entry.userId.length > 10
       return {
-        userId: entry.userId !== 'unknown' && entry.userId !== 'system' ? entry.userId : null,
+        userId: isRealUserId ? entry.userId : null,
         action: entry.action as string,
         module: entry.module,
         entity: entry.resource,

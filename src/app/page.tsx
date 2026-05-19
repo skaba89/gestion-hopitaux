@@ -127,6 +127,11 @@ class ModuleErrorBoundary extends React.Component<
   }
 }
 
+// Wrapper for VirtualWaitingRoom to pass required props without breaking lazy loading
+const VirtualWaitingRoomWrapper = React.memo(function VirtualWaitingRoomWrapper() {
+  return <VirtualWaitingRoom session={demoVideoSessions[0]} onStartCall={() => {}} />
+})
+
 const viewComponents: Record<AppView, React.ComponentType> = {
   landing: LandingPage,
   dashboard: DashboardPage,
@@ -152,7 +157,7 @@ const viewComponents: Record<AppView, React.ComponentType> = {
   'ai-interactions': InteractionChecker,
   'ai-surveillance': SurveillanceDashboard,
   'video-consultation': VideoConsultation,
-  'virtual-waiting-room': () => <VirtualWaitingRoom session={demoVideoSessions[0]} onStartCall={() => {}} />,
+  'virtual-waiting-room': VirtualWaitingRoomWrapper,
   'asc-dashboard': ASCDashboard,
   'audit-log': AuditLogViewer,
   'security-dashboard': SecurityDashboard,
