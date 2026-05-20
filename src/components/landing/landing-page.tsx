@@ -1153,7 +1153,13 @@ function Footer() {
     Produit: ['Fonctionnalités', 'Tarification', 'Modules', 'Intégrations', 'Mises à jour'],
     Entreprise: ['À propos', 'Équipe', 'Carrières', 'Partenaires', 'Presse'],
     Ressources: ['Documentation', 'Blog', 'Webinaires', 'Guides', 'API'],
-    Légal: ['Confidentialité', 'Conditions', 'Sécurité', 'RGPD', 'Mentions légales'],
+    Légal: [
+      { label: 'Confidentialité', href: '/privacy' },
+      { label: 'Conditions', href: '/terms' },
+      { label: 'Sécurité', href: '/rgpd' },
+      { label: 'RGPD', href: '/rgpd' },
+      { label: 'Mentions légales', href: '/mentions-legales' },
+    ],
   }
 
   const socialLinks = [
@@ -1206,16 +1212,20 @@ function Footer() {
             <div key={title}>
               <h3 className="font-semibold text-white mb-4 text-sm">{title}</h3>
               <ul className="space-y-2.5">
-                {links.map((link) => (
-                  <li key={link}>
-                    <a
-                      href="#"
-                      className="text-sm text-slate-400 hover:text-teal-400 transition-colors"
-                    >
-                      {link}
-                    </a>
-                  </li>
-                ))}
+                {links.map((link) => {
+                  const label = typeof link === 'string' ? link : link.label
+                  const href = typeof link === 'string' ? '#' : link.href
+                  return (
+                    <li key={label}>
+                      <a
+                        href={href}
+                        className="text-sm text-slate-400 hover:text-teal-400 transition-colors"
+                      >
+                        {label}
+                      </a>
+                    </li>
+                  )
+                })}
               </ul>
             </div>
           ))}
