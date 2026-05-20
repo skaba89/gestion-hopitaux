@@ -147,6 +147,10 @@ model User {
   failedLoginAttempts Int       @default(0)
   lockedUntil         DateTime?
 
+  // Notification channels
+  telegramChatId              String?  // Telegram chat ID for bot notifications
+  preferredNotificationChannel String? @default("sms") // sms, whatsapp, telegram
+
   establishments       UserEstablishment[]
   roles                UserRole[]
   auditLogs            AuditLog[]
@@ -296,6 +300,10 @@ model Patient {
   primaryLanguage          String   @default("French")
   profilePhotoUrl          String?
   notes                    String?
+
+  // Notification channels
+  telegramChatId               String?  // Telegram chat ID for bot notifications
+  preferredNotificationChannel String   @default("sms") // sms, whatsapp, telegram
 
   establishmentId String
   establishment   Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
@@ -1665,26 +1673,26 @@ model Notification {
 // ============================================================================
 
 model PatientAccount {
-  id              String    @id @default(cuid())
-  phone           String    @unique // Primary identifier for patient login (+224 XXX XX XX XX)
-  email           String?   @unique
-  passwordHash    String?   // Optional - OTP-only auth if null
-  patientId       String?   @unique // Link to primary Patient record
-  patient         Patient?  @relation(fields: [patientId], references: [id])
-  familyAccountId String?   // Link to family account
+  id              String         @id @default(cuid())
+  phone           String         @unique // Primary identifier for patient login (+224 XXX XX XX XX)
+  email           String?        @unique
+  passwordHash    String? // Optional - OTP-only auth if null
+  patientId       String?        @unique // Link to primary Patient record
+  patient         Patient?       @relation(fields: [patientId], references: [id])
+  familyAccountId String? // Link to family account
   familyAccount   FamilyAccount? @relation("FamilyAccountMembers", fields: [familyAccountId], references: [id])
 
   // Auth state
-  otpCode         String?   // Current OTP code (encrypted)
-  otpExpiresAt    DateTime?
-  otpAttempts     Int       @default(0)
-  isActive        Boolean   @default(true)
-  isVerified      Boolean   @default(false)
-  lastLoginAt     DateTime?
+  otpCode      String? // Current OTP code (encrypted)
+  otpExpiresAt DateTime?
+  otpAttempts  Int       @default(0)
+  isActive     Boolean   @default(true)
+  isVerified   Boolean   @default(false)
+  lastLoginAt  DateTime?
 
   // Patient preferences
-  preferredLanguage String   @default("fr") // fr, en, msk, sus, ff
-  notificationPrefs String?  // JSON: {sms: bool, whatsapp: bool, email: bool, appointmentReminder: bool, labResults: bool, vaccination: bool}
+  preferredLanguage String  @default("fr") // fr, en, msk, sus, ff
+  notificationPrefs String? // JSON: {sms: bool, whatsapp: bool, email: bool, appointmentReminder: bool, labResults: bool, vaccination: bool}
 
   // Account lockout
   failedLoginAttempts Int       @default(0)
@@ -1705,35 +1713,35 @@ model PatientAccount {
 }
 
 model FamilyAccount {
-  id            String    @id @default(cuid())
-  primaryPhone  String    @unique // Head of family phone number
-  primaryName   String    // Head of family name
+  id               String           @id @default(cuid())
+  primaryPhone     String           @unique // Head of family phone number
+  primaryName      String // Head of family name
   verificationCode String? // Code for family member access
-  members       PatientAccount[] @relation("FamilyAccountMembers")
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  members          PatientAccount[] @relation("FamilyAccountMembers")
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 
   @@index([primaryPhone])
 }
 
 model CarePlan {
-  id              String    @id @default(cuid())
-  patientId       String
-  patient         Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  establishmentId String?
-  title           String    // e.g., "Diabetes Management Plan"
-  description     String?
-  status          String    @default("ACTIVE") // DRAFT, ACTIVE, COMPLETED, CANCELLED
-  priority        String    @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
-  startDate       DateTime
-  endDate         DateTime?
-  goals           String?   // JSON array of care goals
-  interventions   String?   // JSON array of interventions
-  milestones      String?   // JSON array of milestones with dates
+  id                  String    @id @default(cuid())
+  patientId           String
+  patient             Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  establishmentId     String?
+  title               String // e.g., "Diabetes Management Plan"
+  description         String?
+  status              String    @default("ACTIVE") // DRAFT, ACTIVE, COMPLETED, CANCELLED
+  priority            String    @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  startDate           DateTime
+  endDate             DateTime?
+  goals               String? // JSON array of care goals
+  interventions       String? // JSON array of interventions
+  milestones          String? // JSON array of milestones with dates
   responsibleDoctorId String?
-  notes           String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  notes               String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   @@index([patientId])
   @@index([status])
