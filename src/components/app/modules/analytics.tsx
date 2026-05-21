@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useDataStore } from '@/lib/data-store'
+import { useTranslation } from '@/i18n/provider'
 
 const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.1 } } }
 const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } } }
@@ -32,6 +33,8 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
 }
 
 export function AnalyticsPage() {
+  const { t } = useTranslation('analytics')
+  const { t: tc } = useTranslation('common')
   const [period, setPeriod] = useState('6m')
   const { patients, appointments, consultations, invoices, beds, emergencies } = useDataStore()
 
@@ -40,8 +43,8 @@ export function AnalyticsPage() {
     const maleCount = patients.filter(p => p.gender === 'M').length
     const femaleCount = patients.filter(p => p.gender === 'F').length
     return [
-      { name: 'Hommes', value: maleCount, color: '#06b6d4' },
-      { name: 'Femmes', value: femaleCount, color: '#f43f5e' },
+      { name: t('male', 'Hommes'), value: maleCount, color: '#06b6d4' },
+      { name: t('female', 'Femmes'), value: femaleCount, color: '#f43f5e' },
     ]
   }, [patients])
 
@@ -112,10 +115,10 @@ export function AnalyticsPage() {
   const occupancyRate = totalBeds > 0 ? Math.round((occupiedBeds / totalBeds) * 100) : 0
 
   const kpiCards = [
-    { label: 'Consultations', value: totalConsultations.toString(), trend: `+${appointments.length} RDV`, up: true, icon: Stethoscope, color: 'from-teal-500 to-emerald-600', bg: 'bg-teal-50 dark:bg-teal-950/40', iconColor: 'text-teal-600 dark:text-teal-400' },
-    { label: 'Revenus', value: `${(totalRevenue / 1000000).toFixed(1)}M`, trend: `${invoices.filter(i => i.status === 'Payée').length} payées`, up: true, icon: DollarSign, color: 'from-emerald-500 to-green-600', bg: 'bg-emerald-50 dark:bg-emerald-950/40', iconColor: 'text-emerald-600 dark:text-emerald-400' },
-    { label: 'Patients', value: totalPatients.toLocaleString(), trend: `${patients.filter(p => p.status === 'Actif').length} actifs`, up: true, icon: Users, color: 'from-cyan-500 to-teal-600', bg: 'bg-cyan-50 dark:bg-cyan-950/40', iconColor: 'text-cyan-600 dark:text-cyan-400' },
-    { label: 'Taux occupation', value: `${occupancyRate}%`, trend: `${occupiedBeds}/${totalBeds} lits`, up: occupancyRate >= 50, icon: Bed, color: 'from-amber-500 to-orange-600', bg: 'bg-amber-50 dark:bg-amber-950/40', iconColor: 'text-amber-600 dark:text-amber-400' },
+    { label: t('consultations', 'Consultations'), value: totalConsultations.toString(), trend: `+${appointments.length} RDV`, up: true, icon: Stethoscope, color: 'from-teal-500 to-emerald-600', bg: 'bg-teal-50 dark:bg-teal-950/40', iconColor: 'text-teal-600 dark:text-teal-400' },
+    { label: t('financialStats', 'Revenus'), value: `${(totalRevenue / 1000000).toFixed(1)}M`, trend: `${invoices.filter(i => i.status === 'Payée').length} payées`, up: true, icon: DollarSign, color: 'from-emerald-500 to-green-600', bg: 'bg-emerald-50 dark:bg-emerald-950/40', iconColor: 'text-emerald-600 dark:text-emerald-400' },
+    { label: tc('patients', 'Patients'), value: totalPatients.toLocaleString(), trend: `${patients.filter(p => p.status === 'Actif').length} actifs`, up: true, icon: Users, color: 'from-cyan-500 to-teal-600', bg: 'bg-cyan-50 dark:bg-cyan-950/40', iconColor: 'text-cyan-600 dark:text-cyan-400' },
+    { label: t('occupancyRate', 'Taux occupation'), value: `${occupancyRate}%`, trend: `${occupiedBeds}/${totalBeds} lits`, up: occupancyRate >= 50, icon: Bed, color: 'from-amber-500 to-orange-600', bg: 'bg-amber-50 dark:bg-amber-950/40', iconColor: 'text-amber-600 dark:text-amber-400' },
   ]
 
   return (
@@ -125,17 +128,17 @@ export function AnalyticsPage() {
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center size-10 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 shadow-lg shadow-teal-500/20"><BarChart3 className="size-5 text-white" /></div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Analytique</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Tableaux de bord et indicateurs</p>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{t('title', 'Analytique')}</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t('dashboardsAndMetrics', 'Tableaux de bord et indicateurs')}</p>
           </div>
         </div>
         <Select value={period} onValueChange={setPeriod}>
           <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="1m">1 mois</SelectItem>
-            <SelectItem value="3m">3 mois</SelectItem>
-            <SelectItem value="6m">6 mois</SelectItem>
-            <SelectItem value="1y">1 an</SelectItem>
+            <SelectItem value="1m">{t('daily', '1 mois')}</SelectItem>
+            <SelectItem value="3m">{t('monthly', '3 mois')}</SelectItem>
+            <SelectItem value="6m">{t('monthly', '6 mois')}</SelectItem>
+            <SelectItem value="1y">{t('yearly', '1 an')}</SelectItem>
           </SelectContent>
         </Select>
       </motion.div>
@@ -170,8 +173,8 @@ export function AnalyticsPage() {
         <motion.div variants={itemVariants}>
           <Card className="border-slate-200/60 dark:border-slate-800/60">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">Évolution des consultations</CardTitle>
-              <CardDescription className="text-xs">Rendez-vous groupés par date</CardDescription>
+              <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">{t('consultationTrend', 'Évolution des consultations')}</CardTitle>
+              <CardDescription className="text-xs">{t('appointmentsByDate', 'Rendez-vous groupés par date')}</CardDescription>
             </CardHeader>
             <CardContent className="pt-0">
               <div className="h-[280px]">
@@ -181,7 +184,7 @@ export function AnalyticsPage() {
                     <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                     <Tooltip content={<CustomTooltip />} />
-                    <Line type="monotone" dataKey="consultations" stroke="#14b8a6" strokeWidth={2.5} dot={{ r: 4, fill: '#14b8a6', stroke: '#fff', strokeWidth: 2 }} name="Consultations" />
+                    <Line type="monotone" dataKey="consultations" stroke="#14b8a6" strokeWidth={2.5} dot={{ r: 4, fill: '#14b8a6', stroke: '#fff', strokeWidth: 2 }} name={t('consultations', 'Consultations')} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -193,8 +196,8 @@ export function AnalyticsPage() {
         <motion.div variants={itemVariants}>
           <Card className="border-slate-200/60 dark:border-slate-800/60">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">Évolution des revenus</CardTitle>
-              <CardDescription className="text-xs">Revenus en GNF par date</CardDescription>
+              <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">{t('revenueTrend', 'Évolution des revenus')}</CardTitle>
+              <CardDescription className="text-xs">{t('revenueByDate', 'Revenus en GNF par date')}</CardDescription>
             </CardHeader>
             <CardContent className="pt-0">
               <div className="h-[280px]">
@@ -210,7 +213,7 @@ export function AnalyticsPage() {
                     <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} tickFormatter={v => `${(v / 1000000).toFixed(0)}M`} />
                     <Tooltip content={<CustomTooltip />} />
-                    <Area type="monotone" dataKey="revenue" stroke="#14b8a6" strokeWidth={2.5} fill="url(#revGrad)" name="Revenus (GNF)" dot={{ r: 4, fill: '#14b8a6', stroke: '#fff', strokeWidth: 2 }} />
+                    <Area type="monotone" dataKey="revenue" stroke="#14b8a6" strokeWidth={2.5} fill="url(#revGrad)" name={t('financialStats', 'Revenus (GNF)')} dot={{ r: 4, fill: '#14b8a6', stroke: '#fff', strokeWidth: 2 }} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -225,8 +228,8 @@ export function AnalyticsPage() {
         <motion.div variants={itemVariants}>
           <Card className="border-slate-200/60 dark:border-slate-800/60">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">Lits par service</CardTitle>
-              <CardDescription className="text-xs">Répartition des lits de l&apos;établissement</CardDescription>
+              <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">{t('bedsByService', 'Lits par service')}</CardTitle>
+              <CardDescription className="text-xs">{t('bedDistribution', "Répartition des lits de l'établissement")}</CardDescription>
             </CardHeader>
             <CardContent className="pt-0">
               <div className="h-[280px]">
@@ -242,7 +245,7 @@ export function AnalyticsPage() {
                     <XAxis dataKey="dept" tick={{ fontSize: 10, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                     <Tooltip content={<CustomTooltip />} />
-                    <Bar dataKey="count" fill="url(#admGrad)" radius={[6, 6, 0, 0]} maxBarSize={48} name="Lits" />
+                    <Bar dataKey="count" fill="url(#admGrad)" radius={[6, 6, 0, 0]} maxBarSize={48} name={t('beds', 'Lits')} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -254,8 +257,8 @@ export function AnalyticsPage() {
         <motion.div variants={itemVariants}>
           <Card className="border-slate-200/60 dark:border-slate-800/60">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">Démographie patients</CardTitle>
-              <CardDescription className="text-xs">Répartition par genre</CardDescription>
+              <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">{t('patientDemographics', 'Démographie patients')}</CardTitle>
+              <CardDescription className="text-xs">{t('distributionByGender', 'Répartition par genre')}</CardDescription>
             </CardHeader>
             <CardContent className="pt-0">
               <div className="h-[280px] flex items-center">
@@ -266,7 +269,7 @@ export function AnalyticsPage() {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value: number) => `${value} patients`} />
+                    <Tooltip formatter={(value: number) => `${value} ${tc('patients', 'patients')}`} />
                     <Legend verticalAlign="bottom" height={36} formatter={(value: string) => <span className="text-xs text-slate-600 dark:text-slate-400">{value}</span>} />
                   </PieChart>
                 </ResponsiveContainer>

@@ -21,6 +21,7 @@ import { QRPayment } from '@/components/payments/qr-payment'
 import { FinancialDashboard } from '@/components/payments/financial-dashboard'
 import { CreditSante } from '@/components/payments/credit-sante'
 import { InsurancePanel } from '@/components/insurance/insurance-panel'
+import { useTranslation } from '@/i18n/provider'
 
 const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.1 } } }
 const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } } }
@@ -43,7 +44,26 @@ const methodIcons: Record<string, React.ComponentType<{ className?: string }>> =
 
 export function BillingPage() {
   const { toast } = useToast()
+  const { t } = useTranslation('billing')
+  const { t: tc } = useTranslation('common')
   const { invoices, addInvoice, payInvoice } = useDataStore()
+
+  // Label mappings for translating data values to display text
+  const statusLabels: Record<InvoiceStatus, string> = {
+    'Payée': t('status.paid', 'Payée'),
+    'En attente': t('status.pending', 'En attente'),
+    'Partielle': t('status.partial', 'Partielle'),
+    'Annulée': t('status.cancelled', 'Annulée'),
+  }
+
+  const methodLabels: Record<string, string> = {
+    'Espèces': t('paymentMethods.cash', 'Espèces'),
+    'Mobile Money': t('paymentMethods.mobileMoney', 'Mobile Money'),
+    'Virement': t('paymentMethods.bankTransfer', 'Virement bancaire'),
+    'Assurance': t('paymentMethods.insurance', 'Assurance'),
+    'Cash': t('paymentMethods.cash', 'Espèces'),
+  }
+
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [showNewDialog, setShowNewDialog] = useState(false)
@@ -81,7 +101,7 @@ export function BillingPage() {
     setShowPaymentDialog(false)
     setPaymentAmount('')
     setPaymentMethod('Espèces')
-    toast({ title: 'Paiement enregistré', description: `${Number(paymentAmount).toLocaleString()} GNF payé pour ${selectedInvoice.id}.` })
+    toast({ title: t('paymentRecorded', 'Paiement enregistré'), description: `${Number(paymentAmount).toLocaleString()} GNF ${t('paidFor', 'payé pour')} ${selectedInvoice.id}.` })
   }
 
   const handleAddInvoice = () => {
@@ -106,7 +126,7 @@ export function BillingPage() {
     setNewItemDesc('')
     setNewItemQty('1')
     setNewItemPrice('')
-    toast({ title: 'Facture créée', description: 'La nouvelle facture a été enregistrée.' })
+    toast({ title: t('invoiceCreated', 'Facture créée'), description: t('invoiceCreatedDesc', 'La nouvelle facture a été enregistrée.') })
   }
 
   const openPaymentDialog = (invoice: Invoice) => {
@@ -132,28 +152,28 @@ export function BillingPage() {
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center size-10 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 shadow-lg shadow-teal-500/20"><Receipt className="size-5 text-white" /></div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Facturation</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Gestion des factures et paiements</p>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{t('title', 'Facturation')}</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t('subtitle', 'Gestion des factures et paiements')}</p>
           </div>
         </div>
         <Button onClick={() => setShowNewDialog(true)} className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white shadow-lg shadow-teal-500/20">
-          <Plus className="size-4 mr-2" /> Nouvelle facture
+          <Plus className="size-4 mr-2" /> {t('newInvoice', 'Nouvelle facture')}
         </Button>
       </motion.div>
 
       <Tabs defaultValue="invoices" className="mt-6">
         <TabsList className="bg-slate-100 dark:bg-slate-900 p-1 flex-wrap h-auto gap-1">
           <TabsTrigger value="invoices" className="text-xs gap-1 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800">
-            <Receipt className="size-3.5" /> Factures
+            <Receipt className="size-3.5" /> {t('invoices', 'Factures')}
           </TabsTrigger>
           <TabsTrigger value="dashboard" className="text-xs gap-1 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800">
-            <BarChart3 className="size-3.5" /> Dashboard financier
+            <BarChart3 className="size-3.5" /> {t('financialDashboard', 'Dashboard financier')}
           </TabsTrigger>
           <TabsTrigger value="credit" className="text-xs gap-1 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800">
-            <CreditCard className="size-3.5" /> Crédit Santé
+            <CreditCard className="size-3.5" /> {t('creditSante', 'Crédit Santé')}
           </TabsTrigger>
           <TabsTrigger value="insurance" className="text-xs gap-1 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800">
-            <ShieldCheck className="size-3.5" /> Assurance
+            <ShieldCheck className="size-3.5" /> {t('insurance', 'Assurance')}
           </TabsTrigger>
         </TabsList>
 
@@ -161,10 +181,10 @@ export function BillingPage() {
           {/* Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {[
-              { label: "Revenu aujourd'hui", value: `${(todayRevenue / 1000).toFixed(0)}K`, sub: 'GNF', color: 'from-teal-500 to-emerald-600' },
-              { label: 'Ce mois', value: `${(monthRevenue / 1000).toFixed(0)}K`, sub: 'GNF', color: 'from-cyan-500 to-teal-600' },
-              { label: 'En attente', value: `${(pendingAmount / 1000).toFixed(0)}K`, sub: 'GNF', color: 'from-amber-500 to-orange-600' },
-              { label: 'Paiements partiels', value: overdueCount, sub: 'factures', color: 'from-rose-500 to-red-600' },
+              { label: t('revenueToday', "Revenu aujourd'hui"), value: `${(todayRevenue / 1000).toFixed(0)}K`, sub: 'GNF', color: 'from-teal-500 to-emerald-600' },
+              { label: t('thisMonth', 'Ce mois'), value: `${(monthRevenue / 1000).toFixed(0)}K`, sub: 'GNF', color: 'from-cyan-500 to-teal-600' },
+              { label: t('status.pending', 'En attente'), value: `${(pendingAmount / 1000).toFixed(0)}K`, sub: 'GNF', color: 'from-amber-500 to-orange-600' },
+              { label: t('partialPayments', 'Paiements partiels'), value: overdueCount, sub: t('invoicesCount', 'factures'), color: 'from-rose-500 to-red-600' },
             ].map(stat => (
               <motion.div key={stat.label} variants={itemVariants}>
                 <Card className="relative overflow-hidden border-slate-200/60 dark:border-slate-800/60">
@@ -185,16 +205,16 @@ export function BillingPage() {
                 <div className="flex flex-col sm:flex-row gap-3">
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-                    <Input placeholder="Rechercher facture, patient..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+                    <Input placeholder={t('searchPlaceholder', 'Rechercher facture, patient...')} value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
                   </div>
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Statut" /></SelectTrigger>
+                    <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder={tc('status', 'Statut')} /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Tous</SelectItem>
-                      <SelectItem value="Payée">Payée</SelectItem>
-                      <SelectItem value="En attente">En attente</SelectItem>
-                      <SelectItem value="Partielle">Partielle</SelectItem>
-                      <SelectItem value="Annulée">Annulée</SelectItem>
+                      <SelectItem value="all">{tc('all', 'Tous')}</SelectItem>
+                      <SelectItem value="Payée">{t('status.paid', 'Payée')}</SelectItem>
+                      <SelectItem value="En attente">{t('status.pending', 'En attente')}</SelectItem>
+                      <SelectItem value="Partielle">{t('status.partial', 'Partielle')}</SelectItem>
+                      <SelectItem value="Annulée">{t('status.cancelled', 'Annulée')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -206,21 +226,21 @@ export function BillingPage() {
           <motion.div variants={itemVariants}>
             <Card className="border-slate-200/60 dark:border-slate-800/60">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">Factures</CardTitle>
-                <CardDescription className="text-xs">{filtered.length} factures</CardDescription>
+                <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">{t('invoices', 'Factures')}</CardTitle>
+                <CardDescription className="text-xs">{filtered.length} {t('invoicesCount', 'factures')}</CardDescription>
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-slate-200 dark:border-slate-700">
-                        <th className="text-left py-3 px-2 text-xs font-medium text-slate-500 uppercase">N° Facture</th>
-                        <th className="text-left py-3 px-2 text-xs font-medium text-slate-500 uppercase">Patient</th>
-                        <th className="text-left py-3 px-2 text-xs font-medium text-slate-500 uppercase">Date</th>
-                        <th className="text-right py-3 px-2 text-xs font-medium text-slate-500 uppercase">Montant</th>
-                        <th className="text-center py-3 px-2 text-xs font-medium text-slate-500 uppercase">Statut</th>
-                        <th className="text-center py-3 px-2 text-xs font-medium text-slate-500 uppercase">Paiement</th>
-                        <th className="text-right py-3 px-2 text-xs font-medium text-slate-500 uppercase">Actions</th>
+                        <th className="text-left py-3 px-2 text-xs font-medium text-slate-500 uppercase">{t('invoiceNumber', 'N° Facture')}</th>
+                        <th className="text-left py-3 px-2 text-xs font-medium text-slate-500 uppercase">{t('patient', 'Patient')}</th>
+                        <th className="text-left py-3 px-2 text-xs font-medium text-slate-500 uppercase">{tc('date', 'Date')}</th>
+                        <th className="text-right py-3 px-2 text-xs font-medium text-slate-500 uppercase">{t('amount', 'Montant')}</th>
+                        <th className="text-center py-3 px-2 text-xs font-medium text-slate-500 uppercase">{tc('status', 'Statut')}</th>
+                        <th className="text-center py-3 px-2 text-xs font-medium text-slate-500 uppercase">{t('payment', 'Paiement')}</th>
+                        <th className="text-right py-3 px-2 text-xs font-medium text-slate-500 uppercase">{tc('actions', 'Actions')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -238,7 +258,7 @@ export function BillingPage() {
                             <td className="py-3 px-2 text-slate-500 dark:text-slate-400">{inv.date}</td>
                             <td className="py-3 px-2 text-right font-bold text-slate-900 dark:text-white">{inv.total.toLocaleString()} <span className="text-xs font-normal text-slate-400">GNF</span></td>
                             <td className="py-3 px-2 text-center">
-                              <span className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium ${cfg.color}`}><StatusIcon className="size-3" />{inv.status}</span>
+                              <span className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium ${cfg.color}`}><StatusIcon className="size-3" />{statusLabels[inv.status]}</span>
                             </td>
                             <td className="py-3 px-2 text-center">
                               {inv.paymentMethod && inv.paidAmount > 0 ? (
@@ -251,12 +271,12 @@ export function BillingPage() {
                             <td className="py-3 px-2 text-right">
                               {(inv.status === 'En attente' || inv.status === 'Partielle') && (
                                 <div className="flex gap-1 justify-end" onClick={(e) => e.stopPropagation()}>
-                                  <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => openPaymentDialog(inv)}>Payer</Button>
+                                  <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => openPaymentDialog(inv)}>{t('pay', 'Payer')}</Button>
                                   <Button size="sm" variant="outline" className="text-xs h-7 text-orange-600 border-orange-200 hover:bg-orange-50 dark:border-orange-800" onClick={() => openMobileMoneyDialog(inv)}>
-                                    <Smartphone className="size-3 mr-1" /> Mobile Money
+                                    <Smartphone className="size-3 mr-1" /> {t('paymentMethods.mobileMoney', 'Mobile Money')}
                                   </Button>
                                   <Button size="sm" variant="outline" className="text-xs h-7 text-teal-600 border-teal-200 hover:bg-teal-50 dark:border-teal-800" onClick={() => openQRDialog(inv)}>
-                                    <QrCode className="size-3 mr-1" /> QR
+                                    <QrCode className="size-3 mr-1" /> {t('qr', 'QR')}
                                   </Button>
                                 </div>
                               )}
@@ -295,11 +315,11 @@ export function BillingPage() {
               <DialogHeader><DialogTitle className="flex items-center gap-2"><Receipt className="size-5 text-teal-600" /> {selectedInvoice.id}</DialogTitle></DialogHeader>
               <div className="space-y-4 py-2">
                 <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div><span className="text-xs text-slate-500">Patient</span><p className="font-medium">{selectedInvoice.patientName}</p></div>
-                  <div><span className="text-xs text-slate-500">Date</span><p className="font-medium">{selectedInvoice.date}</p></div>
+                  <div><span className="text-xs text-slate-500">{t('patient', 'Patient')}</span><p className="font-medium">{selectedInvoice.patientName}</p></div>
+                  <div><span className="text-xs text-slate-500">{tc('date', 'Date')}</span><p className="font-medium">{selectedInvoice.date}</p></div>
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">Détail</p>
+                  <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">{t('detail', 'Détail')}</p>
                   {selectedInvoice.items.map((item, i) => (
                     <div key={i} className="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800 last:border-0">
                       <span className="text-xs text-slate-600 dark:text-slate-400">{item.description} {item.quantity > 1 ? `×${item.quantity}` : ''}</span>
@@ -307,29 +327,29 @@ export function BillingPage() {
                     </div>
                   ))}
                   <div className="flex justify-between pt-2 mt-1 border-t-2 border-slate-200 dark:border-slate-700">
-                    <span className="text-sm font-bold text-slate-900 dark:text-white">Total</span>
+                    <span className="text-sm font-bold text-slate-900 dark:text-white">{t('total', 'Total')}</span>
                     <span className="text-sm font-bold text-teal-600 dark:text-teal-400">{selectedInvoice.total.toLocaleString()} GNF</span>
                   </div>
                   {selectedInvoice.paidAmount > 0 && (
                     <div className="flex justify-between pt-1">
-                      <span className="text-xs text-slate-500">Payé</span>
+                      <span className="text-xs text-slate-500">{t('paid', 'Payé')}</span>
                       <span className="text-xs font-medium text-emerald-600">{selectedInvoice.paidAmount.toLocaleString()} GNF</span>
                     </div>
                   )}
                   {selectedInvoice.total - selectedInvoice.paidAmount > 0 && (
                     <div className="flex justify-between pt-1">
-                      <span className="text-xs text-slate-500">Reste</span>
+                      <span className="text-xs text-slate-500">{t('remaining', 'Reste')}</span>
                       <span className="text-xs font-medium text-amber-600">{(selectedInvoice.total - selectedInvoice.paidAmount).toLocaleString()} GNF</span>
                     </div>
                   )}
                 </div>
                 {selectedInvoice.paymentMethod && selectedInvoice.paidAmount > 0 && (
                   <div>
-                    <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">Paiement</p>
+                    <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">{t('payment', 'Paiement')}</p>
                     <div className="flex items-center justify-between py-1.5">
                       <span className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
                         {React.createElement(methodIcons[selectedInvoice.paymentMethod] ?? CreditCard, { className: 'size-3.5' })}
-                        {selectedInvoice.paymentMethod}
+                        {methodLabels[selectedInvoice.paymentMethod] ?? selectedInvoice.paymentMethod}
                       </span>
                       <span className="text-xs font-medium text-emerald-600">{selectedInvoice.paidAmount.toLocaleString()} GNF</span>
                     </div>
@@ -339,16 +359,16 @@ export function BillingPage() {
               <DialogFooter className="flex gap-2 flex-wrap">
                 {(selectedInvoice.status === 'En attente' || selectedInvoice.status === 'Partielle') && (
                   <>
-                    <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => { openPaymentDialog(selectedInvoice) }}>Payer</Button>
+                    <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => { openPaymentDialog(selectedInvoice) }}>{t('pay', 'Payer')}</Button>
                     <Button variant="outline" className="text-orange-600 border-orange-200" onClick={() => { openMobileMoneyDialog(selectedInvoice) }}>
-                      <Smartphone className="size-3.5 mr-1" /> Mobile Money
+                      <Smartphone className="size-3.5 mr-1" /> {t('paymentMethods.mobileMoney', 'Mobile Money')}
                     </Button>
                     <Button variant="outline" className="text-teal-600 border-teal-200" onClick={() => { openQRDialog(selectedInvoice) }}>
-                      <QrCode className="size-3.5 mr-1" /> QR Code
+                      <QrCode className="size-3.5 mr-1" /> {t('qrCode', 'QR Code')}
                     </Button>
                   </>
                 )}
-                <Button variant="outline" onClick={() => setSelectedInvoice(null)}>Fermer</Button>
+                <Button variant="outline" onClick={() => setSelectedInvoice(null)}>{tc('close', 'Fermer')}</Button>
               </DialogFooter>
             </>
           )}
@@ -358,24 +378,24 @@ export function BillingPage() {
       {/* New Invoice Dialog */}
       <Dialog open={showNewDialog} onOpenChange={setShowNewDialog}>
         <DialogContent className="sm:max-w-[480px]">
-          <DialogHeader><DialogTitle>Nouvelle facture</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('newInvoice', 'Nouvelle facture')}</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Patient *</Label><Input placeholder="Nom du patient" value={newPatientName} onChange={e => setNewPatientName(e.target.value)} /></div>
-              <div className="space-y-2"><Label>ID Patient</Label><Input placeholder="P-XXXX-XXX" value={newPatientId} onChange={e => setNewPatientId(e.target.value)} /></div>
+              <div className="space-y-2"><Label>{t('patientRequired', 'Patient *')}</Label><Input placeholder={t('patientName', 'Nom du patient')} value={newPatientName} onChange={e => setNewPatientName(e.target.value)} /></div>
+              <div className="space-y-2"><Label>{t('patientId', 'ID Patient')}</Label><Input placeholder="P-XXXX-XXX" value={newPatientId} onChange={e => setNewPatientId(e.target.value)} /></div>
             </div>
             <div>
-              <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Ligne</p>
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('line', 'Ligne')}</p>
               <div className="grid grid-cols-3 gap-3">
-                <div className="space-y-1 col-span-1"><Label className="text-xs">Description *</Label><Input placeholder="Acte..." value={newItemDesc} onChange={e => setNewItemDesc(e.target.value)} /></div>
-                <div className="space-y-1"><Label className="text-xs">Qté</Label><Input type="number" placeholder="1" value={newItemQty} onChange={e => setNewItemQty(e.target.value)} /></div>
-                <div className="space-y-1"><Label className="text-xs">Prix unit. (GNF) *</Label><Input type="number" placeholder="0" value={newItemPrice} onChange={e => setNewItemPrice(e.target.value)} /></div>
+                <div className="space-y-1 col-span-1"><Label className="text-xs">{t('descriptionRequired', 'Description *')}</Label><Input placeholder={t('actPlaceholder', 'Acte...')} value={newItemDesc} onChange={e => setNewItemDesc(e.target.value)} /></div>
+                <div className="space-y-1"><Label className="text-xs">{t('qty', 'Qté')}</Label><Input type="number" placeholder="1" value={newItemQty} onChange={e => setNewItemQty(e.target.value)} /></div>
+                <div className="space-y-1"><Label className="text-xs">{t('unitPriceGnf', 'Prix unit. (GNF) *')}</Label><Input type="number" placeholder="0" value={newItemPrice} onChange={e => setNewItemPrice(e.target.value)} /></div>
               </div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowNewDialog(false)}>Annuler</Button>
-            <Button className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white" onClick={handleAddInvoice}>Créer facture</Button>
+            <Button variant="outline" onClick={() => setShowNewDialog(false)}>{tc('cancel', 'Annuler')}</Button>
+            <Button className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white" onClick={handleAddInvoice}>{t('createInvoice', 'Créer facture')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -383,14 +403,14 @@ export function BillingPage() {
       {/* Payment Dialog */}
       <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
         <DialogContent className="sm:max-w-[400px]">
-          <DialogHeader><DialogTitle>Enregistrer paiement</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('recordPayment', 'Enregistrer paiement')}</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="space-y-2"><Label>Montant (GNF) *</Label><Input type="number" placeholder="0" value={paymentAmount} onChange={e => setPaymentAmount(e.target.value)} /></div>
-            <div className="space-y-2"><Label>Mode de paiement *</Label><Select value={paymentMethod} onValueChange={setPaymentMethod}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Espèces">Espèces</SelectItem><SelectItem value="Mobile Money">Mobile Money</SelectItem><SelectItem value="Virement">Virement bancaire</SelectItem><SelectItem value="Assurance">Assurance</SelectItem></SelectContent></Select></div>
+            <div className="space-y-2"><Label>{t('amountGnf', 'Montant (GNF) *')}</Label><Input type="number" placeholder="0" value={paymentAmount} onChange={e => setPaymentAmount(e.target.value)} /></div>
+            <div className="space-y-2"><Label>{t('paymentMethodRequired', 'Mode de paiement *')}</Label><Select value={paymentMethod} onValueChange={setPaymentMethod}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Espèces">{t('paymentMethods.cash', 'Espèces')}</SelectItem><SelectItem value="Mobile Money">{t('paymentMethods.mobileMoney', 'Mobile Money')}</SelectItem><SelectItem value="Virement">{t('paymentMethods.bankTransfer', 'Virement bancaire')}</SelectItem><SelectItem value="Assurance">{t('paymentMethods.insurance', 'Assurance')}</SelectItem></SelectContent></Select></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowPaymentDialog(false)}>Annuler</Button>
-            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handlePay}>Confirmer paiement</Button>
+            <Button variant="outline" onClick={() => setShowPaymentDialog(false)}>{tc('cancel', 'Annuler')}</Button>
+            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handlePay}>{t('confirmPayment', 'Confirmer paiement')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -398,7 +418,7 @@ export function BillingPage() {
       {/* Mobile Money Dialog */}
       <Dialog open={showMobileMoneyDialog} onOpenChange={setShowMobileMoneyDialog}>
         <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader><DialogTitle>Paiement Mobile Money</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('mobileMoneyPayment', 'Paiement Mobile Money')}</DialogTitle></DialogHeader>
           {selectedInvoice && (
             <MobileMoneyForm
               invoiceId={selectedInvoice.id}
@@ -420,7 +440,7 @@ export function BillingPage() {
       {/* QR Payment Dialog */}
       <Dialog open={showQRDialog} onOpenChange={setShowQRDialog}>
         <DialogContent className="sm:max-w-[420px]">
-          <DialogHeader><DialogTitle>Paiement par QR Code</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('qrCodePayment', 'Paiement par QR Code')}</DialogTitle></DialogHeader>
           {selectedInvoice && (
             <QRPayment
               invoiceId={selectedInvoice.id}

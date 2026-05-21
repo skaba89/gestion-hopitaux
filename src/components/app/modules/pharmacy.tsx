@@ -15,19 +15,22 @@ import { Label } from '@/components/ui/label'
 import { useDataStore, type Medication } from '@/lib/data-store'
 import { useStore } from '@/lib/store'
 import { useToast } from '@/hooks/use-toast'
+import { useTranslation } from '@/i18n/provider'
 
 const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.1 } } }
 const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } } }
 
-function getStockLevel(stock: number, maxStock: number) {
+function getStockLevel(stock: number, maxStock: number, t: (key: string, fallback: string) => string) {
   const pct = maxStock > 0 ? (stock / maxStock) * 100 : 100
-  if (stock === 0) return { label: 'Rupture', color: 'bg-rose-500', textColor: 'text-rose-600 dark:text-rose-400', bgColor: 'bg-rose-50 dark:bg-rose-950/30', badgeColor: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800' }
-  if (pct < 10) return { label: 'Critique', color: 'bg-rose-500', textColor: 'text-rose-600 dark:text-rose-400', bgColor: 'bg-rose-50 dark:bg-rose-950/30', badgeColor: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800' }
-  if (pct < 25) return { label: 'Faible', color: 'bg-amber-500', textColor: 'text-amber-600 dark:text-amber-400', bgColor: 'bg-amber-50 dark:bg-amber-950/30', badgeColor: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800' }
-  return { label: 'Normal', color: 'bg-emerald-500', textColor: 'text-emerald-600 dark:text-emerald-400', bgColor: 'bg-emerald-50 dark:bg-emerald-950/30', badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800' }
+  if (stock === 0) return { label: t('outOfStock', 'Rupture'), color: 'bg-rose-500', textColor: 'text-rose-600 dark:text-rose-400', bgColor: 'bg-rose-50 dark:bg-rose-950/30', badgeColor: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800' }
+  if (pct < 10) return { label: t('criticalStock', 'Critique'), color: 'bg-rose-500', textColor: 'text-rose-600 dark:text-rose-400', bgColor: 'bg-rose-50 dark:bg-rose-950/30', badgeColor: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800' }
+  if (pct < 25) return { label: t('lowStock', 'Faible'), color: 'bg-amber-500', textColor: 'text-amber-600 dark:text-amber-400', bgColor: 'bg-amber-50 dark:bg-amber-950/30', badgeColor: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800' }
+  return { label: t('normal', 'Normal'), color: 'bg-emerald-500', textColor: 'text-emerald-600 dark:text-emerald-400', bgColor: 'bg-emerald-50 dark:bg-emerald-950/30', badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800' }
 }
 
 export function PharmacyPage() {
+  const { t } = useTranslation('pharmacy')
+  const { t: tc } = useTranslation('common')
   const { toast } = useToast()
   const { setCurrentView } = useStore()
   const { medications, addMedication, stockEntry, stockExit } = useDataStore()
@@ -76,7 +79,7 @@ export function PharmacyPage() {
     setEntryMedId('')
     setEntryQty('')
     const med = medications.find(m => m.id === entryMedId)
-    toast({ title: 'Entrée enregistrée', description: `${entryQty} unités ajoutées pour ${med?.name ?? 'médicament'}.` })
+    toast({ title: t('entryRecorded', 'Entrée enregistrée'), description: `${entryQty} ${t('unitsAddedFor', 'unités ajoutées pour')} ${med?.name ?? t('medication', 'médicament')}.` })
   }
 
   const handleStockExit = () => {
@@ -86,7 +89,7 @@ export function PharmacyPage() {
     setExitMedId('')
     setExitQty('')
     const med = medications.find(m => m.id === exitMedId)
-    toast({ title: 'Sortie enregistrée', description: `${exitQty} unités retirées pour ${med?.name ?? 'médicament'}.` })
+    toast({ title: t('exitRecorded', 'Sortie enregistrée'), description: `${exitQty} ${t('unitsRemovedFor', 'unités retirées pour')} ${med?.name ?? t('medication', 'médicament')}.` })
   }
 
   const handleAddMedication = () => {
@@ -98,7 +101,7 @@ export function PharmacyPage() {
       dosage: newDosage,
       stock: Number(newStock) || 0,
       maxStock: Number(newMaxStock) || 0,
-      unit: newUnit || 'comprimés',
+      unit: newUnit || t('unitsTablets', 'comprimés'),
       price: Number(newPrice),
       expiryDate: newExpiryDate || '—',
       supplier: newSupplier || '—',
@@ -113,7 +116,7 @@ export function PharmacyPage() {
     setNewPrice('')
     setNewExpiryDate('')
     setNewSupplier('')
-    toast({ title: 'Médicament ajouté', description: `${newName} a été ajouté à l'inventaire.` })
+    toast({ title: t('medicationAdded', 'Médicament ajouté'), description: `${newName} ${t('addedToInventory', 'a été ajouté à l\'inventaire')}.` })
   }
 
   return (
@@ -123,31 +126,31 @@ export function PharmacyPage() {
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center size-10 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 shadow-lg shadow-teal-500/20"><Pill className="size-5 text-white" /></div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Pharmacie & Stock</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Gestion des médicaments et inventaire</p>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{t('title', 'Pharmacie & Stock')}</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t('subtitle', 'Gestion des médicaments et inventaire')}</p>
           </div>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setCurrentView('ai-interactions')} className="gap-1.5">
-            <ShieldAlert className="size-4" /> Vérifier interactions
+            <ShieldAlert className="size-4" /> {t('checkInteractions', 'Vérifier interactions')}
           </Button>
           <Button onClick={() => setShowNewDialog(true)} className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white shadow-lg shadow-teal-500/20">
-            <Plus className="size-4 mr-1" /> Nouveau
+            <Plus className="size-4 mr-1" /> {t('new', 'Nouveau')}
           </Button>
-          <Button variant="outline" onClick={() => { setEntryMedId(''); setEntryQty(''); setShowEntryDialog(true) }}><ArrowLeft className="size-4 mr-1" /> Entrée</Button>
-          <Button variant="outline" onClick={() => { setExitMedId(''); setExitQty(''); setShowExitDialog(true) }}><ArrowRight className="size-4 mr-1" /> Sortie</Button>
+          <Button variant="outline" onClick={() => { setEntryMedId(''); setEntryQty(''); setShowEntryDialog(true) }}><ArrowLeft className="size-4 mr-1" /> {t('entry', 'Entrée')}</Button>
+          <Button variant="outline" onClick={() => { setExitMedId(''); setExitQty(''); setShowExitDialog(true) }}><ArrowRight className="size-4 mr-1" /> {t('exit', 'Sortie')}</Button>
         </div>
       </motion.div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Total articles', value: totalItems, icon: Package, color: 'from-teal-500 to-emerald-600', iconBg: 'bg-teal-50 dark:bg-teal-950/40', iconColor: 'text-teal-600 dark:text-teal-400' },
-          { label: 'Stock faible', value: lowStock, icon: AlertTriangle, color: 'from-amber-500 to-orange-600', iconBg: 'bg-amber-50 dark:bg-amber-950/40', iconColor: 'text-amber-600 dark:text-amber-400' },
-          { label: 'Rupture', value: outOfStock, icon: TrendingDown, color: 'from-rose-500 to-red-600', iconBg: 'bg-rose-50 dark:bg-rose-950/40', iconColor: 'text-rose-600 dark:text-rose-400' },
-          { label: 'Expiration proche', value: expiringSoon, icon: Clock, color: 'from-purple-500 to-violet-600', iconBg: 'bg-purple-50 dark:bg-purple-950/40', iconColor: 'text-purple-600 dark:text-purple-400' },
+          { id: 'total', label: t('totalItems', 'Total articles'), value: totalItems, icon: Package, color: 'from-teal-500 to-emerald-600', iconBg: 'bg-teal-50 dark:bg-teal-950/40', iconColor: 'text-teal-600 dark:text-teal-400' },
+          { id: 'lowStock', label: t('lowStock', 'Stock faible'), value: lowStock, icon: AlertTriangle, color: 'from-amber-500 to-orange-600', iconBg: 'bg-amber-50 dark:bg-amber-950/40', iconColor: 'text-amber-600 dark:text-amber-400' },
+          { id: 'outOfStock', label: t('outOfStock', 'Rupture'), value: outOfStock, icon: TrendingDown, color: 'from-rose-500 to-red-600', iconBg: 'bg-rose-50 dark:bg-rose-950/40', iconColor: 'text-rose-600 dark:text-rose-400' },
+          { id: 'expiringSoon', label: t('expiringSoon', 'Expiration proche'), value: expiringSoon, icon: Clock, color: 'from-purple-500 to-violet-600', iconBg: 'bg-purple-50 dark:bg-purple-950/40', iconColor: 'text-purple-600 dark:text-purple-400' },
         ].map(stat => (
-          <motion.div key={stat.label} variants={itemVariants}>
+          <motion.div key={stat.id} variants={itemVariants}>
             <Card className="relative overflow-hidden border-slate-200/60 dark:border-slate-800/60">
               <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${stat.color}`} />
               <CardContent className="pt-5 pb-4 flex items-center justify-between">
@@ -169,12 +172,12 @@ export function PharmacyPage() {
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-                <Input placeholder="Rechercher médicament, dosage..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+                <Input placeholder={t('searchPlaceholder', 'Rechercher médicament, dosage...')} value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
               </div>
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-full sm:w-[200px]"><SelectValue placeholder="Catégorie" /></SelectTrigger>
+                <SelectTrigger className="w-full sm:w-[200px]"><SelectValue placeholder={t('category', 'Catégorie')} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Toutes catégories</SelectItem>
+                  <SelectItem value="all">{t('allCategories', 'Toutes catégories')}</SelectItem>
                   {categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -187,25 +190,25 @@ export function PharmacyPage() {
       <motion.div variants={itemVariants}>
         <Card className="border-slate-200/60 dark:border-slate-800/60">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">Inventaire</CardTitle>
-            <CardDescription className="text-xs">{filtered.length} médicaments</CardDescription>
+            <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">{t('inventory', 'Inventaire')}</CardTitle>
+            <CardDescription className="text-xs">{filtered.length} {t('medications', 'médicaments')}</CardDescription>
           </CardHeader>
           <CardContent className="pt-0">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-slate-700">
-                    <th className="text-left py-3 px-2 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Médicament</th>
-                    <th className="text-left py-3 px-2 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Catégorie</th>
-                    <th className="text-left py-3 px-2 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Stock</th>
-                    <th className="text-left py-3 px-2 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Niveau</th>
-                    <th className="text-left py-3 px-2 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Expiration</th>
-                    <th className="text-right py-3 px-2 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Prix</th>
+                    <th className="text-left py-3 px-2 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">{t('medication', 'Médicament')}</th>
+                    <th className="text-left py-3 px-2 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">{t('category', 'Catégorie')}</th>
+                    <th className="text-left py-3 px-2 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">{t('stock', 'Stock')}</th>
+                    <th className="text-left py-3 px-2 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">{t('level', 'Niveau')}</th>
+                    <th className="text-left py-3 px-2 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">{t('expiration', 'Expiration')}</th>
+                    <th className="text-right py-3 px-2 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">{t('price', 'Prix')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.map((med, index) => {
-                    const level = getStockLevel(med.stock, med.maxStock)
+                    const level = getStockLevel(med.stock, med.maxStock, t)
                     const pct = med.maxStock > 0 ? Math.round((med.stock / med.maxStock) * 100) : 0
                     return (
                       <motion.tr key={med.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: index * 0.03 }}
@@ -248,29 +251,29 @@ export function PharmacyPage() {
       {/* New Medication Dialog */}
       <Dialog open={showNewDialog} onOpenChange={setShowNewDialog}>
         <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><Plus className="size-5 text-teal-600" /> Nouveau médicament</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Plus className="size-5 text-teal-600" /> {t('newMedication', 'Nouveau médicament')}</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Nom *</Label><Input placeholder="Paracétamol 500mg" value={newName} onChange={e => setNewName(e.target.value)} /></div>
-              <div className="space-y-2"><Label>Catégorie *</Label><Input placeholder="Antalgique" value={newCategory} onChange={e => setNewCategory(e.target.value)} /></div>
+              <div className="space-y-2"><Label>{t('name', 'Nom')} *</Label><Input placeholder={t('placeholderMedName', 'Paracétamol 500mg')} value={newName} onChange={e => setNewName(e.target.value)} /></div>
+              <div className="space-y-2"><Label>{t('category', 'Catégorie')} *</Label><Input placeholder={t('placeholderCategory', 'Antalgique')} value={newCategory} onChange={e => setNewCategory(e.target.value)} /></div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Dosage</Label><Input placeholder="500mg" value={newDosage} onChange={e => setNewDosage(e.target.value)} /></div>
-              <div className="space-y-2"><Label>Unité</Label><Input placeholder="comprimés" value={newUnit} onChange={e => setNewUnit(e.target.value)} /></div>
+              <div className="space-y-2"><Label>{t('dosage', 'Dosage')}</Label><Input placeholder={t('placeholderDosage', '500mg')} value={newDosage} onChange={e => setNewDosage(e.target.value)} /></div>
+              <div className="space-y-2"><Label>{t('unit', 'Unité')}</Label><Input placeholder={t('placeholderUnit', 'comprimés')} value={newUnit} onChange={e => setNewUnit(e.target.value)} /></div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Stock initial</Label><Input type="number" placeholder="0" value={newStock} onChange={e => setNewStock(e.target.value)} /></div>
-              <div className="space-y-2"><Label>Stock max</Label><Input type="number" placeholder="0" value={newMaxStock} onChange={e => setNewMaxStock(e.target.value)} /></div>
+              <div className="space-y-2"><Label>{t('initialStock', 'Stock initial')}</Label><Input type="number" placeholder="0" value={newStock} onChange={e => setNewStock(e.target.value)} /></div>
+              <div className="space-y-2"><Label>{t('maxStock', 'Stock max')}</Label><Input type="number" placeholder="0" value={newMaxStock} onChange={e => setNewMaxStock(e.target.value)} /></div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Prix (GNF) *</Label><Input type="number" placeholder="0" value={newPrice} onChange={e => setNewPrice(e.target.value)} /></div>
-              <div className="space-y-2"><Label>Date expiration</Label><Input type="date" value={newExpiryDate} onChange={e => setNewExpiryDate(e.target.value)} /></div>
+              <div className="space-y-2"><Label>{t('price', 'Prix')} (GNF) *</Label><Input type="number" placeholder="0" value={newPrice} onChange={e => setNewPrice(e.target.value)} /></div>
+              <div className="space-y-2"><Label>{t('expiryDate', 'Date expiration')}</Label><Input type="date" value={newExpiryDate} onChange={e => setNewExpiryDate(e.target.value)} /></div>
             </div>
-            <div className="space-y-2"><Label>Fournisseur</Label><Input placeholder="PharmaGuinée" value={newSupplier} onChange={e => setNewSupplier(e.target.value)} /></div>
+            <div className="space-y-2"><Label>{t('supplier', 'Fournisseur')}</Label><Input placeholder={t('placeholderSupplier', 'PharmaGuinée')} value={newSupplier} onChange={e => setNewSupplier(e.target.value)} /></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowNewDialog(false)}>Annuler</Button>
-            <Button className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white" onClick={handleAddMedication}>Ajouter</Button>
+            <Button variant="outline" onClick={() => setShowNewDialog(false)}>{tc('cancel', 'Annuler')}</Button>
+            <Button className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white" onClick={handleAddMedication}>{tc('add', 'Ajouter')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -278,16 +281,16 @@ export function PharmacyPage() {
       {/* Entry Dialog */}
       <Dialog open={showEntryDialog} onOpenChange={setShowEntryDialog}>
         <DialogContent className="sm:max-w-[460px]">
-          <DialogHeader><DialogTitle>Entrée de stock</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('stockEntry', 'Entrée de stock')}</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="space-y-2"><Label>Médicament *</Label><Select value={entryMedId} onValueChange={setEntryMedId}><SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger><SelectContent>{medications.filter(m => m.stock < m.maxStock).map(m => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}</SelectContent></Select></div>
+            <div className="space-y-2"><Label>{t('medication', 'Médicament')} *</Label><Select value={entryMedId} onValueChange={setEntryMedId}><SelectTrigger><SelectValue placeholder={t('selectMedication', 'Sélectionner...')} /></SelectTrigger><SelectContent>{medications.filter(m => m.stock < m.maxStock).map(m => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}</SelectContent></Select></div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Quantité *</Label><Input type="number" placeholder="0" value={entryQty} onChange={e => setEntryQty(e.target.value)} /></div>
+              <div className="space-y-2"><Label>{t('quantity', 'Quantité')} *</Label><Input type="number" placeholder="0" value={entryQty} onChange={e => setEntryQty(e.target.value)} /></div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEntryDialog(false)}>Annuler</Button>
-            <Button className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white" onClick={handleStockEntry}>Enregistrer entrée</Button>
+            <Button variant="outline" onClick={() => setShowEntryDialog(false)}>{tc('cancel', 'Annuler')}</Button>
+            <Button className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white" onClick={handleStockEntry}>{t('saveEntry', 'Enregistrer entrée')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -295,16 +298,16 @@ export function PharmacyPage() {
       {/* Exit Dialog */}
       <Dialog open={showExitDialog} onOpenChange={setShowExitDialog}>
         <DialogContent className="sm:max-w-[460px]">
-          <DialogHeader><DialogTitle>Sortie de stock</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('stockExit', 'Sortie de stock')}</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="space-y-2"><Label>Médicament *</Label><Select value={exitMedId} onValueChange={setExitMedId}><SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger><SelectContent>{medications.filter(m => m.stock > 0).map(m => <SelectItem key={m.id} value={m.id}>{m.name} ({m.stock} {m.unit})</SelectItem>)}</SelectContent></Select></div>
+            <div className="space-y-2"><Label>{t('medication', 'Médicament')} *</Label><Select value={exitMedId} onValueChange={setExitMedId}><SelectTrigger><SelectValue placeholder={t('selectMedication', 'Sélectionner...')} /></SelectTrigger><SelectContent>{medications.filter(m => m.stock > 0).map(m => <SelectItem key={m.id} value={m.id}>{m.name} ({m.stock} {m.unit})</SelectItem>)}</SelectContent></Select></div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Quantité *</Label><Input type="number" placeholder="0" value={exitQty} onChange={e => setExitQty(e.target.value)} /></div>
+              <div className="space-y-2"><Label>{t('quantity', 'Quantité')} *</Label><Input type="number" placeholder="0" value={exitQty} onChange={e => setExitQty(e.target.value)} /></div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowExitDialog(false)}>Annuler</Button>
-            <Button className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white" onClick={handleStockExit}>Enregistrer sortie</Button>
+            <Button variant="outline" onClick={() => setShowExitDialog(false)}>{tc('cancel', 'Annuler')}</Button>
+            <Button className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white" onClick={handleStockExit}>{t('saveExit', 'Enregistrer sortie')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

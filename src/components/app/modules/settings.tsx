@@ -17,11 +17,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useStore } from '@/lib/store'
 import { useTheme } from 'next-themes'
 import { useToast } from '@/hooks/use-toast'
+import { useTranslation } from '@/i18n/provider'
 
 const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.1 } } }
 const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } } }
 
 export function SettingsPage() {
+  const { t } = useTranslation('settings')
+  const { t: tc } = useTranslation('common')
   const { user, updateUser } = useStore()
   const { resolvedTheme, setTheme } = useTheme()
   const { toast } = useToast()
@@ -56,8 +59,8 @@ export function SettingsPage() {
       phone: profilePhone,
     })
     toast({
-      title: 'Profil mis à jour',
-      description: 'Vos informations personnelles ont été enregistrées.',
+      title: t('profileUpdated', 'Profil mis à jour'),
+      description: t('profileUpdatedDesc', 'Vos informations personnelles ont été enregistrées.'),
     })
   }
 
@@ -73,18 +76,18 @@ export function SettingsPage() {
       <motion.div variants={itemVariants} className="flex items-center gap-3">
         <div className="flex items-center justify-center size-10 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 shadow-lg shadow-teal-500/20"><Settings2 className="size-5 text-white" /></div>
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Paramètres</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Configuration de votre compte et préférences</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{t('title', 'Paramètres')}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{t('accountConfig', 'Configuration de votre compte et préférences')}</p>
         </div>
       </motion.div>
 
       <Tabs defaultValue="profile" className="space-y-4">
         <TabsList className="flex flex-wrap">
-          <TabsTrigger value="profile"><User className="size-3.5 mr-1.5" /> Profil</TabsTrigger>
-          <TabsTrigger value="notifications"><Bell className="size-3.5 mr-1.5" /> Notifications</TabsTrigger>
-          <TabsTrigger value="appearance"><Palette className="size-3.5 mr-1.5" /> Apparence</TabsTrigger>
-          <TabsTrigger value="security"><ShieldCheck className="size-3.5 mr-1.5" /> Sécurité</TabsTrigger>
-          <TabsTrigger value="about"><Info className="size-3.5 mr-1.5" /> À propos</TabsTrigger>
+          <TabsTrigger value="profile"><User className="size-3.5 mr-1.5" /> {t('profile', 'Profil')}</TabsTrigger>
+          <TabsTrigger value="notifications"><Bell className="size-3.5 mr-1.5" /> {t('notifications', 'Notifications')}</TabsTrigger>
+          <TabsTrigger value="appearance"><Palette className="size-3.5 mr-1.5" /> {t('theme', 'Apparence')}</TabsTrigger>
+          <TabsTrigger value="security"><ShieldCheck className="size-3.5 mr-1.5" /> {t('security', 'Sécurité')}</TabsTrigger>
+          <TabsTrigger value="about"><Info className="size-3.5 mr-1.5" /> {t('about', 'À propos')}</TabsTrigger>
         </TabsList>
 
         {/* Profile Tab */}
@@ -92,8 +95,8 @@ export function SettingsPage() {
           <motion.div variants={itemVariants}>
             <Card className="border-slate-200/60 dark:border-slate-800/60">
               <CardHeader>
-                <CardTitle className="text-base">Informations personnelles</CardTitle>
-                <CardDescription>Modifiez vos informations de profil</CardDescription>
+                <CardTitle className="text-base">{t('personalInfo', 'Informations personnelles')}</CardTitle>
+                <CardDescription>{t('editProfile', 'Modifiez vos informations de profil')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-4 mb-6">
@@ -101,22 +104,22 @@ export function SettingsPage() {
                   <div>
                     <p className="font-medium text-slate-900 dark:text-white">{user.name}</p>
                     <p className="text-xs text-slate-500">{user.role} — {user.establishment}</p>
-                    <Button variant="outline" size="sm" className="text-xs mt-1">Changer la photo</Button>
+                    <Button variant="outline" size="sm" className="text-xs mt-1">{t('changePhoto', 'Changer la photo')}</Button>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2"><Label>Nom complet</Label><Input value={profileName} onChange={e => setProfileName(e.target.value)} /></div>
+                  <div className="space-y-2"><Label>{tc('firstName', 'Nom complet')}</Label><Input value={profileName} onChange={e => setProfileName(e.target.value)} /></div>
                   <div className="space-y-2"><Label>Email</Label><Input type="email" value={profileEmail} onChange={e => setProfileEmail(e.target.value)} /></div>
-                  <div className="space-y-2"><Label>Téléphone</Label><Input value={profilePhone} onChange={e => setProfilePhone(e.target.value)} /></div>
-                  <div className="space-y-2"><Label>Identifiant professionnel</Label><Input defaultValue="MED-GN-2018-0452" disabled className="bg-slate-50 dark:bg-slate-800" /></div>
+                  <div className="space-y-2"><Label>{tc('phone', 'Téléphone')}</Label><Input value={profilePhone} onChange={e => setProfilePhone(e.target.value)} /></div>
+                  <div className="space-y-2"><Label>{t('professionalId', 'Identifiant professionnel')}</Label><Input defaultValue="MED-GN-2018-0452" disabled className="bg-slate-50 dark:bg-slate-800" /></div>
                 </div>
-                <div className="space-y-2"><Label>Département</Label><Input defaultValue={`${user.role} — ${user.establishment}`} disabled className="bg-slate-50 dark:bg-slate-800" /></div>
+                <div className="space-y-2"><Label>{t('department', 'Département')}</Label><Input defaultValue={`${user.role} — ${user.establishment}`} disabled className="bg-slate-50 dark:bg-slate-800" /></div>
                 <Separator />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2"><Label>Ancien mot de passe</Label><Input type="password" placeholder="••••••••" /></div>
-                  <div className="space-y-2"><Label>Nouveau mot de passe</Label><Input type="password" placeholder="••••••••" /></div>
+                  <div className="space-y-2"><Label>{t('oldPassword', 'Ancien mot de passe')}</Label><Input type="password" placeholder="••••••••" /></div>
+                  <div className="space-y-2"><Label>{t('newPassword', 'Nouveau mot de passe')}</Label><Input type="password" placeholder="••••••••" /></div>
                 </div>
-                <div className="flex justify-end"><Button className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white" onClick={handleSaveProfile}>Enregistrer</Button></div>
+                <div className="flex justify-end"><Button className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white" onClick={handleSaveProfile}>{tc('save', 'Enregistrer')}</Button></div>
               </CardContent>
             </Card>
           </motion.div>
@@ -127,16 +130,16 @@ export function SettingsPage() {
           <motion.div variants={itemVariants}>
             <Card className="border-slate-200/60 dark:border-slate-800/60">
               <CardHeader>
-                <CardTitle className="text-base">Préférences de notification</CardTitle>
-                <CardDescription>Choisissez les notifications que vous souhaitez recevoir</CardDescription>
+                <CardTitle className="text-base">{t('notificationPreferences', 'Préférences de notification')}</CardTitle>
+                <CardDescription>{t('chooseNotifications', 'Choisissez les notifications que vous souhaitez recevoir')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {[
-                  { key: 'appointments' as const, label: 'Rendez-vous', desc: 'Rappels et confirmations de rendez-vous' },
-                  { key: 'labResults' as const, label: 'Résultats de laboratoire', desc: 'Notification quand les résultats sont prêts' },
-                  { key: 'stockAlerts' as const, label: 'Alertes stock pharmacie', desc: 'Médicaments en rupture ou stock faible' },
-                  { key: 'emergencyAlerts' as const, label: 'Alertes urgentes', desc: 'Cas urgents et triage critique' },
-                  { key: 'billingAlerts' as const, label: 'Alertes facturation', desc: 'Factures en retard et paiements' },
+                  { key: 'appointments' as const, label: t('appointments', 'Rendez-vous'), desc: t('appointmentReminders', 'Rappels et confirmations de rendez-vous') },
+                  { key: 'labResults' as const, label: t('labResults', 'Résultats de laboratoire'), desc: t('labResultsDesc', 'Notification quand les résultats sont prêts') },
+                  { key: 'stockAlerts' as const, label: t('stockAlerts', 'Alertes stock pharmacie'), desc: t('stockAlertsDesc', 'Médicaments en rupture ou stock faible') },
+                  { key: 'emergencyAlerts' as const, label: t('emergencyAlerts', 'Alertes urgentes'), desc: t('emergencyAlertsDesc', 'Cas urgents et triage critique') },
+                  { key: 'billingAlerts' as const, label: t('billingAlerts', 'Alertes facturation'), desc: t('billingAlertsDesc', 'Factures en retard et paiements') },
                 ].map(item => (
                   <div key={item.key} className="flex items-center justify-between py-2">
                     <div>
@@ -147,10 +150,10 @@ export function SettingsPage() {
                   </div>
                 ))}
                 <Separator />
-                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Canaux de notification</p>
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{t('notificationChannels', 'Canaux de notification')}</p>
                 {[
-                  { key: 'emailNotif' as const, label: 'Email', desc: 'Recevoir par email', icon: '📧' },
-                  { key: 'smsNotif' as const, label: 'SMS', desc: 'Recevoir par SMS (Orange/MTN)', icon: '📱' },
+                  { key: 'emailNotif' as const, label: 'Email', desc: t('receiveByEmail', 'Recevoir par email'), icon: '📧' },
+                  { key: 'smsNotif' as const, label: 'SMS', desc: t('receiveBySms', 'Recevoir par SMS (Orange/MTN)'), icon: '📱' },
                 ].map(item => (
                   <div key={item.key} className="flex items-center justify-between py-2">
                     <div className="flex items-center gap-2">
@@ -173,17 +176,17 @@ export function SettingsPage() {
           <motion.div variants={itemVariants}>
             <Card className="border-slate-200/60 dark:border-slate-800/60">
               <CardHeader>
-                <CardTitle className="text-base">Apparence</CardTitle>
-                <CardDescription>Personnalisez l&apos;affichage de l&apos;application</CardDescription>
+                <CardTitle className="text-base">{t('theme', 'Apparence')}</CardTitle>
+                <CardDescription>{t('customizeDisplay', "Personnalisez l'affichage de l'application")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div>
-                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">Thème</p>
+                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">{t('theme', 'Thème')}</p>
                   <div className="grid grid-cols-3 gap-3">
                     {[
-                      { value: 'light', label: 'Clair', icon: Sun },
-                      { value: 'dark', label: 'Sombre', icon: Moon },
-                      { value: 'system', label: 'Système', icon: Monitor },
+                      { value: 'light', label: t('lightMode', 'Clair'), icon: Sun },
+                      { value: 'dark', label: t('darkMode', 'Sombre'), icon: Moon },
+                      { value: 'system', label: t('systemMode', 'Système'), icon: Monitor },
                     ].map(opt => (
                       <button key={opt.value} onClick={() => setTheme(opt.value)}
                         className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-colors ${resolvedTheme === opt.value || (opt.value === 'system' && resolvedTheme !== 'light' && resolvedTheme !== 'dark') ? 'border-teal-500 bg-teal-50 dark:bg-teal-950/30' : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'}`}
@@ -197,7 +200,7 @@ export function SettingsPage() {
                 </div>
                 <Separator />
                 <div>
-                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">Langue</p>
+                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">{t('language', 'Langue')}</p>
                   <Select value={language} onValueChange={setLanguage}>
                     <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -216,14 +219,14 @@ export function SettingsPage() {
           <motion.div variants={itemVariants} className="space-y-4">
             <Card className="border-slate-200/60 dark:border-slate-800/60">
               <CardHeader>
-                <CardTitle className="text-base">Sécurité du compte</CardTitle>
-                <CardDescription>Protégez votre compte</CardDescription>
+                <CardTitle className="text-base">{t('accountSecurity', 'Sécurité du compte')}</CardTitle>
+                <CardDescription>{t('protectAccount', 'Protégez votre compte')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between py-2">
                   <div>
-                    <p className="text-sm font-medium text-slate-900 dark:text-white">Authentification à deux facteurs (MFA)</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Ajouter une couche de sécurité supplémentaire via TOTP</p>
+                    <p className="text-sm font-medium text-slate-900 dark:text-white">{t('twoFactor', 'Authentification à deux facteurs (MFA)')}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{t('twoFactorDesc', 'Ajouter une couche de sécurité supplémentaire via TOTP')}</p>
                   </div>
                   <Switch checked={mfaEnabled} onCheckedChange={setMfaEnabled} />
                 </div>
@@ -231,9 +234,9 @@ export function SettingsPage() {
                   <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800">
                     <div className="flex items-center gap-2">
                       <ShieldCheck className="size-4 text-emerald-600" />
-                      <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">MFA activé</span>
+                      <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">{t('mfaEnabled', 'MFA activé')}</span>
                     </div>
-                    <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">Utilisez votre application d&apos;authentification pour générer des codes.</p>
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">{t('mfaEnabledDesc', "Utilisez votre application d'authentification pour générer des codes.")}</p>
                   </div>
                 )}
               </CardContent>
@@ -241,8 +244,8 @@ export function SettingsPage() {
 
             <Card className="border-slate-200/60 dark:border-slate-800/60">
               <CardHeader>
-                <CardTitle className="text-base">Sessions actives</CardTitle>
-                <CardDescription>Gérez vos appareils connectés</CardDescription>
+                <CardTitle className="text-base">{t('activeSessions', 'Sessions actives')}</CardTitle>
+                <CardDescription>{t('manageDevices', 'Gérez vos appareils connectés')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 {sessions.map((session, i) => (
@@ -255,9 +258,9 @@ export function SettingsPage() {
                       </div>
                     </div>
                     {session.current ? (
-                      <Badge className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 text-[10px]">Session actuelle</Badge>
+                      <Badge className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 text-[10px]">{t('currentSession', 'Session actuelle')}</Badge>
                     ) : (
-                      <Button variant="ghost" size="sm" className="text-xs text-rose-500 hover:text-rose-600"><LogOut className="size-3 mr-1" /> Déconnecter</Button>
+                      <Button variant="ghost" size="sm" className="text-xs text-rose-500 hover:text-rose-600"><LogOut className="size-3 mr-1" /> {t('disconnect', 'Déconnecter')}</Button>
                     )}
                   </div>
                 ))}
@@ -277,21 +280,21 @@ export function SettingsPage() {
                   </div>
                   <div>
                     <CardTitle className="text-base">HealthFlow Guinea</CardTitle>
-                    <CardDescription>Système d&apos;Information Hospitalier</CardDescription>
+                    <CardDescription>{t('hospitalInfoSystem', "Système d'Information Hospitalier")}</CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 {[
-                  { label: 'Version', value: '1.0.0' },
+                  { label: t('version', 'Version'), value: '1.0.0' },
                   { label: 'Build', value: '2026.03.05' },
-                  { label: 'Licence', value: 'DataSphere Innovation — Licence commerciale' },
-                  { label: 'Base de données', value: 'SQLite (Prisma ORM)' },
+                  { label: t('license', 'Licence'), value: 'DataSphere Innovation — Licence commerciale' },
+                  { label: t('database', 'Base de données'), value: 'SQLite (Prisma ORM)' },
                   { label: 'Framework', value: 'Next.js 16 + TypeScript' },
                   { label: 'UI', value: 'Tailwind CSS + shadcn/ui' },
-                  { label: 'Établissement', value: user.establishment },
-                  { label: 'Utilisateur', value: `${user.name} (${user.role})` },
-                  { label: 'Support', value: 'support@datasphere-gn.com' },
+                  { label: t('establishment', 'Établissement'), value: user.establishment },
+                  { label: t('user', 'Utilisateur'), value: `${user.name} (${user.role})` },
+                  { label: t('support', 'Support'), value: 'support@datasphere-gn.com' },
                 ].map(item => (
                   <div key={item.label} className="flex items-center justify-between py-1.5">
                     <span className="text-sm text-slate-500 dark:text-slate-400">{item.label}</span>
@@ -300,7 +303,7 @@ export function SettingsPage() {
                 ))}
                 <Separator />
                 <p className="text-xs text-center text-slate-400 dark:text-slate-500">
-                  © 2026 DataSphere Innovation. Tous droits réservés.
+                  © 2026 DataSphere Innovation. {t('allRightsReserved', 'Tous droits réservés.')}
                 </p>
               </CardContent>
             </Card>

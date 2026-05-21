@@ -17,6 +17,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useDataStore, type Appointment } from '@/lib/data-store'
 import { useToast } from '@/hooks/use-toast'
+import { useTranslation } from '@/i18n/provider'
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -38,6 +39,15 @@ const statusConfig: Record<AppointmentStatus, { icon: React.ComponentType<{ clas
   'Non honoré': { icon: XCircle, color: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800' },
 }
 
+const statusKeyMap: Record<AppointmentStatus, string> = {
+  'Planifié': 'status.planned',
+  'Confirmé': 'status.confirmed',
+  'En cours': 'status.inProgress',
+  'Terminé': 'status.completed',
+  'Annulé': 'status.cancelled',
+  'Non honoré': 'status.noShow',
+}
+
 const typeColors: Record<string, string> = {
   'Consultation': 'bg-teal-100 text-teal-700 dark:bg-teal-950/40 dark:text-teal-300',
   'Suivi': 'bg-cyan-100 text-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-300',
@@ -49,12 +59,13 @@ const typeColors: Record<string, string> = {
 const timeSlots = ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '14:00', '14:30', '15:00', '15:30', '16:00']
 
 function StatusBadge({ status }: { status: AppointmentStatus }) {
+  const { t } = useTranslation('appointments')
   const config = statusConfig[status]
   const Icon = config.icon
   return (
     <span className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium ${config.color}`}>
       <Icon className="size-3" />
-      {status}
+      {t(statusKeyMap[status], status)}
     </span>
   )
 }
@@ -62,6 +73,8 @@ function StatusBadge({ status }: { status: AppointmentStatus }) {
 export function AppointmentsPage() {
   const { appointments, addAppointment, confirmAppointment, cancelAppointment, updateAppointment, patients } = useDataStore()
   const { toast } = useToast()
+  const { t } = useTranslation('appointments')
+  const { t: tc } = useTranslation('common')
 
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -93,31 +106,31 @@ export function AppointmentsPage() {
 
   const handleConfirm = (id: string) => {
     confirmAppointment(id)
-    toast({ title: 'Rendez-vous confirmé', description: 'Le rendez-vous a été confirmé avec succès.' })
+    toast({ title: t('toast.confirmedTitle', 'Rendez-vous confirmé'), description: t('toast.confirmedDesc', 'Le rendez-vous a été confirmé avec succès.') })
     setSelectedAppointment(null)
   }
 
   const handleCancel = (id: string) => {
     cancelAppointment(id)
-    toast({ title: 'Rendez-vous annulé', description: 'Le rendez-vous a été annulé.' })
+    toast({ title: t('toast.cancelledTitle', 'Rendez-vous annulé'), description: t('toast.cancelledDesc', 'Le rendez-vous a été annulé.') })
     setSelectedAppointment(null)
   }
 
   const handleStartConsultation = (id: string) => {
     updateAppointment(id, { status: 'En cours' })
-    toast({ title: 'Consultation démarrée', description: 'La consultation est maintenant en cours.' })
+    toast({ title: t('toast.startedTitle', 'Consultation démarrée'), description: t('toast.startedDesc', 'La consultation est maintenant en cours.') })
     setSelectedAppointment(null)
   }
 
   const handleComplete = (id: string) => {
     updateAppointment(id, { status: 'Terminé' })
-    toast({ title: 'Consultation terminée', description: 'La consultation a été marquée comme terminée.' })
+    toast({ title: t('toast.completedTitle', 'Consultation terminée'), description: t('toast.completedDesc', 'La consultation a été marquée comme terminée.') })
     setSelectedAppointment(null)
   }
 
   const handleMarkNoShow = (id: string) => {
     updateAppointment(id, { status: 'Non honoré' })
-    toast({ title: 'Non honoré', description: 'Le rendez-vous a été marqué comme non honoré.' })
+    toast({ title: t('toast.noShowTitle', 'Non honoré'), description: t('toast.noShowDesc', 'Le rendez-vous a été marqué comme non honoré.') })
     setSelectedAppointment(null)
   }
 
@@ -134,7 +147,7 @@ export function AppointmentsPage() {
   const handleAddAppointment = () => {
     const patient = patients.find(p => p.id === newPatientId)
     if (!patient || !newDoctor || !newDate || !newTime) {
-      toast({ title: 'Champs requis', description: 'Veuillez remplir tous les champs obligatoires.', variant: 'destructive' })
+      toast({ title: t('toast.requiredTitle', 'Champs requis'), description: t('toast.requiredDesc', 'Veuillez remplir tous les champs obligatoires.'), variant: 'destructive' })
       return
     }
 
@@ -153,7 +166,7 @@ export function AppointmentsPage() {
     }
 
     addAppointment(newAppointment)
-    toast({ title: 'Rendez-vous créé', description: `Rendez-vous pour ${newAppointment.patientName} le ${newDate} à ${newTime}.` })
+    toast({ title: t('toast.createdTitle', 'Rendez-vous créé'), description: t('toast.createdDesc', `Rendez-vous pour ${newAppointment.patientName} le ${newDate} à ${newTime}.`) })
     resetNewForm()
     setShowNewDialog(false)
   }
@@ -174,22 +187,22 @@ export function AppointmentsPage() {
             <Calendar className="size-5 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Rendez-vous</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Planification et suivi des rendez-vous</p>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{t('title', 'Rendez-vous')}</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t('subtitle', 'Planification et suivi des rendez-vous')}</p>
           </div>
         </div>
         <Button onClick={() => setShowNewDialog(true)} className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white shadow-lg shadow-teal-500/20">
-          <Plus className="size-4 mr-2" /> Nouveau rendez-vous
+          <Plus className="size-4 mr-2" /> {t('newAppointment', 'Nouveau Rendez-vous')}
         </Button>
       </motion.div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: "Aujourd'hui", value: statusCounts.total, color: 'from-teal-500 to-emerald-600' },
-          { label: 'Confirmés', value: statusCounts.confirmed, color: 'from-emerald-500 to-green-600' },
-          { label: 'Planifiés', value: statusCounts.planned, color: 'from-amber-500 to-orange-600' },
-          { label: 'Terminés', value: statusCounts.completed, color: 'from-cyan-500 to-teal-600' },
+          { label: tc('today', "Aujourd'hui"), value: statusCounts.total, color: 'from-teal-500 to-emerald-600' },
+          { label: t('stats.confirmed', 'Confirmés'), value: statusCounts.confirmed, color: 'from-emerald-500 to-green-600' },
+          { label: t('stats.planned', 'Planifiés'), value: statusCounts.planned, color: 'from-amber-500 to-orange-600' },
+          { label: t('stats.completed', 'Terminés'), value: statusCounts.completed, color: 'from-cyan-500 to-teal-600' },
         ].map((stat) => (
           <motion.div key={stat.label} variants={itemVariants}>
             <Card className="relative overflow-hidden border-slate-200/60 dark:border-slate-800/60">
@@ -210,24 +223,24 @@ export function AppointmentsPage() {
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-                <Input placeholder="Rechercher patient, médecin, motif..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+                <Input placeholder={t('searchPlaceholder', 'Rechercher patient, médecin, motif...')} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Statut" /></SelectTrigger>
+                <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder={tc('status', 'Statut')} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tous les statuts</SelectItem>
-                  <SelectItem value="Planifié">Planifié</SelectItem>
-                  <SelectItem value="Confirmé">Confirmé</SelectItem>
-                  <SelectItem value="En cours">En cours</SelectItem>
-                  <SelectItem value="Terminé">Terminé</SelectItem>
-                  <SelectItem value="Annulé">Annulé</SelectItem>
-                  <SelectItem value="Non honoré">Non honoré</SelectItem>
+                  <SelectItem value="all">{t('allStatuses', 'Tous les statuts')}</SelectItem>
+                  <SelectItem value="Planifié">{t('status.planned', 'Planifié')}</SelectItem>
+                  <SelectItem value="Confirmé">{t('status.confirmed', 'Confirmé')}</SelectItem>
+                  <SelectItem value="En cours">{t('status.inProgress', 'En cours')}</SelectItem>
+                  <SelectItem value="Terminé">{t('status.completed', 'Terminé')}</SelectItem>
+                  <SelectItem value="Annulé">{t('status.cancelled', 'Annulé')}</SelectItem>
+                  <SelectItem value="Non honoré">{t('status.noShow', 'Non honoré')}</SelectItem>
                 </SelectContent>
               </Select>
               <Tabs value={view} onValueChange={(v) => setView(v as 'list' | 'calendar')}>
                 <TabsList>
-                  <TabsTrigger value="list" className="text-xs">Liste</TabsTrigger>
-                  <TabsTrigger value="calendar" className="text-xs">Calendrier</TabsTrigger>
+                  <TabsTrigger value="list" className="text-xs">{t('listView', 'Liste')}</TabsTrigger>
+                  <TabsTrigger value="calendar" className="text-xs">{t('calendarView', 'Calendrier')}</TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
@@ -240,8 +253,8 @@ export function AppointmentsPage() {
         <motion.div variants={itemVariants}>
           <Card className="border-slate-200/60 dark:border-slate-800/60">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">Rendez-vous du jour</CardTitle>
-              <CardDescription className="text-xs">{filtered.length} rendez-vous trouvés</CardDescription>
+              <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">{t('todayAppointments', 'Rendez-vous du jour')}</CardTitle>
+              <CardDescription className="text-xs">{filtered.length} {t('appointmentsFound', 'rendez-vous trouvés')}</CardDescription>
             </CardHeader>
             <CardContent className="pt-0">
               <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1 custom-scrollbar">
@@ -272,7 +285,7 @@ export function AppointmentsPage() {
                 {filtered.length === 0 && (
                   <div className="flex flex-col items-center justify-center py-12 text-slate-400">
                     <Calendar className="size-10 mb-2" />
-                    <p className="text-sm">Aucun rendez-vous trouvé</p>
+                    <p className="text-sm">{t('noAppointmentsFound', 'Aucun rendez-vous trouvé')}</p>
                   </div>
                 )}
               </div>
@@ -284,10 +297,10 @@ export function AppointmentsPage() {
           <Card className="border-slate-200/60 dark:border-slate-800/60">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">Vue calendrier — 10 Mai 2026</CardTitle>
+                <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">{t('calendarViewDate', 'Vue calendrier — 10 Mai 2026')}</CardTitle>
                 <div className="flex items-center gap-1">
                   <Button variant="outline" size="icon" className="size-8"><ChevronLeft className="size-4" /></Button>
-                  <Button variant="outline" size="sm" className="text-xs">Aujourd&apos;hui</Button>
+                  <Button variant="outline" size="sm" className="text-xs">{tc('today', "Aujourd'hui")}</Button>
                   <Button variant="outline" size="icon" className="size-8"><ChevronRight className="size-4" /></Button>
                 </div>
               </div>
@@ -315,7 +328,7 @@ export function AppointmentsPage() {
                           <span className="text-[10px] text-slate-500 dark:text-slate-400">{apt.doctor} — {apt.reason.length > 40 ? apt.reason.slice(0, 40) + '...' : apt.reason}</span>
                         </div>
                       ) : (
-                        <div className="flex-1 rounded-lg border border-dashed border-slate-200 dark:border-slate-700 py-2 px-3 text-xs text-slate-300 dark:text-slate-600">Disponible</div>
+                        <div className="flex-1 rounded-lg border border-dashed border-slate-200 dark:border-slate-700 py-2 px-3 text-xs text-slate-300 dark:text-slate-600">{t('available', 'Disponible')}</div>
                       )}
                     </div>
                   )
@@ -334,40 +347,40 @@ export function AppointmentsPage() {
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <Calendar className="size-5 text-teal-600" />
-                  Détails du rendez-vous
+                  {t('appointmentDetails', 'Détails du rendez-vous')}
                 </DialogTitle>
               </DialogHeader>
               <div className="space-y-4 py-2">
                 <div className="grid grid-cols-2 gap-4">
-                  <div><Label className="text-xs text-slate-500">Patient</Label><p className="text-sm font-medium text-slate-900 dark:text-white">{selectedAppointment.patientName}</p></div>
-                  <div><Label className="text-xs text-slate-500">Médecin</Label><p className="text-sm font-medium text-slate-900 dark:text-white">{selectedAppointment.doctor}</p></div>
-                  <div><Label className="text-xs text-slate-500">Date & Heure</Label><p className="text-sm font-medium text-slate-900 dark:text-white">{selectedAppointment.date} à {selectedAppointment.time}</p></div>
-                  <div><Label className="text-xs text-slate-500">Durée</Label><p className="text-sm font-medium text-slate-900 dark:text-white">{selectedAppointment.duration} minutes</p></div>
-                  <div><Label className="text-xs text-slate-500">Type</Label><p><span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${typeColors[selectedAppointment.type] || 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'}`}>{selectedAppointment.type}</span></p></div>
-                  <div><Label className="text-xs text-slate-500">Statut</Label><div className="mt-0.5"><StatusBadge status={selectedAppointment.status} /></div></div>
+                  <div><Label className="text-xs text-slate-500">{t('patient', 'Patient')}</Label><p className="text-sm font-medium text-slate-900 dark:text-white">{selectedAppointment.patientName}</p></div>
+                  <div><Label className="text-xs text-slate-500">{t('doctor', 'Médecin')}</Label><p className="text-sm font-medium text-slate-900 dark:text-white">{selectedAppointment.doctor}</p></div>
+                  <div><Label className="text-xs text-slate-500">{t('dateAndTime', 'Date & Heure')}</Label><p className="text-sm font-medium text-slate-900 dark:text-white">{selectedAppointment.date} {t('at', 'à')} {selectedAppointment.time}</p></div>
+                  <div><Label className="text-xs text-slate-500">{t('duration', 'Durée')}</Label><p className="text-sm font-medium text-slate-900 dark:text-white">{selectedAppointment.duration} {t('minutes', 'minutes')}</p></div>
+                  <div><Label className="text-xs text-slate-500">{t('type', 'Type')}</Label><p><span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${typeColors[selectedAppointment.type] || 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'}`}>{selectedAppointment.type}</span></p></div>
+                  <div><Label className="text-xs text-slate-500">{tc('status', 'Statut')}</Label><div className="mt-0.5"><StatusBadge status={selectedAppointment.status} /></div></div>
                 </div>
-                <div><Label className="text-xs text-slate-500">Motif</Label><p className="text-sm text-slate-700 dark:text-slate-300 mt-0.5">{selectedAppointment.reason}</p></div>
+                <div><Label className="text-xs text-slate-500">{t('reason', 'Motif')}</Label><p className="text-sm text-slate-700 dark:text-slate-300 mt-0.5">{selectedAppointment.reason}</p></div>
                 {selectedAppointment.notes && (
-                  <div><Label className="text-xs text-slate-500">Notes</Label><p className="text-sm text-slate-700 dark:text-slate-300 mt-0.5">{selectedAppointment.notes}</p></div>
+                  <div><Label className="text-xs text-slate-500">{t('notes', 'Notes')}</Label><p className="text-sm text-slate-700 dark:text-slate-300 mt-0.5">{selectedAppointment.notes}</p></div>
                 )}
               </div>
               <DialogFooter className="flex gap-2">
                 {(selectedAppointment.status === 'Planifié') && (
-                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => handleConfirm(selectedAppointment.id)}>Confirmer</Button>
+                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => handleConfirm(selectedAppointment.id)}>{t('confirmAppointment', 'Confirmer')}</Button>
                 )}
                 {(selectedAppointment.status === 'Confirmé') && (
-                  <Button className="bg-teal-600 hover:bg-teal-700 text-white" onClick={() => handleStartConsultation(selectedAppointment.id)}>Démarrer consultation</Button>
+                  <Button className="bg-teal-600 hover:bg-teal-700 text-white" onClick={() => handleStartConsultation(selectedAppointment.id)}>{t('startConsultation', 'Démarrer consultation')}</Button>
                 )}
                 {(selectedAppointment.status === 'En cours') && (
-                  <Button className="bg-cyan-600 hover:bg-cyan-700 text-white" onClick={() => handleComplete(selectedAppointment.id)}>Terminer</Button>
+                  <Button className="bg-cyan-600 hover:bg-cyan-700 text-white" onClick={() => handleComplete(selectedAppointment.id)}>{t('complete', 'Terminer')}</Button>
                 )}
                 {(selectedAppointment.status === 'Planifié' || selectedAppointment.status === 'Confirmé') && (
-                  <Button variant="outline" className="text-rose-600 border-rose-200 hover:bg-rose-50 dark:text-rose-400 dark:border-rose-800 dark:hover:bg-rose-950/30" onClick={() => handleCancel(selectedAppointment.id)}>Annuler</Button>
+                  <Button variant="outline" className="text-rose-600 border-rose-200 hover:bg-rose-50 dark:text-rose-400 dark:border-rose-800 dark:hover:bg-rose-950/30" onClick={() => handleCancel(selectedAppointment.id)}>{tc('cancel', 'Annuler')}</Button>
                 )}
                 {(selectedAppointment.status === 'Planifié' || selectedAppointment.status === 'Confirmé') && (
-                  <Button variant="outline" className="text-amber-600 border-amber-200 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-800 dark:hover:bg-amber-950/30" onClick={() => handleMarkNoShow(selectedAppointment.id)}>Non honoré</Button>
+                  <Button variant="outline" className="text-amber-600 border-amber-200 hover:bg-amber-50 dark:text-amber-400 dark:border-amber-800 dark:hover:bg-amber-950/30" onClick={() => handleMarkNoShow(selectedAppointment.id)}>{t('status.noShow', 'Non honoré')}</Button>
                 )}
-                <Button variant="outline" onClick={() => setSelectedAppointment(null)}>Fermer</Button>
+                <Button variant="outline" onClick={() => setSelectedAppointment(null)}>{tc('close', 'Fermer')}</Button>
               </DialogFooter>
             </>
           )}
@@ -380,15 +393,15 @@ export function AppointmentsPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Plus className="size-5 text-teal-600" />
-              Nouveau rendez-vous
+              {t('newAppointment', 'Nouveau Rendez-vous')}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Patient *</Label>
+                <Label>{t('patient', 'Patient')} *</Label>
                 <Select value={newPatientId} onValueChange={setNewPatientId}>
-                  <SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('selectPlaceholder', 'Sélectionner...')} /></SelectTrigger>
                   <SelectContent>
                     {patients.filter(p => p.status === 'Actif').map(p => (
                       <SelectItem key={p.id} value={p.id}>{p.firstName} {p.lastName}</SelectItem>
@@ -397,9 +410,9 @@ export function AppointmentsPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Médecin *</Label>
+                <Label>{t('doctor', 'Médecin')} *</Label>
                 <Select value={newDoctor} onValueChange={setNewDoctor}>
-                  <SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('selectPlaceholder', 'Sélectionner...')} /></SelectTrigger>
                   <SelectContent>
                     {doctors.map(d => (
                       <SelectItem key={d.id} value={d.name}>{d.name}</SelectItem>
@@ -410,35 +423,35 @@ export function AppointmentsPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Date *</Label>
+                <Label>{tc('date', 'Date')} *</Label>
                 <Input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label>Heure *</Label>
+                <Label>{tc('time', 'Heure')} *</Label>
                 <Select value={newTime} onValueChange={setNewTime}>
-                  <SelectTrigger><SelectValue placeholder="Choisir..." /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('choosePlaceholder', 'Choisir...')} /></SelectTrigger>
                   <SelectContent>
-                    {timeSlots.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                    {timeSlots.map(slot => <SelectItem key={slot} value={slot}>{slot}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Type</Label>
+                <Label>{t('type', 'Type')}</Label>
                 <Select value={newType} onValueChange={setNewType}>
-                  <SelectTrigger><SelectValue placeholder="Type..." /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('typePlaceholder', 'Type...')} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Consultation">Consultation</SelectItem>
-                    <SelectItem value="Suivi">Suivi</SelectItem>
-                    <SelectItem value="Urgence">Urgence</SelectItem>
-                    <SelectItem value="Contrôle">Contrôle</SelectItem>
-                    <SelectItem value="Prénatal">Prénatal</SelectItem>
+                    <SelectItem value="Consultation">{t('types.consultation', 'Consultation')}</SelectItem>
+                    <SelectItem value="Suivi">{t('types.followUp', 'Suivi')}</SelectItem>
+                    <SelectItem value="Urgence">{t('types.emergency', 'Urgence')}</SelectItem>
+                    <SelectItem value="Contrôle">{t('types.checkup', 'Contrôle')}</SelectItem>
+                    <SelectItem value="Prénatal">{t('types.prenatal', 'Prénatal')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Durée (min)</Label>
+                <Label>{t('duration', 'Durée')} (min)</Label>
                 <Select value={newDuration} onValueChange={setNewDuration}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -451,13 +464,13 @@ export function AppointmentsPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Motif</Label>
-              <Textarea placeholder="Décrire le motif du rendez-vous..." rows={3} value={newReason} onChange={(e) => setNewReason(e.target.value)} />
+              <Label>{t('reason', 'Motif')}</Label>
+              <Textarea placeholder={t('reasonPlaceholder', 'Décrire le motif du rendez-vous...')} rows={3} value={newReason} onChange={(e) => setNewReason(e.target.value)} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setShowNewDialog(false); resetNewForm() }}>Annuler</Button>
-            <Button className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white" onClick={handleAddAppointment}>Enregistrer</Button>
+            <Button variant="outline" onClick={() => { setShowNewDialog(false); resetNewForm() }}>{tc('cancel', 'Annuler')}</Button>
+            <Button className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white" onClick={handleAddAppointment}>{tc('save', 'Enregistrer')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

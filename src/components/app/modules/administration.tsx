@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useDataStore } from '@/lib/data-store'
 import { useStore } from '@/lib/store'
+import { useTranslation } from '@/i18n/provider'
 
 const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.1 } } }
 const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } } }
@@ -59,6 +60,8 @@ const rolePermissions: Record<UserRole, string[]> = {
 }
 
 export function AdministrationPage() {
+  const { t } = useTranslation('administration')
+  const { t: tc } = useTranslation('common')
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState<string>('all')
   const [showNewDialog, setShowNewDialog] = useState(false)
@@ -87,22 +90,22 @@ export function AdministrationPage() {
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center size-10 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 shadow-lg shadow-teal-500/20"><Shield className="size-5 text-white" /></div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Administration</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Gestion des utilisateurs et configuration</p>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{t('title', 'Administration')}</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t('userManagement', 'Gestion des utilisateurs et configuration')}</p>
           </div>
         </div>
         <Button onClick={() => setShowNewDialog(true)} className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white shadow-lg shadow-teal-500/20">
-          <Plus className="size-4 mr-2" /> Nouvel utilisateur
+          <Plus className="size-4 mr-2" /> {t('addUser', 'Nouvel utilisateur')}
         </Button>
       </motion.div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Patients actifs', value: activePatients, color: 'from-teal-500 to-emerald-600' },
-          { label: 'Lits occupés', value: occupiedBeds, color: 'from-emerald-500 to-green-600' },
-          { label: 'Factures payées', value: paidInvoices, color: 'from-cyan-500 to-teal-600' },
-          { label: 'Urgences en attente', value: pendingEmergencies, color: 'from-rose-500 to-red-600' },
+          { label: t('activePatients', 'Patients actifs'), value: activePatients, color: 'from-teal-500 to-emerald-600' },
+          { label: t('occupiedBeds', 'Lits occupés'), value: occupiedBeds, color: 'from-emerald-500 to-green-600' },
+          { label: t('paidInvoices', 'Factures payées'), value: paidInvoices, color: 'from-cyan-500 to-teal-600' },
+          { label: t('pendingEmergencies', 'Urgences en attente'), value: pendingEmergencies, color: 'from-rose-500 to-red-600' },
         ].map(stat => (
           <motion.div key={stat.label} variants={itemVariants}>
             <Card className="relative overflow-hidden border-slate-200/60 dark:border-slate-800/60">
@@ -118,9 +121,9 @@ export function AdministrationPage() {
 
       <Tabs defaultValue="users">
         <TabsList>
-          <TabsTrigger value="users">Utilisateurs</TabsTrigger>
-          <TabsTrigger value="roles">Rôles & Permissions</TabsTrigger>
-          <TabsTrigger value="establishment">Établissement</TabsTrigger>
+          <TabsTrigger value="users">{t('users', 'Utilisateurs')}</TabsTrigger>
+          <TabsTrigger value="roles">{t('rolesPermissions', 'Rôles & Permissions')}</TabsTrigger>
+          <TabsTrigger value="establishment">{t('establishments', 'Établissement')}</TabsTrigger>
         </TabsList>
 
         {/* Users Tab */}
@@ -131,12 +134,12 @@ export function AdministrationPage() {
                 <div className="flex flex-col sm:flex-row gap-3 mb-4">
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-                    <Input placeholder="Rechercher nom, email..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+                    <Input placeholder={tc('search', 'Rechercher nom, email...')} value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
                   </div>
                   <Select value={roleFilter} onValueChange={setRoleFilter}>
-                    <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Rôle" /></SelectTrigger>
+                    <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder={t('roles', 'Rôle')} /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Tous les rôles</SelectItem>
+                      <SelectItem value="all">{tc('all', 'Tous les rôles')}</SelectItem>
                       {Object.keys(roleColors).map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
                     </SelectContent>
                   </Select>
@@ -159,7 +162,7 @@ export function AdministrationPage() {
                     <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium ${roleColors[user.role]}`}>{user.role}</span>
                     <Badge variant={user.status === 'Actif' ? 'default' : 'secondary'} className={`text-[10px] ${user.status === 'Actif' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>{user.status}</Badge>
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{user.email} • {user.department} • Dernière connexion: {user.lastLogin}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{user.email} • {user.department} • {t('lastLogin', 'Dernière connexion')}: {user.lastLogin}</p>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   <Button size="icon" variant="ghost" className="size-8 text-slate-400 hover:text-teal-600" onClick={() => { setSelectedUser(user); setShowEditDialog(true) }}><Pencil className="size-3.5" /></Button>
@@ -179,7 +182,7 @@ export function AdministrationPage() {
                   <CardContent className="pt-4 pb-4">
                     <div className="flex items-center gap-2 mb-3">
                       <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${roleColors[role]}`}>{role}</span>
-                      <span className="text-xs text-slate-400">{demoUsers.filter(u => u.role === role).length} utilisateur(s)</span>
+                      <span className="text-xs text-slate-400">{demoUsers.filter(u => u.role === role).length} {t('userCount', 'utilisateur(s)')}</span>
                     </div>
                     <div className="space-y-1.5">
                       {perms.map(perm => (
@@ -204,19 +207,19 @@ export function AdministrationPage() {
                 <Building2 className="size-5 text-teal-600" />
                 <CardTitle className="text-base">{user.establishment}</CardTitle>
               </div>
-              <CardDescription>Configuration de l&apos;établissement</CardDescription>
+              <CardDescription>{t('establishmentConfig', "Configuration de l'établissement")}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2"><Label className="text-xs text-slate-500">Nom</Label><Input defaultValue={user.establishment} /></div>
-                <div className="space-y-2"><Label className="text-xs text-slate-500">Type</Label><Select defaultValue="hospital"><SelectTrigger /><SelectContent><SelectItem value="hospital">Hôpital</SelectItem><SelectItem value="clinic">Clinique</SelectItem><SelectItem value="center">Centre de santé</SelectItem></SelectContent></Select></div>
-                <div className="space-y-2"><Label className="text-xs text-slate-500">Adresse</Label><Input defaultValue="Avenue de la République, Conakry" /></div>
-                <div className="space-y-2"><Label className="text-xs text-slate-500">Région</Label><Select defaultValue="conakry"><SelectTrigger /><SelectContent><SelectItem value="conakry">Conakry</SelectItem><SelectItem value="kankan">Kankan</SelectItem><SelectItem value="nzer">Nzérékoré</SelectItem></SelectContent></Select></div>
-                <div className="space-y-2"><Label className="text-xs text-slate-500">Téléphone</Label><Input defaultValue={user.phone} /></div>
+                <div className="space-y-2"><Label className="text-xs text-slate-500">{tc('date', 'Nom')}</Label><Input defaultValue={user.establishment} /></div>
+                <div className="space-y-2"><Label className="text-xs text-slate-500">{tc('type', 'Type')}</Label><Select defaultValue="hospital"><SelectTrigger /><SelectContent><SelectItem value="hospital">{t('hospital', 'Hôpital')}</SelectItem><SelectItem value="clinic">{t('clinic', 'Clinique')}</SelectItem><SelectItem value="center">{t('healthCenter', 'Centre de santé')}</SelectItem></SelectContent></Select></div>
+                <div className="space-y-2"><Label className="text-xs text-slate-500">{tc('address', 'Adresse')}</Label><Input defaultValue="Avenue de la République, Conakry" /></div>
+                <div className="space-y-2"><Label className="text-xs text-slate-500">{t('region', 'Région')}</Label><Select defaultValue="conakry"><SelectTrigger /><SelectContent><SelectItem value="conakry">Conakry</SelectItem><SelectItem value="kankan">Kankan</SelectItem><SelectItem value="nzer">Nzérékoré</SelectItem></SelectContent></Select></div>
+                <div className="space-y-2"><Label className="text-xs text-slate-500">{tc('phone', 'Téléphone')}</Label><Input defaultValue={user.phone} /></div>
                 <div className="space-y-2"><Label className="text-xs text-slate-500">Email</Label><Input defaultValue={user.email} /></div>
               </div>
               <div className="mt-4 flex justify-end">
-                <Button className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white">Sauvegarder</Button>
+                <Button className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white">{tc('save', 'Sauvegarder')}</Button>
               </div>
             </CardContent>
           </Card>
@@ -226,24 +229,24 @@ export function AdministrationPage() {
       {/* New User Dialog */}
       <Dialog open={showNewDialog} onOpenChange={setShowNewDialog}>
         <DialogContent className="sm:max-w-[480px]">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><Plus className="size-5 text-teal-600" /> Nouvel utilisateur</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Plus className="size-5 text-teal-600" /> {t('addUser', 'Nouvel utilisateur')}</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Nom complet *</Label><Input placeholder="Nom..." /></div>
+              <div className="space-y-2"><Label>{tc('firstName', 'Nom complet')} *</Label><Input placeholder="Nom..." /></div>
               <div className="space-y-2"><Label>Email *</Label><Input type="email" placeholder="email@healthflow.gn" /></div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Téléphone</Label><Input placeholder="+224 6XX XX XX XX" /></div>
-              <div className="space-y-2"><Label>Rôle *</Label><Select><SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger><SelectContent>{Object.keys(roleColors).map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent></Select></div>
+              <div className="space-y-2"><Label>{tc('phone', 'Téléphone')}</Label><Input placeholder="+224 6XX XX XX XX" /></div>
+              <div className="space-y-2"><Label>{t('roles', 'Rôle')} *</Label><Select><SelectTrigger><SelectValue placeholder={t('selectRole', 'Sélectionner...')} /></SelectTrigger><SelectContent>{Object.keys(roleColors).map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent></Select></div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Département</Label><Input placeholder="Département..." /></div>
-              <div className="space-y-2"><Label>Mot de passe *</Label><Input type="password" placeholder="••••••••" /></div>
+              <div className="space-y-2"><Label>{t('department', 'Département')}</Label><Input placeholder={t('department', 'Département...')} /></div>
+              <div className="space-y-2"><Label>{t('password', 'Mot de passe')} *</Label><Input type="password" placeholder="••••••••" /></div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowNewDialog(false)}>Annuler</Button>
-            <Button className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white" onClick={() => setShowNewDialog(false)}>Créer utilisateur</Button>
+            <Button variant="outline" onClick={() => setShowNewDialog(false)}>{tc('cancel', 'Annuler')}</Button>
+            <Button className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white" onClick={() => setShowNewDialog(false)}>{t('createUser', 'Créer utilisateur')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -253,21 +256,21 @@ export function AdministrationPage() {
         <DialogContent className="sm:max-w-[480px]">
           {selectedUser && (
             <>
-              <DialogHeader><DialogTitle className="flex items-center gap-2"><Pencil className="size-5 text-teal-600" /> Modifier utilisateur</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle className="flex items-center gap-2"><Pencil className="size-5 text-teal-600" /> {t('editUser', 'Modifier utilisateur')}</DialogTitle></DialogHeader>
               <div className="space-y-4 py-2">
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2"><Label>Nom</Label><Input defaultValue={selectedUser.name} /></div>
+                  <div className="space-y-2"><Label>{tc('firstName', 'Nom')}</Label><Input defaultValue={selectedUser.name} /></div>
                   <div className="space-y-2"><Label>Email</Label><Input defaultValue={selectedUser.email} /></div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2"><Label>Téléphone</Label><Input defaultValue={selectedUser.phone} /></div>
-                  <div className="space-y-2"><Label>Rôle</Label><Select defaultValue={selectedUser.role}><SelectTrigger /><SelectContent>{Object.keys(roleColors).map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent></Select></div>
+                  <div className="space-y-2"><Label>{tc('phone', 'Téléphone')}</Label><Input defaultValue={selectedUser.phone} /></div>
+                  <div className="space-y-2"><Label>{t('roles', 'Rôle')}</Label><Select defaultValue={selectedUser.role}><SelectTrigger /><SelectContent>{Object.keys(roleColors).map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent></Select></div>
                 </div>
-                <div className="space-y-2"><Label>Statut</Label><Select defaultValue={selectedUser.status}><SelectTrigger /><SelectContent><SelectItem value="Actif">Actif</SelectItem><SelectItem value="Inactif">Inactif</SelectItem></SelectContent></Select></div>
+                <div className="space-y-2"><Label>{tc('status', 'Statut')}</Label><Select defaultValue={selectedUser.status}><SelectTrigger /><SelectContent><SelectItem value="Actif">{tc('active', 'Actif')}</SelectItem><SelectItem value="Inactif">{tc('inactive', 'Inactif')}</SelectItem></SelectContent></Select></div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setShowEditDialog(false)}>Annuler</Button>
-                <Button className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white" onClick={() => setShowEditDialog(false)}>Sauvegarder</Button>
+                <Button variant="outline" onClick={() => setShowEditDialog(false)}>{tc('cancel', 'Annuler')}</Button>
+                <Button className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white" onClick={() => setShowEditDialog(false)}>{tc('save', 'Sauvegarder')}</Button>
               </DialogFooter>
             </>
           )}

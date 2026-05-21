@@ -93,6 +93,7 @@ import { Separator } from '@/components/ui/separator'
 import { useDataStore, type Patient, type MedicalDocument, type UserRole, ROLE_PERMISSIONS } from '@/lib/data-store'
 import { useStore } from '@/lib/store'
 import { useToast } from '@/hooks/use-toast'
+import { useTranslation } from '@/i18n/provider'
 
 /* ─────────── Animation Variants ─────────── */
 
@@ -154,6 +155,12 @@ function formatDate(dateStr: string): string {
 /* ─────────── Status Badge ─────────── */
 
 function StatusBadge({ status }: { status: PatientStatus }) {
+  const { t: tc } = useTranslation('common')
+  const statusLabels: Record<PatientStatus, string> = {
+    Actif: tc('active', 'Actif'),
+    Inactif: tc('inactive', 'Inactif'),
+    Archivé: tc('archived', 'Archivé'),
+  }
   const variants: Record<PatientStatus, string> = {
     Actif: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800',
     Inactif: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800',
@@ -167,7 +174,7 @@ function StatusBadge({ status }: { status: PatientStatus }) {
   return (
     <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${variants[status]}`}>
       <span className={`mr-1.5 size-1.5 rounded-full ${dots[status]}`} />
-      {status}
+      {statusLabels[status]}
     </span>
   )
 }
@@ -175,6 +182,12 @@ function StatusBadge({ status }: { status: PatientStatus }) {
 /* ─────────── Severity Badge ─────────── */
 
 function SeverityBadge({ severity }: { severity: 'Mineur' | 'Majeur' | 'Critique' }) {
+  const { t } = useTranslation('patients')
+  const severityLabels: Record<string, string> = {
+    Mineur: t('severity.minor', 'Mineur'),
+    Majeur: t('severity.major', 'Majeur'),
+    Critique: t('severity.critical', 'Critique'),
+  }
   const variants: Record<string, string> = {
     Mineur: 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800',
     Majeur: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800',
@@ -188,7 +201,7 @@ function SeverityBadge({ severity }: { severity: 'Mineur' | 'Majeur' | 'Critique
   return (
     <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${variants[severity]}`}>
       {icons[severity]}
-      {severity}
+      {severityLabels[severity]}
     </span>
   )
 }
@@ -224,6 +237,10 @@ const defaultFormState = {
 /* ─────────── Main Component ─────────── */
 
 export function PatientsPage() {
+  // i18n
+  const { t } = useTranslation('patients')
+  const { t: tc } = useTranslation('common')
+
   // Store
   const {
     patients, addPatient, updatePatient, archivePatient,
@@ -411,8 +428,8 @@ export function PatientsPage() {
   const handleFormSubmit = () => {
     if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.dateOfBirth || !formData.phone.trim()) {
       toast({
-        title: 'Champs obligatoires manquants',
-        description: 'Veuillez remplir le nom, le prénom, la date de naissance et le téléphone.',
+        title: t('requiredFieldsMissing', 'Champs obligatoires manquants'),
+        description: t('requiredFieldsDesc', 'Veuillez remplir le nom, le prénom, la date de naissance et le téléphone.'),
         variant: 'destructive',
       })
       return
@@ -468,8 +485,8 @@ export function PatientsPage() {
       }
 
       toast({
-        title: 'Patient modifié',
-        description: `${formData.lastName} ${formData.firstName} a été mis à jour avec succès.`,
+        title: t('patientModified', 'Patient modifié'),
+        description: t('updatedSuccessfully', `${formData.lastName} ${formData.firstName} a été mis à jour avec succès.`),
       })
     } else {
       // Add new patient
@@ -492,7 +509,7 @@ export function PatientsPage() {
         emergencyPhone: formData.emergencyPhone.trim(),
         lastVisit: today,
         status: 'Actif',
-        reason: 'Nouveau patient',
+        reason: t('newPatientReason', 'Nouveau patient'),
         allergies: parsedAllergies,
         medicalHistory: parsedMedicalHistory,
         surgicalHistory: [],
@@ -504,8 +521,8 @@ export function PatientsPage() {
       addPatient(newPatientData)
 
       toast({
-        title: 'Patient ajouté',
-        description: `${formData.lastName} ${formData.firstName} a été enregistré avec succès. QR code: ${qrCode}`,
+        title: t('patientAdded', 'Patient ajouté'),
+        description: t('registeredSuccessfully', `${formData.lastName} ${formData.firstName} a été enregistré avec succès. QR code: ${qrCode}`),
       })
     }
 
@@ -529,8 +546,8 @@ export function PatientsPage() {
     })
 
     toast({
-      title: 'Patient archivé',
-      description: `${patientName} a été archivé.`,
+      title: t('patientArchived', 'Patient archivé'),
+      description: t('archivedSuccessfully', `${patientName} a été archivé.`),
     })
   }
 
@@ -549,14 +566,14 @@ export function PatientsPage() {
           </div>
           <div>
             <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
-              Gestion des Patients
+              {t('title', 'Gestion des Patients')}
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-              Gérez les dossiers patients de l&apos;établissement
+              {t('subtitle', "Gérez les dossiers patients de l'établissement")}
             </p>
           </div>
           <Badge className="ml-2 bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-800 text-xs px-2.5 py-1">
-            {activePatientCount} actifs
+            {activePatientCount} {t('activePatients', 'actifs')}
           </Badge>
         </div>
         <Button
@@ -564,7 +581,7 @@ export function PatientsPage() {
           className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white shadow-lg shadow-teal-500/20 gap-2"
         >
           <Plus className="size-4" />
-          Nouveau Patient
+          {t('newPatient', 'Nouveau Patient')}
         </Button>
       </motion.div>
 
@@ -577,7 +594,7 @@ export function PatientsPage() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
                 <Input
-                  placeholder="Rechercher par nom, téléphone, QR code, n° d'identité..."
+                  placeholder={t('searchPatient', "Rechercher par nom, téléphone, QR code, n° d'identité...")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9 h-9 bg-white dark:bg-slate-900"
@@ -587,25 +604,25 @@ export function PatientsPage() {
               {/* Status Filter */}
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-[140px] h-9">
-                  <SelectValue placeholder="Statut" />
+                  <SelectValue placeholder={tc('status', 'Statut')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tous les statuts</SelectItem>
-                  <SelectItem value="Actif">Actif</SelectItem>
-                  <SelectItem value="Inactif">Inactif</SelectItem>
-                  <SelectItem value="Archivé">Archivé</SelectItem>
+                  <SelectItem value="all">{t('allStatuses', 'Tous les statuts')}</SelectItem>
+                  <SelectItem value="Actif">{tc('active', 'Actif')}</SelectItem>
+                  <SelectItem value="Inactif">{tc('inactive', 'Inactif')}</SelectItem>
+                  <SelectItem value="Archivé">{tc('archived', 'Archivé')}</SelectItem>
                 </SelectContent>
               </Select>
 
               {/* Gender Filter */}
               <Select value={genderFilter} onValueChange={setGenderFilter}>
                 <SelectTrigger className="w-[120px] h-9">
-                  <SelectValue placeholder="Genre" />
+                  <SelectValue placeholder={t('gender', 'Genre')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tous</SelectItem>
-                  <SelectItem value="M">Masculin</SelectItem>
-                  <SelectItem value="F">Féminin</SelectItem>
+                  <SelectItem value="all">{tc('all', 'Tous')}</SelectItem>
+                  <SelectItem value="M">{t('male', 'Masculin')}</SelectItem>
+                  <SelectItem value="F">{t('female', 'Féminin')}</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -619,14 +636,14 @@ export function PatientsPage() {
                         {dateFrom ? formatDate(dateFrom.toISOString()) : '...'} — {dateTo ? formatDate(dateTo.toISOString()) : '...'}
                       </span>
                     ) : (
-                      <span className="text-xs">Date inscription</span>
+                      <span className="text-xs">{t('registrationDate', 'Date inscription')}</span>
                     )}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="end">
                   <div className="p-3 space-y-3">
                     <div className="space-y-1">
-                      <Label className="text-xs font-medium text-slate-500 dark:text-slate-400">Date début</Label>
+                      <Label className="text-xs font-medium text-slate-500 dark:text-slate-400">{t('dateStart', 'Date début')}</Label>
                       <CalendarComponent
                         mode="single"
                         selected={dateFrom}
@@ -635,7 +652,7 @@ export function PatientsPage() {
                     </div>
                     <Separator />
                     <div className="space-y-1">
-                      <Label className="text-xs font-medium text-slate-500 dark:text-slate-400">Date fin</Label>
+                      <Label className="text-xs font-medium text-slate-500 dark:text-slate-400">{t('dateEnd', 'Date fin')}</Label>
                       <CalendarComponent
                         mode="single"
                         selected={dateTo}
@@ -655,7 +672,7 @@ export function PatientsPage() {
                           setDateTo(undefined)
                         }}
                       >
-                        Effacer les dates
+                        {t('clearDates', 'Effacer les dates')}
                       </Button>
                     )}
                   </div>
@@ -671,18 +688,18 @@ export function PatientsPage() {
                   onClick={clearFilters}
                 >
                   <X className="size-3.5" />
-                  Effacer
+                  {t('clear', 'Effacer')}
                 </Button>
               )}
             </div>
 
             {/* Results count */}
             <div className="mt-3 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-              <span>{filteredPatients.length} patient{filteredPatients.length !== 1 ? 's' : ''} trouvé{filteredPatients.length !== 1 ? 's' : ''}</span>
+              <span>{filteredPatients.length} {t('patientsFound', `patient${filteredPatients.length !== 1 ? 's' : ''} trouvé${filteredPatients.length !== 1 ? 's' : ''}`)}</span>
               {selectedIds.size > 0 && (
                 <>
                   <span className="text-slate-300 dark:text-slate-600">•</span>
-                  <span className="text-teal-600 dark:text-teal-400 font-medium">{selectedIds.size} sélectionné{selectedIds.size !== 1 ? 's' : ''}</span>
+                  <span className="text-teal-600 dark:text-teal-400 font-medium">{selectedIds.size} {t('selected', `sélectionné${selectedIds.size !== 1 ? 's' : ''}`)}</span>
                 </>
               )}
             </div>
@@ -709,7 +726,7 @@ export function PatientsPage() {
                     onClick={() => handleSort('name')}
                   >
                     <div className="flex items-center gap-1">
-                      Nom complet
+                      {t('fullName', 'Nom complet')}
                       <SortIcon field="name" currentField={sortField} direction={sortDir} />
                     </div>
                   </TableHead>
@@ -718,7 +735,7 @@ export function PatientsPage() {
                     onClick={() => handleSort('age')}
                   >
                     <div className="flex items-center gap-1">
-                      Âge / Genre
+                      {t('ageGender', 'Âge / Genre')}
                       <SortIcon field="age" currentField={sortField} direction={sortDir} />
                     </div>
                   </TableHead>
@@ -727,7 +744,7 @@ export function PatientsPage() {
                     onClick={() => handleSort('phone')}
                   >
                     <div className="flex items-center gap-1">
-                      Téléphone
+                      {t('phone', 'Téléphone')}
                       <SortIcon field="phone" currentField={sortField} direction={sortDir} />
                     </div>
                   </TableHead>
@@ -736,7 +753,7 @@ export function PatientsPage() {
                     onClick={() => handleSort('lastVisit')}
                   >
                     <div className="flex items-center gap-1">
-                      Dernière visite
+                      {t('lastVisit', 'Dernière visite')}
                       <SortIcon field="lastVisit" currentField={sortField} direction={sortDir} />
                     </div>
                   </TableHead>
@@ -745,7 +762,7 @@ export function PatientsPage() {
                     onClick={() => handleSort('status')}
                   >
                     <div className="flex items-center gap-1">
-                      Statut
+                      {tc('status', 'Statut')}
                       <SortIcon field="status" currentField={sortField} direction={sortDir} />
                     </div>
                   </TableHead>
@@ -759,8 +776,8 @@ export function PatientsPage() {
                       <TableCell colSpan={8} className="h-32 text-center">
                         <div className="flex flex-col items-center gap-2 text-slate-400 dark:text-slate-500">
                           <Search className="size-8" />
-                          <p className="text-sm font-medium">Aucun patient trouvé</p>
-                          <p className="text-xs">Essayez de modifier vos critères de recherche</p>
+                          <p className="text-sm font-medium">{t('noPatientFound', 'Aucun patient trouvé')}</p>
+                          <p className="text-xs">{t('tryDifferentSearch', 'Essayez de modifier vos critères de recherche')}</p>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -818,7 +835,7 @@ export function PatientsPage() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <span className="text-sm text-slate-700 dark:text-slate-300">{age} ans</span>
+                            <span className="text-sm text-slate-700 dark:text-slate-300">{age} {t('yearsOld', 'ans')}</span>
                             <span className="text-xs text-slate-400 dark:text-slate-500 ml-1.5">
                               {patient.gender === 'M' ? '♂' : '♀'}
                             </span>
@@ -851,11 +868,11 @@ export function PatientsPage() {
                               <DropdownMenuContent align="end" className="w-48">
                                 <DropdownMenuItem onClick={() => setDetailPatient(patient)}>
                                   <Eye className="size-4" />
-                                  Voir dossier
+                                  {t('viewFile', 'Voir dossier')}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => openEditPatientDialog(patient)}>
                                   <Pencil className="size-4" />
-                                  Modifier
+                                  {tc('edit', 'Modifier')}
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
@@ -863,7 +880,7 @@ export function PatientsPage() {
                                   onClick={() => handleArchivePatient(patient.id, `${patient.lastName} ${patient.firstName}`)}
                                 >
                                   <Archive className="size-4" />
-                                  Archiver
+                                  {t('archive', 'Archiver')}
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -896,7 +913,7 @@ export function PatientsPage() {
                         {detailPatient.lastName} {detailPatient.firstName}
                       </SheetTitle>
                       <SheetDescription className="text-teal-100 mt-1">
-                        {detailPatient.id} • {calculateAge(detailPatient.dateOfBirth)} ans • {detailPatient.gender === 'M' ? 'Masculin' : 'Féminin'}
+                        {detailPatient.id} • {calculateAge(detailPatient.dateOfBirth)} {t('yearsOld', 'ans')} • {detailPatient.gender === 'M' ? t('male', 'Masculin') : t('female', 'Féminin')}
                       </SheetDescription>
                       <div className="flex items-center gap-2 mt-2">
                         <StatusBadge status={detailPatient.status} />
@@ -921,23 +938,23 @@ export function PatientsPage() {
                   <TabsList className="w-full h-auto flex-wrap bg-slate-100 dark:bg-slate-900 p-1 mb-4">
                     <TabsTrigger value="informations" className="text-xs flex-1 gap-1 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800">
                       <User className="size-3.5" />
-                      Informations
+                      {t('informations', 'Informations')}
                     </TabsTrigger>
                     <TabsTrigger value="historique" className="text-xs flex-1 gap-1 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800">
                       <Clock className="size-3.5" />
-                      Historique
+                      {t('historique', 'Historique')}
                     </TabsTrigger>
                     <TabsTrigger value="documents" className="text-xs flex-1 gap-1 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800">
                       <FileText className="size-3.5" />
-                      Documents
+                      {t('documents', 'Documents')}
                     </TabsTrigger>
                     <TabsTrigger value="allergies" className="text-xs flex-1 gap-1 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800">
                       <AlertTriangle className="size-3.5" />
-                      Allergies
+                      {t('allergies', 'Allergies')}
                     </TabsTrigger>
                     <TabsTrigger value="antecedents" className="text-xs flex-1 gap-1 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800">
                       <Heart className="size-3.5" />
-                      Antécédents
+                      {t('antecedents', 'Antécédents')}
                     </TabsTrigger>
                   </TabsList>
 
@@ -946,12 +963,12 @@ export function PatientsPage() {
                     <div className="space-y-4">
                       {/* Personal Info */}
                       <div className="grid grid-cols-2 gap-3">
-                        <InfoItem icon={Calendar} label="Date de naissance" value={formatDate(detailPatient.dateOfBirth)} />
-                        <InfoItem icon={User} label="Genre" value={detailPatient.gender === 'M' ? 'Masculin' : 'Féminin'} />
-                        <InfoItem icon={Phone} label="Téléphone" value={detailPatient.phone} />
-                        <InfoItem icon={Droplets} label="Groupe sanguin" value={detailPatient.bloodType} />
-                        <InfoItem icon={MapPin} label="Adresse" value={detailPatient.address} className="col-span-2" />
-                        <InfoItem icon={ShieldCheck} label="N° identité nationale" value={detailPatient.nationalId} className="col-span-2" />
+                        <InfoItem icon={Calendar} label={t('dateOfBirth', 'Date de naissance')} value={formatDate(detailPatient.dateOfBirth)} />
+                        <InfoItem icon={User} label={t('gender', 'Genre')} value={detailPatient.gender === 'M' ? t('male', 'Masculin') : t('female', 'Féminin')} />
+                        <InfoItem icon={Phone} label={t('phone', 'Téléphone')} value={detailPatient.phone} />
+                        <InfoItem icon={Droplets} label={t('bloodType', 'Groupe sanguin')} value={detailPatient.bloodType} />
+                        <InfoItem icon={MapPin} label={t('address', 'Adresse')} value={detailPatient.address} className="col-span-2" />
+                        <InfoItem icon={ShieldCheck} label={t('nationalId', "N° identité nationale")} value={detailPatient.nationalId} className="col-span-2" />
                       </div>
 
                       <Separator />
@@ -959,11 +976,11 @@ export function PatientsPage() {
                       {/* Emergency Contact */}
                       <div>
                         <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
-                          Contact d&apos;urgence
+                          {t('emergencyContact', "Contact d'urgence")}
                         </h4>
                         <div className="grid grid-cols-2 gap-3">
-                          <InfoItem icon={User} label="Nom" value={detailPatient.emergencyContact} />
-                          <InfoItem icon={Phone} label="Téléphone" value={detailPatient.emergencyPhone} />
+                          <InfoItem icon={User} label={t('lastName', 'Nom')} value={detailPatient.emergencyContact} />
+                          <InfoItem icon={Phone} label={t('phone', 'Téléphone')} value={detailPatient.emergencyPhone} />
                         </div>
                       </div>
 
@@ -972,23 +989,23 @@ export function PatientsPage() {
                       {/* Quick Stats */}
                       <div>
                         <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
-                          Résumé
+                          {t('summary', 'Résumé')}
                         </h4>
                         <div className="grid grid-cols-3 gap-3">
                           <div className="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 text-center">
                             <Activity className="size-4 text-teal-500 mx-auto mb-1" />
                             <p className="text-lg font-bold text-slate-900 dark:text-white">{detailPatient.medicalHistory.length}</p>
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400">Antécédents</p>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400">{t('medicalHistory', 'Antécédents')}</p>
                           </div>
                           <div className="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 text-center">
                             <AlertTriangle className="size-4 text-amber-500 mx-auto mb-1" />
                             <p className="text-lg font-bold text-slate-900 dark:text-white">{detailPatient.allergies.length}</p>
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400">Allergies</p>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400">{t('allergies', 'Allergies')}</p>
                           </div>
                           <div className="bg-slate-50 dark:bg-slate-900 rounded-xl p-3 text-center">
                             <FileText className="size-4 text-sky-500 mx-auto mb-1" />
                             <p className="text-lg font-bold text-slate-900 dark:text-white">{detailPatient.documents.length}</p>
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400">Documents</p>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400">{t('documents', 'Documents')}</p>
                           </div>
                         </div>
                       </div>
@@ -999,15 +1016,15 @@ export function PatientsPage() {
                   <TabsContent value="historique">
                     <div className="space-y-3">
                       <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
-                        Derniers événements
+                        {t('recentEvents', 'Derniers événements')}
                       </h4>
                       {[
-                        { date: detailPatient.lastVisit, label: 'Consultation', desc: detailPatient.reason, icon: Stethoscope, color: 'text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/40' },
-                        { date: detailPatient.registrationDate, label: 'Inscription', desc: 'Premier enregistrement', icon: User, color: 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/40' },
+                        { date: detailPatient.lastVisit, label: t('consultation', 'Consultation'), desc: detailPatient.reason, icon: Stethoscope, color: 'text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/40' },
+                        { date: detailPatient.registrationDate, label: t('registration', 'Inscription'), desc: t('firstRegistration', 'Premier enregistrement'), icon: User, color: 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/40' },
                         ...(detailPatient.surgicalHistory.length > 0
                           ? detailPatient.surgicalHistory.map((s, i) => ({
                               date: `20${20 + i}`,
-                              label: 'Chirurgie',
+                              label: t('surgery', 'Chirurgie'),
                               desc: s,
                               icon: Activity,
                               color: 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40',
@@ -1042,12 +1059,12 @@ export function PatientsPage() {
                       {/* Header with role badge and actions */}
                       <div className="flex items-center justify-between mb-3">
                         <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                          Documents médicaux ({detailPatient.documents.length})
+                          {t('medicalDocuments', 'Documents médicaux')} ({detailPatient.documents.length})
                         </h4>
                         <div className="flex items-center gap-2">
                           <Badge className={`text-[10px] ${isAdmin ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' : 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800'}`}>
                             {isAdmin ? <Unlock className="w-3 h-3 mr-1" /> : <Lock className="w-3 h-3 mr-1" />}
-                            {isAdmin ? 'Accès complet' : 'Accès restreint'}
+                            {isAdmin ? t('fullAccess', 'Accès complet') : t('restrictedAccess', 'Accès restreint')}
                           </Badge>
                           {permissions.canUpload && (
                             <Button
@@ -1057,7 +1074,7 @@ export function PatientsPage() {
                               onClick={() => setShowUploadDialog(true)}
                             >
                               <Upload className="w-3 h-3" />
-                              Ajouter
+                              {tc('add', 'Ajouter')}
                             </Button>
                           )}
                           {isAdmin && documentAuthorizations.filter(a => a.patientId === detailPatient.id && a.status === 'En attente').length > 0 && (
@@ -1068,7 +1085,7 @@ export function PatientsPage() {
                               onClick={() => setShowAuthManage(true)}
                             >
                               <Shield className="w-3 h-3" />
-                              Autorisations ({documentAuthorizations.filter(a => a.patientId === detailPatient.id && a.status === 'En attente').length})
+                              {t('authorizations', 'Autorisations')} ({documentAuthorizations.filter(a => a.patientId === detailPatient.id && a.status === 'En attente').length})
                             </Button>
                           )}
                         </div>
@@ -1081,12 +1098,12 @@ export function PatientsPage() {
                             <Lock className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
                             <div>
                               <p className="text-xs font-semibold text-amber-800 dark:text-amber-200">
-                                Accès restreint — Rôle : {userRole}
+                                {t('restrictedAccessRole', 'Accès restreint — Rôle :')} {userRole}
                               </p>
                               <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-0.5 leading-relaxed">
                                 {permissions.canView
-                                  ? 'Vous pouvez visualiser les documents. Le téléchargement nécessite une autorisation administrateur.'
-                                  : 'L\'accès aux documents nécessite une autorisation administrateur.'}
+                                  ? t('canViewNoDownload', 'Vous pouvez visualiser les documents. Le téléchargement nécessite une autorisation administrateur.')
+                                  : t('needAdminAccess', "L'accès aux documents nécessite une autorisation administrateur.")}
                               </p>
                             </div>
                           </div>
@@ -1097,8 +1114,8 @@ export function PatientsPage() {
                       {detailPatient.documents.length === 0 ? (
                         <div className="flex flex-col items-center py-8 text-slate-400 dark:text-slate-500">
                           <FileText className="size-10 mb-2" />
-                          <p className="text-sm font-medium">Aucun document</p>
-                          <p className="text-xs">Ce patient n&apos;a pas de documents enregistrés</p>
+                          <p className="text-sm font-medium">{t('noDocuments', 'Aucun document')}</p>
+                          <p className="text-xs">{t('noDocumentsDesc', "Ce patient n'a pas de documents enregistrés")}</p>
                         </div>
                       ) : (
                         detailPatient.documents.map((doc, i) => {
@@ -1173,7 +1190,7 @@ export function PatientsPage() {
                                     size="sm"
                                     className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-500 hover:text-teal-600"
                                     onClick={() => { setViewingDoc(doc); setShowDocViewer(true) }}
-                                    title="Visualiser"
+                                    title={t('visualize', 'Visualiser')}
                                   >
                                     <Eye className="size-4" />
                                   </Button>
@@ -1183,14 +1200,14 @@ export function PatientsPage() {
                                     size="sm"
                                     className="opacity-0 group-hover:opacity-100 transition-opacity text-amber-500 hover:text-amber-600"
                                     onClick={() => { setAuthDocName(doc.name); setShowAuthDialog(true) }}
-                                    title="Demander l'autorisation"
+                                    title={t('requestAuth', "Demander l'autorisation")}
                                   >
                                     <EyeOff className="size-4" />
                                   </Button>
                                 ) : (
                                   <Badge className="text-[9px] h-5 px-1.5 bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800">
                                     <Clock className="w-2.5 h-2.5 mr-0.5" />
-                                    En attente
+                                    {tc('pending', 'En attente')}
                                   </Badge>
                                 )}
 
@@ -1202,7 +1219,7 @@ export function PatientsPage() {
                                     className="opacity-0 group-hover:opacity-100 transition-opacity text-teal-600 dark:text-teal-400"
                                     onClick={() => {
                                       // Generate a demo file download
-                                      const content = `Document: ${doc.name}\nPatient: ${detailPatient.firstName} ${detailPatient.lastName}\nID: ${detailPatient.id}\nDate: ${doc.date}\nType: ${doc.type}\nCatégorie: ${doc.category || 'Non classé'}\n\nCe document est une démonstration HealthFlow Guinea.\nLe contenu réel serait disponible en production.`
+                                      const content = `Document: ${doc.name}\nPatient: ${detailPatient.firstName} ${detailPatient.lastName}\nID: ${detailPatient.id}\nDate: ${doc.date}\nType: ${doc.type}\nCatégorie: ${doc.category || t('uncategorized', 'Non classé')}\n\nCe document est une démonstration HealthFlow Guinea.\nLe contenu réel serait disponible en production.`
                                       const blob = new Blob([content], { type: 'text/plain' })
                                       const url = URL.createObjectURL(blob)
                                       const a = document.createElement('a')
@@ -1210,9 +1227,9 @@ export function PatientsPage() {
                                       a.download = `${doc.name.replace(/\s+/g, '_')}_${detailPatient.id}.txt`
                                       a.click()
                                       URL.revokeObjectURL(url)
-                                      toast({ title: 'Téléchargement', description: `${doc.name} téléchargé avec succès` })
+                                      toast({ title: tc('download', 'Téléchargement'), description: t('downloadedSuccessfully', `${doc.name} téléchargé avec succès`) })
                                     }}
-                                    title="Télécharger"
+                                    title={tc('download', 'Télécharger')}
                                   >
                                     <Download className="size-4" />
                                   </Button>
@@ -1225,7 +1242,7 @@ export function PatientsPage() {
                                     size="sm"
                                     className="opacity-0 group-hover:opacity-100 transition-opacity text-amber-500"
                                     onClick={() => { setAuthDocName(doc.name); setShowAuthDialog(true) }}
-                                    title="Demander l'autorisation de télécharger"
+                                    title={t('requestDownloadAuth', "Demander l'autorisation de télécharger")}
                                   >
                                     <Download className="size-4" />
                                   </Button>
@@ -1240,9 +1257,9 @@ export function PatientsPage() {
                                     onClick={() => {
                                       removePatientDocument(detailPatient.id, doc.name)
                                       setDetailPatient({ ...detailPatient, documents: detailPatient.documents.filter(d => d.name !== doc.name) })
-                                      toast({ title: 'Document supprimé', description: `${doc.name} a été supprimé` })
+                                      toast({ title: t('documentDeleted', 'Document supprimé'), description: t('docDeletedDesc', `${doc.name} a été supprimé`) })
                                     }}
-                                    title="Supprimer"
+                                    title={tc('delete', 'Supprimer')}
                                   >
                                     <Trash2 className="size-4" />
                                   </Button>
@@ -1261,24 +1278,24 @@ export function PatientsPage() {
                       <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                           <Shield className="w-5 h-5 text-amber-500" />
-                          Demande d&apos;autorisation
+                          {t('authRequest', "Demande d'autorisation")}
                         </DialogTitle>
                         <DialogDescription>
-                          Vous n&apos;avez pas les droits nécessaires pour accéder à ce document.
-                          Demandez une autorisation à un administrateur.
+                          {t('noAccessRights', "Vous n'avez pas les droits nécessaires pour accéder à ce document.")}
+                          {t('requestAdminAuth', ' Demandez une autorisation à un administrateur.')}
                         </DialogDescription>
                       </DialogHeader>
                       <div className="space-y-4 py-2">
                         <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900/50">
-                          <p className="text-sm font-medium text-slate-900 dark:text-white">Document : {authDocName}</p>
-                          <p className="text-xs text-slate-500 mt-0.5">Patient : {detailPatient?.firstName} {detailPatient?.lastName} ({detailPatient?.id})</p>
-                          <p className="text-xs text-slate-500">Votre rôle : {userRole}</p>
+                          <p className="text-sm font-medium text-slate-900 dark:text-white">{t('document', 'Document')} : {authDocName}</p>
+                          <p className="text-xs text-slate-500 mt-0.5">{t('patient', 'Patient')} : {detailPatient?.firstName} {detailPatient?.lastName} ({detailPatient?.id})</p>
+                          <p className="text-xs text-slate-500">{t('yourRole', 'Votre rôle')} : {userRole}</p>
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="auth-reason" className="text-sm font-medium">Motif de la demande *</Label>
+                          <Label htmlFor="auth-reason" className="text-sm font-medium">{t('requestReason', 'Motif de la demande')} *</Label>
                           <Textarea
                             id="auth-reason"
-                            placeholder="Expliquez pourquoi vous avez besoin d'accéder à ce document..."
+                            placeholder={t('explainReason', "Expliquez pourquoi vous avez besoin d'accéder à ce document...")}
                             value={authReason}
                             onChange={(e) => setAuthReason(e.target.value)}
                             className="min-h-[80px]"
@@ -1286,7 +1303,7 @@ export function PatientsPage() {
                         </div>
                       </div>
                       <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowAuthDialog(false)}>Annuler</Button>
+                        <Button variant="outline" onClick={() => setShowAuthDialog(false)}>{tc('cancel', 'Annuler')}</Button>
                         <Button
                           className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
                           disabled={!authReason.trim()}
@@ -1302,20 +1319,20 @@ export function PatientsPage() {
                             })
                             addNotification({
                               id: `NOTIF-${Date.now()}`,
-                              title: 'Demande d\'autorisation',
+                              title: t('authRequest', "Demande d'autorisation"),
                               message: `${user.name} (${userRole}) demande l'accès à "${authDocName}" du patient ${detailPatient.firstName} ${detailPatient.lastName}`,
                               type: 'warning',
                               time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
                               read: false,
                             })
-                            toast({ title: 'Demande envoyée', description: 'Votre demande d\'autorisation a été envoyée à l\'administrateur.' })
+                            toast({ title: t('requestSent', 'Demande envoyée'), description: t('requestSentDesc', "Votre demande d'autorisation a été envoyée à l'administrateur.") })
                             setShowAuthDialog(false)
                             setAuthReason('')
                             setAuthDocName('')
                           }}
                         >
                           <Shield className="w-4 h-4 mr-1" />
-                          Envoyer la demande
+                          {t('sendRequest', 'Envoyer la demande')}
                         </Button>
                       </DialogFooter>
                     </DialogContent>
@@ -1330,7 +1347,7 @@ export function PatientsPage() {
                           {viewingDoc?.name}
                         </DialogTitle>
                         <DialogDescription>
-                          Visualisation du document — {detailPatient?.firstName} {detailPatient?.lastName}
+                          {t('docVisualization', 'Visualisation du document')} — {detailPatient?.firstName} {detailPatient?.lastName}
                         </DialogDescription>
                       </DialogHeader>
                       <div className="space-y-3 py-2">
@@ -1348,33 +1365,33 @@ export function PatientsPage() {
                             <div className="flex items-center justify-center h-40 bg-slate-50 dark:bg-slate-800 rounded-lg">
                               <div className="text-center">
                                 <Eye className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-                                <p className="text-xs text-slate-400">Aperçu image/radiologie</p>
-                                <p className="text-[10px] text-slate-300">Disponible en production</p>
+                                <p className="text-xs text-slate-400">{t('imagePreview', 'Aperçu image/radiologie')}</p>
+                                <p className="text-[10px] text-slate-300">{t('availableInProduction', 'Disponible en production')}</p>
                               </div>
                             </div>
                           ) : (
                             <div className="space-y-2">
                               <div className="flex justify-between text-xs">
-                                <span className="text-slate-500">Patient</span>
+                                <span className="text-slate-500">{t('patient', 'Patient')}</span>
                                 <span className="text-slate-900 dark:text-white font-medium">{detailPatient?.firstName} {detailPatient?.lastName}</span>
                               </div>
                               <div className="flex justify-between text-xs">
-                                <span className="text-slate-500">ID Patient</span>
+                                <span className="text-slate-500">{t('patientId', 'ID Patient')}</span>
                                 <span className="text-slate-900 dark:text-white">{detailPatient?.id}</span>
                               </div>
                               <div className="flex justify-between text-xs">
-                                <span className="text-slate-500">Date</span>
+                                <span className="text-slate-500">{tc('date', 'Date')}</span>
                                 <span className="text-slate-900 dark:text-white">{viewingDoc?.date && formatDate(viewingDoc.date)}</span>
                               </div>
                               <div className="flex justify-between text-xs">
-                                <span className="text-slate-500">Catégorie</span>
-                                <span className="text-slate-900 dark:text-white">{viewingDoc?.category || 'Non classé'}</span>
+                                <span className="text-slate-500">{t('category', 'Catégorie')}</span>
+                                <span className="text-slate-900 dark:text-white">{viewingDoc?.category || t('uncategorized', 'Non classé')}</span>
                               </div>
                               <Separator className="my-2" />
                               <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
                                 <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                                  Ce document est consultable en mode visualisation uniquement.
-                                  {permissions.canDownload || isAdmin ? ' Vous pouvez le télécharger via le bouton dédié.' : ' Le téléchargement nécessite une autorisation administrateur.'}
+                                  {t('docViewOnly', 'Ce document est consultable en mode visualisation uniquement.')}
+                                  {permissions.canDownload || isAdmin ? ` ${t('youCanDownload', 'Vous pouvez le télécharger via le bouton dédié.')}` : ` ${t('downloadNeedsAdmin', 'Le téléchargement nécessite une autorisation administrateur.')}`}
                                 </p>
                               </div>
                             </div>
@@ -1383,17 +1400,17 @@ export function PatientsPage() {
                         {!permissions.canDownload && !isAdmin && (
                           <div className="flex items-center gap-2 p-2 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
                             <Lock className="w-4 h-4 text-amber-500 flex-shrink-0" />
-                            <p className="text-xs text-amber-700 dark:text-amber-300">Mode visualisation uniquement — Téléchargement restreint</p>
+                            <p className="text-xs text-amber-700 dark:text-amber-300">{t('viewOnlyRestricted', 'Mode visualisation uniquement — Téléchargement restreint')}</p>
                           </div>
                         )}
                       </div>
                       <DialogFooter className="gap-2">
-                        <Button variant="outline" onClick={() => setShowDocViewer(false)}>Fermer</Button>
+                        <Button variant="outline" onClick={() => setShowDocViewer(false)}>{tc('close', 'Fermer')}</Button>
                         {(permissions.canDownload || isAdmin) && viewingDoc && (
                           <Button
                             className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white"
                             onClick={() => {
-                              const content = `Document: ${viewingDoc.name}\nPatient: ${detailPatient?.firstName} ${detailPatient?.lastName}\nID: ${detailPatient?.id}\nDate: ${viewingDoc.date}\nType: ${viewingDoc.type}\nCatégorie: ${viewingDoc.category || 'Non classé'}\n\nCe document est une démonstration HealthFlow Guinea.\nLe contenu réel serait disponible en production.`
+                              const content = `Document: ${viewingDoc.name}\nPatient: ${detailPatient?.firstName} ${detailPatient?.lastName}\nID: ${detailPatient?.id}\nDate: ${viewingDoc.date}\nType: ${viewingDoc.type}\nCatégorie: ${viewingDoc.category || t('uncategorized', 'Non classé')}\n\nCe document est une démonstration HealthFlow Guinea.\nLe contenu réel serait disponible en production.`
                               const blob = new Blob([content], { type: 'text/plain' })
                               const url = URL.createObjectURL(blob)
                               const a = document.createElement('a')
@@ -1401,11 +1418,11 @@ export function PatientsPage() {
                               a.download = `${viewingDoc.name.replace(/\s+/g, '_')}_${detailPatient?.id}.txt`
                               a.click()
                               URL.revokeObjectURL(url)
-                              toast({ title: 'Téléchargement', description: `${viewingDoc.name} téléchargé avec succès` })
+                              toast({ title: tc('download', 'Téléchargement'), description: t('downloadedSuccessfully', `${viewingDoc.name} téléchargé avec succès`) })
                             }}
                           >
                             <Download className="w-4 h-4 mr-1" />
-                            Télécharger
+                            {tc('download', 'Télécharger')}
                           </Button>
                         )}
                       </DialogFooter>
@@ -1418,45 +1435,45 @@ export function PatientsPage() {
                       <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                           <FileUp className="w-5 h-5 text-teal-500" />
-                          Ajouter un document
+                          {t('addDocument', 'Ajouter un document')}
                         </DialogTitle>
                         <DialogDescription>
-                          Ajouter un document au dossier de {detailPatient?.firstName} {detailPatient?.lastName}
+                          {t('addDocumentTo', 'Ajouter un document au dossier de')} {detailPatient?.firstName} {detailPatient?.lastName}
                         </DialogDescription>
                       </DialogHeader>
                       <div className="space-y-4 py-2">
                         <div className="space-y-2">
-                          <Label htmlFor="doc-name" className="text-sm font-medium">Nom du document *</Label>
+                          <Label htmlFor="doc-name" className="text-sm font-medium">{t('documentName', 'Nom du document')} *</Label>
                           <Input
                             id="doc-name"
-                            placeholder="Ex: Résultats échographie"
+                            placeholder={t('docNamePlaceholder', 'Ex: Résultats échographie')}
                             value={newDocName}
                             onChange={(e) => setNewDocName(e.target.value)}
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="doc-category" className="text-sm font-medium">Catégorie</Label>
+                          <Label htmlFor="doc-category" className="text-sm font-medium">{t('category', 'Catégorie')}</Label>
                           <Select value={newDocCategory} onValueChange={(v) => setNewDocCategory(v as MedicalDocument['category'])}>
                             <SelectTrigger>
-                              <SelectValue placeholder="Sélectionner une catégorie" />
+                              <SelectValue placeholder={t('selectCategory', 'Sélectionner une catégorie')} />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="Résultat">Résultat d&apos;analyse</SelectItem>
-                              <SelectItem value="Ordonnance">Ordonnance</SelectItem>
-                              <SelectItem value="Imagerie">Imagerie / Radiologie</SelectItem>
-                              <SelectItem value="Certificat">Certificat médical</SelectItem>
-                              <SelectItem value="Autre">Autre</SelectItem>
+                              <SelectItem value="Résultat">{t('analysisResult', "Résultat d'analyse")}</SelectItem>
+                              <SelectItem value="Ordonnance">{t('prescription', 'Ordonnance')}</SelectItem>
+                              <SelectItem value="Imagerie">{t('imagingRadiology', 'Imagerie / Radiologie')}</SelectItem>
+                              <SelectItem value="Certificat">{t('medicalCertificate', 'Certificat médical')}</SelectItem>
+                              <SelectItem value="Autre">{tc('other', 'Autre')}</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
                         <div className="p-6 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl text-center">
                           <Upload className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                          <p className="text-xs text-slate-500">Glisser-déposer ou cliquer pour sélectionner</p>
-                          <p className="text-[10px] text-slate-400 mt-1">PDF, JPG, PNG (max 10 Mo)</p>
+                          <p className="text-xs text-slate-500">{t('dragDropOrClick', 'Glisser-déposer ou cliquer pour sélectionner')}</p>
+                          <p className="text-[10px] text-slate-400 mt-1">{t('fileFormats', 'PDF, JPG, PNG (max 10 Mo)')}</p>
                         </div>
                       </div>
                       <DialogFooter>
-                        <Button variant="outline" onClick={() => { setShowUploadDialog(false); setNewDocName(''); setNewDocCategory('Autre') }}>Annuler</Button>
+                        <Button variant="outline" onClick={() => { setShowUploadDialog(false); setNewDocName(''); setNewDocCategory('Autre') }}>{tc('cancel', 'Annuler')}</Button>
                         <Button
                           className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white"
                           disabled={!newDocName.trim()}
@@ -1473,14 +1490,14 @@ export function PatientsPage() {
                             }
                             addPatientDocument(detailPatient.id, newDoc)
                             setDetailPatient({ ...detailPatient, documents: [...detailPatient.documents, newDoc] })
-                            toast({ title: 'Document ajouté', description: `${newDocName} a été ajouté au dossier` })
+                            toast({ title: t('documentAdded', 'Document ajouté'), description: t('docAddedDesc', `${newDocName} a été ajouté au dossier`) })
                             setShowUploadDialog(false)
                             setNewDocName('')
                             setNewDocCategory('Autre')
                           }}
                         >
                           <Upload className="w-4 h-4 mr-1" />
-                          Enregistrer
+                          {tc('save', 'Enregistrer')}
                         </Button>
                       </DialogFooter>
                     </DialogContent>
@@ -1492,17 +1509,17 @@ export function PatientsPage() {
                       <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                           <Shield className="w-5 h-5 text-amber-500" />
-                          Gestion des autorisations
+                          {t('authManagement', 'Gestion des autorisations')}
                         </DialogTitle>
                         <DialogDescription>
-                          Demandes d&apos;accès en attente pour {detailPatient?.firstName} {detailPatient?.lastName}
+                          {t('pendingAccessRequests', "Demandes d'accès en attente pour")} {detailPatient?.firstName} {detailPatient?.lastName}
                         </DialogDescription>
                       </DialogHeader>
                       <div className="space-y-3 py-2 max-h-80 overflow-y-auto">
                         {documentAuthorizations.filter(a => a.patientId === detailPatient?.id).length === 0 ? (
                           <div className="text-center py-6 text-slate-400">
                             <ShieldCheck className="w-8 h-8 mx-auto mb-2" />
-                            <p className="text-sm">Aucune demande d&apos;autorisation</p>
+                            <p className="text-sm">{t('noAuthRequests', "Aucune demande d'autorisation")}</p>
                           </div>
                         ) : (
                           documentAuthorizations
@@ -1517,9 +1534,9 @@ export function PatientsPage() {
                                   <div className="min-w-0">
                                     <p className="text-sm font-medium text-slate-900 dark:text-white">{auth.documentName}</p>
                                     <p className="text-xs text-slate-500 mt-0.5">
-                                      Demandé par <span className="font-medium">{auth.requestedBy}</span> ({auth.requestedByRole})
+                                      {t('requestedBy', 'Demandé par')} <span className="font-medium">{auth.requestedBy}</span> ({auth.requestedByRole})
                                     </p>
-                                    <p className="text-xs text-slate-400 mt-0.5">Motif : {auth.reason}</p>
+                                    <p className="text-xs text-slate-400 mt-0.5">{t('reason', 'Motif')} : {auth.reason}</p>
                                   </div>
                                   <Badge className={`text-[10px] flex-shrink-0 ${
                                     auth.status === 'En attente' ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800' :
@@ -1529,7 +1546,7 @@ export function PatientsPage() {
                                     {auth.status === 'En attente' && <Clock className="w-2.5 h-2.5 mr-0.5" />}
                                     {auth.status === 'Approuvée' && <CheckCircle className="w-2.5 h-2.5 mr-0.5" />}
                                     {auth.status === 'Refusée' && <XCircle className="w-2.5 h-2.5 mr-0.5" />}
-                                    {auth.status}
+                                    {auth.status === 'En attente' ? tc('pending', 'En attente') : auth.status === 'Approuvée' ? t('approved', 'Approuvée') : t('refused', 'Refusée')}
                                   </Badge>
                                 </div>
                                 {auth.status === 'En attente' && isAdmin && (
@@ -1541,17 +1558,17 @@ export function PatientsPage() {
                                         approveDocumentAccess(auth.id, user.name)
                                         addNotification({
                                           id: `NOTIF-${Date.now()}`,
-                                          title: 'Autorisation accordée',
+                                          title: t('authGranted', 'Autorisation accordée'),
                                           message: `Votre accès à "${auth.documentName}" a été approuvé par ${user.name}`,
                                           type: 'success',
                                           time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
                                           read: false,
                                         })
-                                        toast({ title: 'Autorisation accordée', description: `Accès à "${auth.documentName}" accordé à ${auth.requestedBy}` })
+                                        toast({ title: t('authGranted', 'Autorisation accordée'), description: t('accessGrantedTo', `Accès à "${auth.documentName}" accordé à ${auth.requestedBy}`) })
                                       }}
                                     >
                                       <CheckCircle className="w-3 h-3 mr-1" />
-                                      Approuver
+                                      {t('approve', 'Approuver')}
                                     </Button>
                                     <Button
                                       size="sm"
@@ -1559,11 +1576,11 @@ export function PatientsPage() {
                                       className="h-7 text-xs border-red-300 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/30"
                                       onClick={() => {
                                         refuseDocumentAccess(auth.id, user.name)
-                                        toast({ title: 'Autorisation refusée', description: `Accès à "${auth.documentName}" refusé pour ${auth.requestedBy}`, variant: 'destructive' })
+                                        toast({ title: t('authRefused', 'Autorisation refusée'), description: t('accessRefusedTo', `Accès à "${auth.documentName}" refusé pour ${auth.requestedBy}`), variant: 'destructive' })
                                       }}
                                     >
                                       <XCircle className="w-3 h-3 mr-1" />
-                                      Refuser
+                                      {t('refuse', 'Refuser')}
                                     </Button>
                                   </div>
                                 )}
@@ -1572,7 +1589,7 @@ export function PatientsPage() {
                         )}
                       </div>
                       <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowAuthManage(false)}>Fermer</Button>
+                        <Button variant="outline" onClick={() => setShowAuthManage(false)}>{tc('close', 'Fermer')}</Button>
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>
@@ -1581,13 +1598,13 @@ export function PatientsPage() {
                   <TabsContent value="allergies">
                     <div className="space-y-3">
                       <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
-                        Allergies connues ({detailPatient.allergies.length})
+                        {t('knownAllergies', 'Allergies connues')} ({detailPatient.allergies.length})
                       </h4>
                       {detailPatient.allergies.length === 0 ? (
                         <div className="flex flex-col items-center py-8 text-slate-400 dark:text-slate-500">
                           <ShieldCheck className="size-10 mb-2" />
-                          <p className="text-sm font-medium">Aucune allergie connue</p>
-                          <p className="text-xs">Ce patient n&apos;a pas d&apos;allergies enregistrées</p>
+                          <p className="text-sm font-medium">{t('noKnownAllergies', 'Aucune allergie connue')}</p>
+                          <p className="text-xs">{t('noAllergiesDesc', "Ce patient n'a pas d'allergies enregistrées")}</p>
                         </div>
                       ) : (
                         detailPatient.allergies.map((allergy, i) => (
@@ -1628,21 +1645,21 @@ export function PatientsPage() {
                     <div className="space-y-5">
                       {/* Medical */}
                       <AntecedentSection
-                        title="Antécédents médicaux"
+                        title={t('medicalHistory', 'Antécédents médicaux')}
                         icon={Stethoscope}
                         color="text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/40"
                         items={detailPatient.medicalHistory}
                       />
                       {/* Surgical */}
                       <AntecedentSection
-                        title="Antécédents chirurgicaux"
+                        title={t('surgicalHistory', 'Antécédents chirurgicaux')}
                         icon={Activity}
                         color="text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40"
                         items={detailPatient.surgicalHistory}
                       />
                       {/* Family */}
                       <AntecedentSection
-                        title="Antécédents familiaux"
+                        title={t('familyHistory', 'Antécédents familiaux')}
                         icon={Baby}
                         color="text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/40"
                         items={detailPatient.familyHistory}
@@ -1664,12 +1681,12 @@ export function PatientsPage() {
               <div className="flex items-center justify-center size-8 rounded-lg bg-gradient-to-br from-teal-500 to-emerald-600">
                 {editingPatient ? <Pencil className="size-4 text-white" /> : <Plus className="size-4 text-white" />}
               </div>
-              {editingPatient ? 'Modifier le Patient' : 'Nouveau Patient'}
+              {editingPatient ? t('editPatient', 'Modifier le Patient') : t('newPatient', 'Nouveau Patient')}
             </DialogTitle>
             <DialogDescription>
               {editingPatient
-                ? `Modifiez les informations de ${editingPatient.lastName} ${editingPatient.firstName}.`
-                : 'Remplissez les informations du patient. Les champs marqués * sont obligatoires.'}
+                ? t('editPatientDesc', `Modifiez les informations de ${editingPatient.lastName} ${editingPatient.firstName}.`)
+                : t('newPatientDesc', 'Remplissez les informations du patient. Les champs marqués * sont obligatoires.')}
             </DialogDescription>
           </DialogHeader>
 
@@ -1678,7 +1695,7 @@ export function PatientsPage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="lastName" className="text-xs font-medium">
-                  Nom <span className="text-rose-500">*</span>
+                  {t('lastName', 'Nom')} <span className="text-rose-500">*</span>
                 </Label>
                 <Input
                   id="lastName"
@@ -1689,7 +1706,7 @@ export function PatientsPage() {
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="firstName" className="text-xs font-medium">
-                  Prénom <span className="text-rose-500">*</span>
+                  {t('firstName', 'Prénom')} <span className="text-rose-500">*</span>
                 </Label>
                 <Input
                   id="firstName"
@@ -1703,7 +1720,7 @@ export function PatientsPage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="dob" className="text-xs font-medium">
-                  Date de naissance <span className="text-rose-500">*</span>
+                  {t('dateOfBirth', 'Date de naissance')} <span className="text-rose-500">*</span>
                 </Label>
                 <Input
                   id="dob"
@@ -1714,15 +1731,15 @@ export function PatientsPage() {
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="gender" className="text-xs font-medium">
-                  Genre <span className="text-rose-500">*</span>
+                  {t('gender', 'Genre')} <span className="text-rose-500">*</span>
                 </Label>
                 <Select value={formData.gender} onValueChange={(v) => setFormData({ ...formData, gender: v as 'M' | 'F' })}>
                   <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="M">Masculin</SelectItem>
-                    <SelectItem value="F">Féminin</SelectItem>
+                    <SelectItem value="M">{t('male', 'Masculin')}</SelectItem>
+                    <SelectItem value="F">{t('female', 'Féminin')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1730,7 +1747,7 @@ export function PatientsPage() {
 
             <div className="space-y-1.5">
               <Label htmlFor="phone" className="text-xs font-medium">
-                Téléphone <span className="text-rose-500">*</span>
+                {t('phone', 'Téléphone')} <span className="text-rose-500">*</span>
               </Label>
               <Input
                 id="phone"
@@ -1744,11 +1761,11 @@ export function PatientsPage() {
 
             {/* Optional Fields */}
             <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-              Informations complémentaires
+              {t('additionalInfo', 'Informations complémentaires')}
             </p>
 
             <div className="space-y-1.5">
-              <Label htmlFor="address" className="text-xs font-medium">Adresse</Label>
+              <Label htmlFor="address" className="text-xs font-medium">{t('address', 'Adresse')}</Label>
               <Input
                 id="address"
                 placeholder="Conakry, Kaloum"
@@ -1759,7 +1776,7 @@ export function PatientsPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="nationalId" className="text-xs font-medium">N° identité nationale</Label>
+                <Label htmlFor="nationalId" className="text-xs font-medium">{t('nationalId', "N° identité nationale")}</Label>
                 <Input
                   id="nationalId"
                   placeholder="GN-XXXX-XXXX-XX"
@@ -1768,13 +1785,13 @@ export function PatientsPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="bloodType" className="text-xs font-medium">Groupe sanguin</Label>
+                <Label htmlFor="bloodType" className="text-xs font-medium">{t('bloodType', 'Groupe sanguin')}</Label>
                 <Select value={formData.bloodType || '_none'} onValueChange={(v) => setFormData({ ...formData, bloodType: v === '_none' ? '' : v })}>
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Sélectionner" />
+                    <SelectValue placeholder={t('select', 'Sélectionner')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="_none">Non renseigné</SelectItem>
+                    <SelectItem value="_none">{t('notSpecified', 'Non renseigné')}</SelectItem>
                     <SelectItem value="A+">A+</SelectItem>
                     <SelectItem value="A-">A-</SelectItem>
                     <SelectItem value="B+">B+</SelectItem>
@@ -1790,16 +1807,16 @@ export function PatientsPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="emergencyName" className="text-xs font-medium">Contact d&apos;urgence</Label>
+                <Label htmlFor="emergencyName" className="text-xs font-medium">{t('emergencyContact', "Contact d'urgence")}</Label>
                 <Input
                   id="emergencyName"
-                  placeholder="Nom du contact"
+                  placeholder={t('contactName', 'Nom du contact')}
                   value={formData.emergencyContact}
                   onChange={(e) => setFormData({ ...formData, emergencyContact: e.target.value })}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="emergencyPhone" className="text-xs font-medium">Tél. d&apos;urgence</Label>
+                <Label htmlFor="emergencyPhone" className="text-xs font-medium">{t('emergencyPhone', "Tél. d'urgence")}</Label>
                 <Input
                   id="emergencyPhone"
                   placeholder="+224 6XX XX XX XX"
@@ -1810,21 +1827,21 @@ export function PatientsPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="allergies" className="text-xs font-medium">Allergies connues</Label>
+              <Label htmlFor="allergies" className="text-xs font-medium">{t('knownAllergies', 'Allergies connues')}</Label>
               <Input
                 id="allergies"
                 placeholder="Pénicilline, Sulfamides, Latex..."
                 value={formData.allergies}
                 onChange={(e) => setFormData({ ...formData, allergies: e.target.value })}
               />
-              <p className="text-[10px] text-slate-400 dark:text-slate-500">Séparez les allergies par des virgules</p>
+              <p className="text-[10px] text-slate-400 dark:text-slate-500">{t('separateAllergies', 'Séparez les allergies par des virgules')}</p>
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="antecedents" className="text-xs font-medium">Antécédents médicaux</Label>
+              <Label htmlFor="antecedents" className="text-xs font-medium">{t('medicalHistory', 'Antécédents médicaux')}</Label>
               <Textarea
                 id="antecedents"
-                placeholder="Décrivez les antécédents médicaux, chirurgicaux et familiaux..."
+                placeholder={t('describeAntecedents', 'Décrivez les antécédents médicaux, chirurgicaux et familiaux...')}
                 rows={3}
                 value={formData.antecedents}
                 onChange={(e) => setFormData({ ...formData, antecedents: e.target.value })}
@@ -1837,7 +1854,7 @@ export function PatientsPage() {
               variant="outline"
               onClick={closeDialog}
             >
-              Annuler
+              {tc('cancel', 'Annuler')}
             </Button>
             <Button
               onClick={handleFormSubmit}
@@ -1846,12 +1863,12 @@ export function PatientsPage() {
               {editingPatient ? (
                 <>
                   <Pencil className="size-4" />
-                  Mettre à jour
+                  {t('update', 'Mettre à jour')}
                 </>
               ) : (
                 <>
                   <QrCode className="size-4" />
-                  Enregistrer & Générer QR
+                  {t('saveAndGenerateQR', 'Enregistrer & Générer QR')}
                 </>
               )}
             </Button>
@@ -1920,6 +1937,7 @@ function AntecedentSection({
   color: string
   items: string[]
 }) {
+  const { t } = useTranslation('patients')
   return (
     <div>
       <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
@@ -1929,7 +1947,7 @@ function AntecedentSection({
         {title}
       </h4>
       {items.length === 0 ? (
-        <p className="text-xs text-slate-400 dark:text-slate-500 ml-8">Aucun antécédent enregistré</p>
+        <p className="text-xs text-slate-400 dark:text-slate-500 ml-8">{t('noHistory', 'Aucun antécédent enregistré')}</p>
       ) : (
         <div className="space-y-1.5 ml-8">
           {items.map((item, i) => (

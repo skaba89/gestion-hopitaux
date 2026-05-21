@@ -114,7 +114,7 @@ interface NavItem {
 
 const createNavGroups = (t: (key: string, fallback: string) => string): { label: string; items: NavItem[] }[] => [
   {
-    label: 'Principal',
+    label: t('principal', 'Principal'),
     items: [
       { view: 'dashboard', label: t('dashboard', 'Dashboard'), icon: LayoutDashboard },
       { view: 'patients', label: t('patients', 'Patients'), icon: Users, requiredPermission: { resource: 'patients', action: 'read' } },
@@ -123,7 +123,7 @@ const createNavGroups = (t: (key: string, fallback: string) => string): { label:
     ],
   },
   {
-    label: 'Médical',
+    label: t('medical', 'Médical'),
     items: [
       { view: 'laboratory', label: t('laboratory', 'Laboratoire'), icon: Microscope, requiredPermission: { resource: 'laboratory', action: 'read' } },
       { view: 'pharmacy', label: t('pharmacy', 'Pharmacie'), icon: Pill, requiredPermission: { resource: 'pharmacy', action: 'read' } },
@@ -134,76 +134,76 @@ const createNavGroups = (t: (key: string, fallback: string) => string): { label:
     ],
   },
   {
-    label: 'Gestion',
+    label: t('management', 'Gestion'),
     items: [
       { view: 'billing', label: t('billing', 'Facturation'), icon: Receipt, requiredPermission: { resource: 'billing', action: 'read' } },
-      { view: 'payments', label: 'Paiements', icon: CreditCard },
-      { view: 'messaging', label: 'Messagerie', icon: MessageSquare, requiredPermission: { resource: 'messaging', action: 'send' } },
-      { view: 'insurance', label: 'Assurance', icon: ShieldCheck, requiredPermission: { resource: 'insurance', action: 'read' } },
-      { view: 'teleconsultation', label: 'Téléconsultation', icon: Video, requiredPermission: { resource: 'telemedicine', action: 'read' } },
-      { view: 'analytics', label: 'Analytics', icon: BarChart3 },
+      { view: 'payments', label: t('payments', 'Paiements'), icon: CreditCard },
+      { view: 'messaging', label: t('messaging', 'Messagerie'), icon: MessageSquare, requiredPermission: { resource: 'messaging', action: 'send' } },
+      { view: 'insurance', label: t('insurance', 'Assurance'), icon: ShieldCheck, requiredPermission: { resource: 'insurance', action: 'read' } },
+      { view: 'teleconsultation', label: t('teleconsultation', 'Téléconsultation'), icon: Video, requiredPermission: { resource: 'telemedicine', action: 'read' } },
+      { view: 'analytics', label: t('analytics', 'Analytics'), icon: BarChart3 },
     ],
   },
   {
-    label: 'Télémédecine',
+    label: t('telemedicine', 'Télémédecine'),
     items: [
-      { view: 'video-consultation', label: 'Vidéo Consultation', icon: MonitorPlay, requiredPermission: { resource: 'telemedicine', action: 'read' } },
-      { view: 'virtual-waiting-room', label: 'Salle d\'attente', icon: Clock, requiredPermission: { resource: 'telemedicine', action: 'read' } },
-      { view: 'asc-dashboard', label: 'Outils ASC', icon: MapPin, requiredPermission: { resource: 'asc', action: 'read' } },
+      { view: 'video-consultation', label: t('videoConsultation', 'Vidéo Consultation'), icon: MonitorPlay, requiredPermission: { resource: 'telemedicine', action: 'read' } },
+      { view: 'virtual-waiting-room', label: t('virtualWaitingRoom', "Salle d'attente"), icon: Clock, requiredPermission: { resource: 'telemedicine', action: 'read' } },
+      { view: 'asc-dashboard', label: t('ascTools', 'Outils ASC'), icon: MapPin, requiredPermission: { resource: 'asc', action: 'read' } },
     ],
   },
   {
-    label: 'IA Santé',
+    label: t('aiHealth', 'IA Santé'),
     items: [
-      { view: 'ai-diagnostic', label: 'Diagnostic IA', icon: Brain, requiredPermission: { resource: 'ai', action: 'diagnostic' } },
-      { view: 'ai-interactions', label: 'Interactions', icon: AlertCircle, requiredPermission: { resource: 'ai', action: 'interactions' } },
-      { view: 'ai-surveillance', label: 'Surveillance', icon: Activity, requiredPermission: { resource: 'ai', action: 'surveillance' } },
+      { view: 'ai-diagnostic', label: t('aiDiagnostic', 'Diagnostic IA'), icon: Brain, requiredPermission: { resource: 'ai', action: 'diagnostic' } },
+      { view: 'ai-interactions', label: t('aiInteractions', 'Interactions'), icon: AlertCircle, requiredPermission: { resource: 'ai', action: 'interactions' } },
+      { view: 'ai-surveillance', label: t('aiSurveillance', 'Surveillance'), icon: Activity, requiredPermission: { resource: 'ai', action: 'surveillance' } },
     ],
   },
   {
-    label: 'Interopérabilité FHIR',
+    label: t('fhirInterop', 'Interopérabilité FHIR'),
     items: [
-      { view: 'fhir-explorer', label: 'FHIR Explorer', icon: FileJson },
-      { view: 'adt-messages', label: 'Messages ADT', icon: ArrowRightLeft },
-      { view: 'terminology-browser', label: 'Terminologie', icon: BookOpen },
-      { view: 'mpi-dashboard', label: 'MPI Registre', icon: Database },
-      { view: 'fhir-subscriptions', label: 'Abonnements', icon: Zap },
+      { view: 'fhir-explorer', label: t('fhirExplorer', 'FHIR Explorer'), icon: FileJson },
+      { view: 'adt-messages', label: t('adtMessages', 'Messages ADT'), icon: ArrowRightLeft },
+      { view: 'terminology-browser', label: t('terminology', 'Terminologie'), icon: BookOpen },
+      { view: 'mpi-dashboard', label: t('mpiRegistry', 'MPI Registre'), icon: Database },
+      { view: 'fhir-subscriptions', label: t('subscriptions', 'Abonnements'), icon: Zap },
     ],
   },
   {
-    label: 'Intégrations Nationales',
+    label: t('nationalIntegrations', 'Intégrations Nationales'),
     items: [
-      { view: 'integration-dashboard', label: 'Intégrations', icon: Globe },
-      { view: 'national-health-id', label: 'INS Guinée', icon: Fingerprint },
-      { view: 'dhis2-connector', label: 'DHIS2 / SNIS', icon: BarChart3 },
-      { view: 'dicom-viewer', label: 'Imagerie DICOM', icon: Monitor },
-      { view: 'cross-border', label: 'Echanges CEDEAO', icon: Plane },
+      { view: 'integration-dashboard', label: t('integrations', 'Intégrations'), icon: Globe },
+      { view: 'national-health-id', label: t('insGuinea', 'INS Guinée'), icon: Fingerprint },
+      { view: 'dhis2-connector', label: t('dhis2', 'DHIS2 / SNIS'), icon: BarChart3 },
+      { view: 'dicom-viewer', label: t('dicomImaging', 'Imagerie DICOM'), icon: Monitor },
+      { view: 'cross-border', label: t('ecowasExchange', 'Echanges CEDEAO'), icon: Plane },
     ],
   },
   {
-    label: 'Déploiement National',
+    label: t('nationalDeployment', 'Déploiement National'),
     items: [
-      { view: 'adaptive-dashboard', label: 'Dashboard Adaptatif', icon: LayoutDashboard },
-      { view: 'multi-hospital', label: 'Multi-Hôpitaux', icon: Hospital, requiredPermission: { resource: 'admin', action: 'read' } },
-      { view: 'national-supervision', label: 'Supervision', icon: Target, requiredPermission: { resource: 'admin', action: 'read' } },
-      { view: 'facilities-management', label: 'Établissements', icon: Building2 },
-      { view: 'national-statistics', label: 'Statistiques', icon: PieChart },
+      { view: 'adaptive-dashboard', label: t('adaptiveDashboard', 'Dashboard Adaptatif'), icon: LayoutDashboard },
+      { view: 'multi-hospital', label: t('multiHospital', 'Multi-Hôpitaux'), icon: Hospital, requiredPermission: { resource: 'admin', action: 'read' } },
+      { view: 'national-supervision', label: t('supervision', 'Supervision'), icon: Target, requiredPermission: { resource: 'admin', action: 'read' } },
+      { view: 'facilities-management', label: t('facilities', 'Établissements'), icon: Building2 },
+      { view: 'national-statistics', label: t('statistics', 'Statistiques'), icon: PieChart },
     ],
   },
   {
-    label: 'Sécurité',
+    label: t('security', 'Sécurité'),
     items: [
-      { view: 'audit-log', label: 'Journal d\'audit', icon: Eye, requiredPermission: { resource: 'admin', action: 'read' } },
-      { view: 'security-dashboard', label: 'Sécurité', icon: Shield, requiredPermission: { resource: 'admin', action: 'read' } },
-      { view: 'permission-matrix', label: 'Permissions', icon: Lock, requiredPermission: { resource: 'admin', action: 'read' } },
+      { view: 'audit-log', label: t('auditLog', "Journal d'audit"), icon: Eye, requiredPermission: { resource: 'admin', action: 'read' } },
+      { view: 'security-dashboard', label: t('securityDash', 'Sécurité'), icon: Shield, requiredPermission: { resource: 'admin', action: 'read' } },
+      { view: 'permission-matrix', label: t('permissions', 'Permissions'), icon: Lock, requiredPermission: { resource: 'admin', action: 'read' } },
     ],
   },
   {
-    label: 'Système',
+    label: t('system', 'Système'),
     items: [
       { view: 'administration', label: t('administration', 'Administration'), icon: Settings2, requiredPermission: { resource: 'admin', action: 'read' } },
       { view: 'settings', label: t('settings', 'Paramètres'), icon: Cog },
-      { view: 'patient-portal', label: 'Portail Patient', icon: Smartphone },
+      { view: 'patient-portal', label: t('patientPortal', 'Portail Patient'), icon: Smartphone },
     ],
   },
 ]

@@ -76,6 +76,12 @@
     "principal": "Prensipal",
     "medical": "Kɛnɛ",
     "management": "Bolomara",
+    "telemedicine": "Tɛlɛmɛdisin",
+    "aiHealth": "IA Kɛnɛ",
+    "fhirInterop": "FHIR Intɛropɛrabilite",
+    "nationalIntegrations": "Nasyɔn Intɛgrasiyɔnw",
+    "nationalDeployment": "Nasyɔn Bɔli",
+    "security": "Lakana",
     "system": "Sistɛm"
   },
   "dashboard": {

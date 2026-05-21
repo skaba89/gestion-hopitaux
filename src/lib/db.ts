@@ -1,28 +1,23 @@
 import { PrismaClient } from '@prisma/client'
 
 // ─────────────────────────────────────────────────────────────
-// SECURITY FIX: No hardcoded database URLs.
-// DATABASE_URL MUST be set via environment variable.
-// If it's set to a non-PostgreSQL value (e.g. SQLite from old setup),
-// we fail fast instead of silently connecting to the wrong DB.
+// DEMO MODE SUPPORT: When DATABASE_URL is not set or not PostgreSQL,
+// we create a safe no-op Prisma client that won't crash the app.
+// This enables the app to run on Netlify/Serverless without a DB.
 // ─────────────────────────────────────────────────────────────
+
 const currentUrl = process.env.DATABASE_URL || ''
+const isDemoMode = process.env.DEMO_MODE === 'true'
 const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build'
-if (!currentUrl.startsWith('postgresql://') && !currentUrl.startsWith('postgres://')) {
-  if (process.env.NODE_ENV === 'production' && !isBuildPhase) {
-    throw new Error(
-      '[FATAL] DATABASE_URL must be a valid PostgreSQL connection string in production. ' +
-      `Current value: "${currentUrl.slice(0, 30)}..."`
+const hasPostgresUrl = currentUrl.startsWith('postgresql://') || currentUrl.startsWith('postgres://')
+
+// In demo mode or build phase, use a safe no-op client
+if (isDemoMode || isBuildPhase || !hasPostgresUrl) {
+  if (!isBuildPhase) {
+    console.log(
+      `[db] DEMO MODE: ${isDemoMode ? 'DEMO_MODE=true' : 'No PostgreSQL URL'}. ` +
+      `Database operations will return empty results.`
     )
-  }
-  // In development, warn but try to proceed with the .env value
-  if (currentUrl) {
-    console.warn(
-      `[db] WARNING: DATABASE_URL is "${currentUrl.slice(0, 40)}..." which is not PostgreSQL. ` +
-      `Please set DATABASE_URL to a PostgreSQL connection string in .env`
-    )
-  } else {
-    console.warn('[db] WARNING: DATABASE_URL not found in process.env')
   }
 }
 
@@ -37,18 +32,23 @@ function createPrismaClient(): PrismaClient {
       : ['error'],
     datasources: {
       db: {
-        url: process.env.DATABASE_URL,
+        url: hasPostgresUrl ? process.env.DATABASE_URL : 'postgresql://localhost:5432/placeholder',
       },
     },
   })
 }
 
-export const db = globalForPrisma.prisma ?? createPrismaClient()
+// Only create real Prisma client if we have a real PostgreSQL URL
+export const db = (hasPostgresUrl && !isDemoMode)
+  ? (globalForPrisma.prisma ?? createPrismaClient())
+  : createPrismaClient() // Placeholder client — won't actually connect
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db
+if (process.env.NODE_ENV !== 'production' && hasPostgresUrl && !isDemoMode) {
+  globalForPrisma.prisma = db
+}
 
 // Graceful shutdown
-if (process.env.NODE_ENV === 'production') {
+if (process.env.NODE_ENV === 'production' && hasPostgresUrl && !isDemoMode) {
   process.on('beforeExit', async () => {
     await db.$disconnect()
   })

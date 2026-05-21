@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useDataStore, type EmergencyCase } from '@/lib/data-store'
 import { useToast } from '@/hooks/use-toast'
+import { useTranslation } from '@/i18n/provider'
 
 const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.1 } } }
 const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } } }
@@ -41,6 +42,26 @@ const statusColors: Record<EmergencyStatus, string> = {
 export function EmergenciesPage() {
   const { emergencies, addEmergency, updateEmergency, takeCharge } = useDataStore()
   const { toast } = useToast()
+  const { t } = useTranslation('emergencies')
+  const { t: tc } = useTranslation('common')
+
+  // Translated labels for display (data values in comparisons remain unchanged)
+  const triageLabels: Record<TriageLevel, string> = {
+    Rouge: t('triageLevels.red', 'Absolu'),
+    Orange: t('triageLevels.orange', 'Urgent'),
+    Jaune: t('triageLevels.yellow', 'Semi-urgent'),
+    Vert: t('triageLevels.green', 'Moins urgent'),
+    Bleu: t('triageLevels.blue', 'Non urgent'),
+  }
+
+  const statusLabels: Record<EmergencyStatus, string> = {
+    'En attente': t('status.pending', 'En attente'),
+    'Pris en charge': t('status.takenCharge', 'Pris en charge'),
+    'En cours': t('status.inProgress', 'En cours'),
+    'Terminé': t('status.completed', 'Terminé'),
+    'Transféré': t('status.transferred', 'Transféré'),
+  }
+
   const [search, setSearch] = useState('')
   const [showNewDialog, setShowNewDialog] = useState(false)
   const [selectedCase, setSelectedCase] = useState<EmergencyCase | null>(null)
@@ -62,7 +83,7 @@ export function EmergenciesPage() {
 
   const handleAddEmergency = () => {
     if (!newPatientName || !newReason) {
-      toast({ title: 'Erreur', description: 'Nom patient et motif sont obligatoires', variant: 'destructive' })
+      toast({ title: t('errors.title', 'Erreur'), description: t('errors.nameAndReasonRequired', 'Nom patient et motif sont obligatoires'), variant: 'destructive' })
       return
     }
     addEmergency({
@@ -75,7 +96,7 @@ export function EmergenciesPage() {
       status: 'En attente',
       doctor: null,
     })
-    toast({ title: 'Urgence ajoutée', description: `${newPatientName} enregistré(e) en urgence` })
+    toast({ title: t('toast.emergencyAdded', 'Urgence ajoutée'), description: t('toast.patientRegistered', `${newPatientName} enregistré(e) en urgence`) })
     setNewPatientName('')
     setNewPatientId('')
     setNewTriageLevel('Jaune')
@@ -85,11 +106,11 @@ export function EmergenciesPage() {
 
   const handleTakeCharge = () => {
     if (!selectedCase || !doctorName) {
-      toast({ title: 'Erreur', description: 'Nom du médecin requis', variant: 'destructive' })
+      toast({ title: t('errors.title', 'Erreur'), description: t('errors.doctorNameRequired', 'Nom du médecin requis'), variant: 'destructive' })
       return
     }
     takeCharge(selectedCase.id, doctorName)
-    toast({ title: 'Pris en charge', description: `${selectedCase.patientName} pris(e) en charge par ${doctorName}` })
+    toast({ title: t('status.takenCharge', 'Pris en charge'), description: t('toast.patientTakenCharge', `${selectedCase.patientName} pris(e) en charge par ${doctorName}`) })
     setDoctorName('')
     setSelectedCase(null)
   }
@@ -97,14 +118,14 @@ export function EmergenciesPage() {
   const handleTerminate = () => {
     if (!selectedCase) return
     updateEmergency(selectedCase.id, { status: 'Terminé' })
-    toast({ title: 'Terminé', description: `Cas de ${selectedCase.patientName} terminé` })
+    toast({ title: t('status.completed', 'Terminé'), description: t('toast.caseCompleted', `Cas de ${selectedCase.patientName} terminé`) })
     setSelectedCase(null)
   }
 
   const handleTransfer = () => {
     if (!selectedCase) return
     updateEmergency(selectedCase.id, { status: 'Transféré' })
-    toast({ title: 'Transféré', description: `${selectedCase.patientName} transféré(e)` })
+    toast({ title: t('status.transferred', 'Transféré'), description: t('toast.patientTransferred', `${selectedCase.patientName} transféré(e)`) })
     setSelectedCase(null)
   }
 
@@ -115,24 +136,24 @@ export function EmergenciesPage() {
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center size-10 rounded-xl bg-gradient-to-br from-rose-500 to-red-600 shadow-lg shadow-rose-500/20"><Siren className="size-5 text-white" /></div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Urgences</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Accueil et triage des urgences</p>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{t('title', 'Urgences')}</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t('subtitle', 'Accueil et triage des urgences')}</p>
           </div>
         </div>
         <Button onClick={() => setShowNewDialog(true)} className="bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-600 hover:to-red-700 text-white shadow-lg shadow-rose-500/20">
-          <Plus className="size-4 mr-2" /> Nouveau patient urgence
+          <Plus className="size-4 mr-2" /> {t('newCase', 'Nouveau patient urgence')}
         </Button>
       </motion.div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: "Cas aujourd'hui", value: totalToday, color: 'from-teal-500 to-emerald-600' },
-          { label: 'Critiques', value: critical, color: 'from-rose-500 to-red-600' },
-          { label: 'En attente', value: waiting, color: 'from-amber-500 to-orange-600' },
-          { label: 'Traités', value: treated, color: 'from-emerald-500 to-green-600' },
+          { id: 'todayCases', label: t('stats.todayCases', "Cas aujourd'hui"), value: totalToday, color: 'from-teal-500 to-emerald-600' },
+          { id: 'critical', label: t('stats.critical', 'Critiques'), value: critical, color: 'from-rose-500 to-red-600' },
+          { id: 'waiting', label: t('status.pending', 'En attente'), value: waiting, color: 'from-amber-500 to-orange-600' },
+          { id: 'treated', label: t('stats.treated', 'Traités'), value: treated, color: 'from-emerald-500 to-green-600' },
         ].map(stat => (
-          <motion.div key={stat.label} variants={itemVariants}>
+          <motion.div key={stat.id} variants={itemVariants}>
             <Card className="relative overflow-hidden border-slate-200/60 dark:border-slate-800/60">
               <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${stat.color}`} />
               <CardContent className="pt-5 pb-4">
@@ -149,11 +170,11 @@ export function EmergenciesPage() {
         <Card className="border-slate-200/60 dark:border-slate-800/60">
           <CardContent className="py-3">
             <div className="flex items-center gap-4 flex-wrap">
-              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Triage :</span>
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">{t('triage', 'Triage')} :</span>
               {(Object.keys(triageConfig) as TriageLevel[]).map(key => {
                 const cfg = triageConfig[key]
                 return (
-                  <span key={key} className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-bold ${cfg.bg} ${cfg.color}`}>{key} — {cfg.label}</span>
+                  <span key={key} className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-bold ${cfg.bg} ${cfg.color}`}>{key} — {triageLabels[key]}</span>
                 )
               })}
             </div>
@@ -168,12 +189,12 @@ export function EmergenciesPage() {
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">File d&apos;attente par priorité</CardTitle>
-                  <CardDescription className="text-xs">Trié par niveau de triage</CardDescription>
+                  <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">{t('priorityQueue', "File d'attente par priorité")}</CardTitle>
+                  <CardDescription className="text-xs">{t('sortedByTriage', 'Trié par niveau de triage')}</CardDescription>
                 </div>
                 <div className="relative">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-slate-400" />
-                  <Input placeholder="Rechercher..." className="pl-8 h-8 text-xs w-[160px]" value={search} onChange={e => setSearch(e.target.value)} />
+                  <Input placeholder={t('searchPlaceholder', 'Rechercher...')} className="pl-8 h-8 text-xs w-[160px]" value={search} onChange={e => setSearch(e.target.value)} />
                 </div>
               </div>
             </CardHeader>
@@ -198,7 +219,7 @@ export function EmergenciesPage() {
                       </div>
                       <div className="flex flex-col items-end gap-1 shrink-0">
                         <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{c.arrivalTime}</span>
-                        <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${statusColors[c.status]}`}>{c.status}</span>
+                        <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${statusColors[c.status]}`}>{statusLabels[c.status]}</span>
                       </div>
                     </motion.div>
                   )
@@ -212,7 +233,7 @@ export function EmergenciesPage() {
         <motion.div variants={itemVariants}>
           <Card className="border-slate-200/60 dark:border-slate-800/60 h-full">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">Répartition par triage</CardTitle>
+              <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">{t('triageDistribution', 'Répartition par triage')}</CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
               <div className="space-y-3">
@@ -225,7 +246,7 @@ export function EmergenciesPage() {
                       <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center gap-2">
                           <div className={`size-3 rounded ${cfg.bg}`} />
-                          <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{level} — {cfg.label}</span>
+                          <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{level} — {triageLabels[level]}</span>
                         </div>
                         <span className="text-xs font-bold text-slate-900 dark:text-white">{count} ({pct}%)</span>
                       </div>
@@ -255,32 +276,32 @@ export function EmergenciesPage() {
               <div className="space-y-4 py-2">
                 <div className="flex items-center gap-2">
                   <div className={`flex items-center justify-center size-8 rounded ${triageConfig[selectedCase.triageLevel].bg} ${triageConfig[selectedCase.triageLevel].color} font-bold text-sm`}>{selectedCase.triageLevel}</div>
-                  <span className="text-sm font-medium">{triageConfig[selectedCase.triageLevel].label}</span>
-                  <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ml-auto ${statusColors[selectedCase.status]}`}>{selectedCase.status}</span>
+                  <span className="text-sm font-medium">{triageLabels[selectedCase.triageLevel]}</span>
+                  <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ml-auto ${statusColors[selectedCase.status]}`}>{statusLabels[selectedCase.status]}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div><span className="text-xs text-slate-500">Heure arrivée</span><p className="font-medium text-slate-900 dark:text-white">{selectedCase.arrivalTime}</p></div>
-                  <div><span className="text-xs text-slate-500">Médecin</span><p className="font-medium text-slate-900 dark:text-white">{selectedCase.doctor || '—'}</p></div>
+                  <div><span className="text-xs text-slate-500">{t('arrivalTime', "Heure d'arrivée")}</span><p className="font-medium text-slate-900 dark:text-white">{selectedCase.arrivalTime}</p></div>
+                  <div><span className="text-xs text-slate-500">{t('attendingDoctor', 'Médecin')}</span><p className="font-medium text-slate-900 dark:text-white">{selectedCase.doctor || '—'}</p></div>
                 </div>
-                <div><span className="text-xs text-slate-500">Motif</span><p className="text-sm font-medium text-slate-900 dark:text-white mt-0.5">{selectedCase.reason}</p></div>
+                <div><span className="text-xs text-slate-500">{t('reason', 'Motif')}</span><p className="text-sm font-medium text-slate-900 dark:text-white mt-0.5">{selectedCase.reason}</p></div>
                 {selectedCase.patientId && (
-                  <div><span className="text-xs text-slate-500">ID Patient</span><p className="text-sm font-medium text-slate-900 dark:text-white mt-0.5">{selectedCase.patientId}</p></div>
+                  <div><span className="text-xs text-slate-500">{t('patientId', 'ID Patient')}</span><p className="text-sm font-medium text-slate-900 dark:text-white mt-0.5">{selectedCase.patientId}</p></div>
                 )}
               </div>
               <DialogFooter className="flex flex-col gap-2 sm:flex-row">
                 {selectedCase.status === 'En attente' && (
                   <div className="flex items-center gap-2 w-full sm:w-auto">
-                    <Input placeholder="Nom médecin..." value={doctorName} onChange={e => setDoctorName(e.target.value)} className="h-9 text-sm" />
-                    <Button className="bg-teal-600 hover:bg-teal-700 text-white whitespace-nowrap" onClick={handleTakeCharge}>Prendre en charge</Button>
+                    <Input placeholder={t('doctorNamePlaceholder', 'Nom médecin...')} value={doctorName} onChange={e => setDoctorName(e.target.value)} className="h-9 text-sm" />
+                    <Button className="bg-teal-600 hover:bg-teal-700 text-white whitespace-nowrap" onClick={handleTakeCharge}>{t('takeCharge', 'Prendre en charge')}</Button>
                   </div>
                 )}
                 {(selectedCase.status === 'Pris en charge' || selectedCase.status === 'En cours') && (
                   <>
-                    <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleTerminate}>Terminer</Button>
-                    <Button variant="outline" onClick={handleTransfer}>Transférer</Button>
+                    <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleTerminate}>{t('terminate', 'Terminer')}</Button>
+                    <Button variant="outline" onClick={handleTransfer}>{t('transfer', 'Transférer')}</Button>
                   </>
                 )}
-                <Button variant="outline" onClick={() => setSelectedCase(null)}>Fermer</Button>
+                <Button variant="outline" onClick={() => setSelectedCase(null)}>{tc('close', 'Fermer')}</Button>
               </DialogFooter>
             </>
           )}
@@ -290,26 +311,26 @@ export function EmergenciesPage() {
       {/* New Emergency Dialog */}
       <Dialog open={showNewDialog} onOpenChange={setShowNewDialog}>
         <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><Siren className="size-5 text-rose-600" /> Nouveau patient urgence</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Siren className="size-5 text-rose-600" /> {t('newCase', 'Nouveau patient urgence')}</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Nom patient *</Label><Input placeholder="Nom complet..." value={newPatientName} onChange={e => setNewPatientName(e.target.value)} /></div>
-              <div className="space-y-2"><Label>ID Patient</Label><Input placeholder="ID patient..." value={newPatientId} onChange={e => setNewPatientId(e.target.value)} /></div>
+              <div className="space-y-2"><Label>{t('patientName', 'Nom patient')} *</Label><Input placeholder={t('patientNamePlaceholder', 'Nom complet...')} value={newPatientName} onChange={e => setNewPatientName(e.target.value)} /></div>
+              <div className="space-y-2"><Label>{t('patientId', 'ID Patient')}</Label><Input placeholder={t('patientIdPlaceholder', 'ID patient...')} value={newPatientId} onChange={e => setNewPatientId(e.target.value)} /></div>
             </div>
             <div className="space-y-2">
-              <Label>Niveau de triage *</Label>
+              <Label>{t('triageLevel', 'Niveau de triage')} *</Label>
               <Select value={newTriageLevel} onValueChange={(v) => setNewTriageLevel(v as TriageLevel)}>
-                <SelectTrigger><SelectValue placeholder="Triage..." /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t('triagePlaceholder', 'Triage...')} /></SelectTrigger>
                 <SelectContent>
-                  {(Object.keys(triageConfig) as TriageLevel[]).map(l => <SelectItem key={l} value={l}>{l} — {triageConfig[l].label}</SelectItem>)}
+                  {(Object.keys(triageConfig) as TriageLevel[]).map(l => <SelectItem key={l} value={l}>{l} — {triageLabels[l]}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2"><Label>Motif d&apos;urgence *</Label><Textarea placeholder="Décrire la situation..." rows={3} value={newReason} onChange={e => setNewReason(e.target.value)} /></div>
+            <div className="space-y-2"><Label>{t('urgencyReason', "Motif d'urgence")} *</Label><Textarea placeholder={t('describeSituation', 'Décrire la situation...')} rows={3} value={newReason} onChange={e => setNewReason(e.target.value)} /></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowNewDialog(false)}>Annuler</Button>
-            <Button className="bg-gradient-to-r from-rose-500 to-red-600 text-white" onClick={handleAddEmergency}>Enregistrer</Button>
+            <Button variant="outline" onClick={() => setShowNewDialog(false)}>{tc('cancel', 'Annuler')}</Button>
+            <Button className="bg-gradient-to-r from-rose-500 to-red-600 text-white" onClick={handleAddEmergency}>{tc('save', 'Enregistrer')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

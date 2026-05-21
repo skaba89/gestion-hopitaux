@@ -76,6 +76,12 @@
     "principal": "Main",
     "medical": "Medical",
     "management": "Management",
+    "telemedicine": "Telemedicine",
+    "aiHealth": "AI Health",
+    "fhirInterop": "FHIR Interoperability",
+    "nationalIntegrations": "National Integrations",
+    "nationalDeployment": "National Deployment",
+    "security": "Security",
     "system": "System"
   },
   "dashboard": {

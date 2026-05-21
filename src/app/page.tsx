@@ -8,6 +8,10 @@ import { I18nProvider } from '@/i18n/provider'
 import { QueryProvider } from '@/lib/query-provider'
 import { PWARegistrar } from '@/components/app/pwa-registrar'
 import { demoVideoSessions } from '@/lib/telemedicine'
+import { useAuthStore } from '@/lib/auth-store'
+
+// Lazy-load sign-in page
+const SignInPage = dynamic(() => import('@/components/auth/sign-in-page').then(m => ({ default: m.SignInPage })))
 
 // ─── Lazy-loaded view components ─────────────────────────────────
 // Using next/dynamic to split each module into its own chunk.
@@ -181,9 +185,15 @@ const viewComponents: Record<AppView, React.ComponentType> = {
 
 function AppContent() {
   const { currentView } = useStore()
+  const { isAuthenticated } = useAuthStore()
+
+  // Auth guard: show sign-in page if not authenticated
+  if (!isAuthenticated) {
+    return <SignInPage />
+  }
 
   if (currentView === 'landing') {
-    return <LandingPage />
+    return <DashboardPage />
   }
 
   const PageComponent = viewComponents[currentView] || DashboardPage

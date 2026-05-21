@@ -76,6 +76,12 @@
     "principal": "Fɔlɔ",
     "medical": "Kɛnɛ",
     "management": "Kɛtigi",
+    "telemedicine": "Tɛlɛmɛdisin",
+    "aiHealth": "IA Kɛnɛ",
+    "fhirInterop": "FHIR Intɛropɛrabilite",
+    "nationalIntegrations": "Nasyɔn Intɛgrasiyɔn",
+    "nationalDeployment": "Nasyɔn Bɔli",
+    "security": "Lakana",
     "system": "Sistɛm"
   },
   "dashboard": {

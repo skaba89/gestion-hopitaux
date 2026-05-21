@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useDataStore, type LabRequest } from '@/lib/data-store'
 import { useToast } from '@/hooks/use-toast'
+import { useTranslation } from '@/i18n/provider'
 
 const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.1 } } }
 const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } } }
@@ -38,6 +39,8 @@ const priorityColors: Record<LabPriority, string> = {
 export function LaboratoryPage() {
   const { toast } = useToast()
   const { labRequests, addLabRequest, updateLabRequest, validateLabResult } = useDataStore()
+  const { t } = useTranslation('laboratory')
+  const { t: tc } = useTranslation('common')
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [showNewDialog, setShowNewDialog] = useState(false)
@@ -51,6 +54,20 @@ export function LaboratoryPage() {
   const [newPriority, setNewPriority] = useState<LabPriority>('Normal')
   const [newNotes, setNewNotes] = useState('')
 
+  // Translated labels for status and priority display
+  const statusLabels: Record<LabStatus, string> = {
+    'En attente': t('status.pending', 'En attente'),
+    'En cours': t('status.inProgress', 'En cours'),
+    'Terminé': t('status.completed', 'Terminé'),
+    'Validé': t('status.validated', 'Validé'),
+  }
+
+  const priorityLabels: Record<LabPriority, string> = {
+    'Normal': t('priorityLevels.normal', 'Normal'),
+    'Urgent': t('priorityLevels.urgent', 'Urgent'),
+    'Stat': t('priorityLevels.stat', 'Stat'),
+  }
+
   const filtered = labRequests.filter(r => {
     const matchSearch = r.patientName.toLowerCase().includes(search.toLowerCase()) || r.id.toLowerCase().includes(search.toLowerCase()) || r.type.toLowerCase().includes(search.toLowerCase())
     const matchStatus = statusFilter === 'all' || r.status === statusFilter
@@ -60,19 +77,19 @@ export function LaboratoryPage() {
   const handleStartAnalysis = (id: string) => {
     updateLabRequest(id, { status: 'En cours' })
     setSelectedRequest(null)
-    toast({ title: 'Analyse démarrée', description: 'L\'analyse est maintenant en cours.' })
+    toast({ title: t('toast.analysisStarted', 'Analyse démarrée'), description: t('toast.analysisInProgress', "L'analyse est maintenant en cours.") })
   }
 
   const handleComplete = (id: string) => {
     updateLabRequest(id, { status: 'Terminé' })
     setSelectedRequest(null)
-    toast({ title: 'Analyse terminée', description: 'Les résultats sont prêts pour validation.' })
+    toast({ title: t('toast.analysisCompleted', 'Analyse terminée'), description: t('toast.resultsReadyForValidation', 'Les résultats sont prêts pour validation.') })
   }
 
   const handleValidate = (id: string) => {
     validateLabResult(id)
     setSelectedRequest(null)
-    toast({ title: 'Résultats validés', description: 'Les résultats ont été validés avec succès.' })
+    toast({ title: t('toast.resultsValidated', 'Résultats validés'), description: t('toast.resultsValidatedDesc', 'Les résultats ont été validés avec succès.') })
   }
 
   const handleAddRequest = () => {
@@ -95,7 +112,7 @@ export function LaboratoryPage() {
     setNewType('')
     setNewPriority('Normal')
     setNewNotes('')
-    toast({ title: 'Demande créée', description: 'La demande d\'analyse a été enregistrée.' })
+    toast({ title: t('toast.requestCreated', 'Demande créée'), description: t('toast.requestCreatedDesc', "La demande d'analyse a été enregistrée.") })
   }
 
   return (
@@ -107,22 +124,22 @@ export function LaboratoryPage() {
             <Microscope className="size-5 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Laboratoire</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Gestion des analyses et résultats</p>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{t('title', 'Laboratoire')}</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t('subtitle', 'Gestion des analyses et résultats')}</p>
           </div>
         </div>
         <Button onClick={() => setShowNewDialog(true)} className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white shadow-lg shadow-teal-500/20">
-          <Plus className="size-4 mr-2" /> Nouvelle demande
+          <Plus className="size-4 mr-2" /> {t('newRequest', 'Nouvelle demande')}
         </Button>
       </motion.div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Total demandes', value: labRequests.length, color: 'from-teal-500 to-emerald-600' },
-          { label: 'En attente', value: labRequests.filter(r => r.status === 'En attente').length, color: 'from-amber-500 to-orange-600' },
-          { label: 'En cours', value: labRequests.filter(r => r.status === 'En cours').length, color: 'from-cyan-500 to-teal-600' },
-          { label: 'Validés', value: labRequests.filter(r => r.status === 'Validé').length, color: 'from-emerald-500 to-green-600' },
+          { label: t('totalRequests', 'Total demandes'), value: labRequests.length, color: 'from-teal-500 to-emerald-600' },
+          { label: t('status.pending', 'En attente'), value: labRequests.filter(r => r.status === 'En attente').length, color: 'from-amber-500 to-orange-600' },
+          { label: t('status.inProgress', 'En cours'), value: labRequests.filter(r => r.status === 'En cours').length, color: 'from-cyan-500 to-teal-600' },
+          { label: t('validated', 'Validés'), value: labRequests.filter(r => r.status === 'Validé').length, color: 'from-emerald-500 to-green-600' },
         ].map(stat => (
           <motion.div key={stat.label} variants={itemVariants}>
             <Card className="relative overflow-hidden border-slate-200/60 dark:border-slate-800/60">
@@ -143,16 +160,16 @@ export function LaboratoryPage() {
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-                <Input placeholder="Rechercher patient, code, analyse..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+                <Input placeholder={t('searchPlaceholder', 'Rechercher patient, code, analyse...')} value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder="Statut" /></SelectTrigger>
+                <SelectTrigger className="w-full sm:w-[180px]"><SelectValue placeholder={tc('status', 'Statut')} /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tous</SelectItem>
-                  <SelectItem value="En attente">En attente</SelectItem>
-                  <SelectItem value="En cours">En cours</SelectItem>
-                  <SelectItem value="Terminé">Terminé</SelectItem>
-                  <SelectItem value="Validé">Validé</SelectItem>
+                  <SelectItem value="all">{tc('all', 'Tous')}</SelectItem>
+                  <SelectItem value="En attente">{t('status.pending', 'En attente')}</SelectItem>
+                  <SelectItem value="En cours">{t('status.inProgress', 'En cours')}</SelectItem>
+                  <SelectItem value="Terminé">{t('status.completed', 'Terminé')}</SelectItem>
+                  <SelectItem value="Validé">{t('status.validated', 'Validé')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -164,8 +181,8 @@ export function LaboratoryPage() {
       <motion.div variants={itemVariants}>
         <Card className="border-slate-200/60 dark:border-slate-800/60">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">Demandes d&apos;analyses</CardTitle>
-            <CardDescription className="text-xs">{filtered.length} demandes</CardDescription>
+            <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">{t('analysisRequests', "Demandes d'analyses")}</CardTitle>
+            <CardDescription className="text-xs">{filtered.length} {t('requests', 'demandes')}</CardDescription>
           </CardHeader>
           <CardContent className="pt-0">
             <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1 custom-scrollbar">
@@ -186,8 +203,8 @@ export function LaboratoryPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium ${priorityColors[req.priority]}`}>{req.priority}</span>
-                        <span className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium ${config.color}`}><StatusIcon className="size-3" />{req.status}</span>
+                        <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium ${priorityColors[req.priority]}`}>{priorityLabels[req.priority]}</span>
+                        <span className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-medium ${config.color}`}><StatusIcon className="size-3" />{statusLabels[req.status]}</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
@@ -200,7 +217,7 @@ export function LaboratoryPage() {
                             <div key={r.name} className={`p-2 rounded-lg text-center ${r.abnormal ? 'bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800' : 'bg-slate-50 dark:bg-slate-800'}`}>
                               <p className="text-[10px] text-slate-500 dark:text-slate-400">{r.name}</p>
                               <p className={`text-sm font-bold ${r.abnormal ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white'}`}>{r.value}</p>
-                              <p className="text-[10px] text-slate-400 dark:text-slate-500">{r.unit} (Réf: {r.normalRange})</p>
+                              <p className="text-[10px] text-slate-400 dark:text-slate-500">{r.unit} ({t('ref', 'Réf')}: {r.normalRange})</p>
                             </div>
                           ))}
                         </div>
@@ -224,21 +241,21 @@ export function LaboratoryPage() {
               </DialogHeader>
               <div className="space-y-4 py-2">
                 <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div><span className="text-xs text-slate-500">Patient</span><p className="font-medium text-slate-900 dark:text-white">{selectedRequest.patientName}</p></div>
-                  <div><span className="text-xs text-slate-500">Médecin prescripteur</span><p className="font-medium text-slate-900 dark:text-white">{selectedRequest.doctor}</p></div>
-                  <div><span className="text-xs text-slate-500">Date</span><p className="font-medium text-slate-900 dark:text-white">{selectedRequest.date}</p></div>
-                  <div><span className="text-xs text-slate-500">Priorité</span><span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ml-1 ${priorityColors[selectedRequest.priority]}`}>{selectedRequest.priority}</span></div>
+                  <div><span className="text-xs text-slate-500">{t('patient', 'Patient')}</span><p className="font-medium text-slate-900 dark:text-white">{selectedRequest.patientName}</p></div>
+                  <div><span className="text-xs text-slate-500">{t('doctor', 'Médecin prescripteur')}</span><p className="font-medium text-slate-900 dark:text-white">{selectedRequest.doctor}</p></div>
+                  <div><span className="text-xs text-slate-500">{tc('date', 'Date')}</span><p className="font-medium text-slate-900 dark:text-white">{selectedRequest.date}</p></div>
+                  <div><span className="text-xs text-slate-500">{t('priority', 'Priorité')}</span><span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ml-1 ${priorityColors[selectedRequest.priority]}`}>{priorityLabels[selectedRequest.priority]}</span></div>
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">Analyse demandée</p>
+                  <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">{t('requestedAnalysis', 'Analyse demandée')}</p>
                   <Badge variant="secondary">{selectedRequest.type}</Badge>
                 </div>
                 {selectedRequest.results.length > 0 && (
                   <div>
-                    <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">Résultats</p>
+                    <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">{t('results', 'Résultats')}</p>
                     <div className="border rounded-lg overflow-hidden">
                       <div className="grid grid-cols-5 gap-0 bg-slate-100 dark:bg-slate-800 p-2 text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase">
-                        <span>Paramètre</span><span>Valeur</span><span>Unité</span><span>Référence</span><span>Statut</span>
+                        <span>{t('parameter', 'Paramètre')}</span><span>{t('value', 'Valeur')}</span><span>{t('unit', 'Unité')}</span><span>{t('reference', 'Référence')}</span><span>{tc('status', 'Statut')}</span>
                       </div>
                       {selectedRequest.results.map(r => (
                         <div key={r.name} className={`grid grid-cols-5 gap-0 p-2 border-t border-slate-200 dark:border-slate-700 ${r.abnormal ? 'bg-rose-50/50 dark:bg-rose-950/20' : ''}`}>
@@ -254,10 +271,10 @@ export function LaboratoryPage() {
                 )}
               </div>
               <DialogFooter className="flex gap-2">
-                {selectedRequest.status === 'En attente' && <Button className="bg-cyan-600 hover:bg-cyan-700 text-white" onClick={() => handleStartAnalysis(selectedRequest.id)}>Démarrer analyse</Button>}
-                {selectedRequest.status === 'En cours' && <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => handleComplete(selectedRequest.id)}>Terminer</Button>}
-                {selectedRequest.status === 'Terminé' && <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => handleValidate(selectedRequest.id)}>Valider résultats</Button>}
-                <Button variant="outline" onClick={() => setSelectedRequest(null)}>Fermer</Button>
+                {selectedRequest.status === 'En attente' && <Button className="bg-cyan-600 hover:bg-cyan-700 text-white" onClick={() => handleStartAnalysis(selectedRequest.id)}>{t('startAnalysis', 'Démarrer analyse')}</Button>}
+                {selectedRequest.status === 'En cours' && <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => handleComplete(selectedRequest.id)}>{t('complete', 'Terminer')}</Button>}
+                {selectedRequest.status === 'Terminé' && <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => handleValidate(selectedRequest.id)}>{t('validateResult', 'Valider résultats')}</Button>}
+                <Button variant="outline" onClick={() => setSelectedRequest(null)}>{tc('close', 'Fermer')}</Button>
               </DialogFooter>
             </>
           )}
@@ -267,22 +284,22 @@ export function LaboratoryPage() {
       {/* New Lab Request Dialog */}
       <Dialog open={showNewDialog} onOpenChange={setShowNewDialog}>
         <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><Plus className="size-5 text-teal-600" /> Nouvelle demande d&apos;analyse</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Plus className="size-5 text-teal-600" /> {t('newAnalysisRequest', "Nouvelle demande d'analyse")}</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>Patient *</Label><Input placeholder="Nom du patient" value={newPatient} onChange={e => setNewPatient(e.target.value)} /></div>
-              <div className="space-y-2"><Label>Priorité</Label><Select value={newPriority} onValueChange={(v) => setNewPriority(v as LabPriority)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Normal">Normal</SelectItem><SelectItem value="Urgent">Urgent</SelectItem><SelectItem value="Stat">Stat</SelectItem></SelectContent></Select></div>
+              <div className="space-y-2"><Label>{t('patient', 'Patient')} *</Label><Input placeholder={t('patientName', 'Nom du patient')} value={newPatient} onChange={e => setNewPatient(e.target.value)} /></div>
+              <div className="space-y-2"><Label>{t('priority', 'Priorité')}</Label><Select value={newPriority} onValueChange={(v) => setNewPriority(v as LabPriority)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Normal">{t('priorityLevels.normal', 'Normal')}</SelectItem><SelectItem value="Urgent">{t('priorityLevels.urgent', 'Urgent')}</SelectItem><SelectItem value="Stat">{t('priorityLevels.stat', 'Stat')}</SelectItem></SelectContent></Select></div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>ID Patient</Label><Input placeholder="P-XXXX-XXX" value={newPatientId} onChange={e => setNewPatientId(e.target.value)} /></div>
-              <div className="space-y-2"><Label>Médecin</Label><Input placeholder="Dr. ..." value={newDoctor} onChange={e => setNewDoctor(e.target.value)} /></div>
+              <div className="space-y-2"><Label>{t('patientId', 'ID Patient')}</Label><Input placeholder="P-XXXX-XXX" value={newPatientId} onChange={e => setNewPatientId(e.target.value)} /></div>
+              <div className="space-y-2"><Label>{t('doctorShort', 'Médecin')}</Label><Input placeholder="Dr. ..." value={newDoctor} onChange={e => setNewDoctor(e.target.value)} /></div>
             </div>
-            <div className="space-y-2"><Label>Type d&apos;analyse *</Label><Input placeholder="Ex: Hémogramme, Bilan lipidique..." value={newType} onChange={e => setNewType(e.target.value)} /></div>
-            <div className="space-y-2"><Label>Notes cliniques</Label><Textarea placeholder="Contexte clinique, symptômes..." rows={2} value={newNotes} onChange={e => setNewNotes(e.target.value)} /></div>
+            <div className="space-y-2"><Label>{t('analysisType', "Type d'analyse")} *</Label><Input placeholder={t('analysisTypePlaceholder', 'Ex: Hémogramme, Bilan lipidique...')} value={newType} onChange={e => setNewType(e.target.value)} /></div>
+            <div className="space-y-2"><Label>{t('clinicalNotes', 'Notes cliniques')}</Label><Textarea placeholder={t('clinicalNotesPlaceholder', 'Contexte clinique, symptômes...')} rows={2} value={newNotes} onChange={e => setNewNotes(e.target.value)} /></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowNewDialog(false)}>Annuler</Button>
-            <Button className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white" onClick={handleAddRequest}>Envoyer demande</Button>
+            <Button variant="outline" onClick={() => setShowNewDialog(false)}>{tc('cancel', 'Annuler')}</Button>
+            <Button className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white" onClick={handleAddRequest}>{t('submitRequest', 'Envoyer demande')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

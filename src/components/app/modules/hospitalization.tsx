@@ -15,22 +15,25 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useDataStore, type BedUnit } from '@/lib/data-store'
 import { useToast } from '@/hooks/use-toast'
+import { useTranslation } from '@/i18n/provider'
 
 const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.1 } } }
 const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } } }
 
 type BedStatus = BedUnit['status']
 
-const bedStatusConfig: Record<BedStatus, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
-  Libre: { label: 'Disponible', color: 'bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800', icon: ShieldCheck },
-  Occupé: { label: 'Occupé', color: 'bg-rose-100 text-rose-700 border-rose-300 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800', icon: User },
-  Réservé: { label: 'Réservé', color: 'bg-sky-100 text-sky-700 border-sky-300 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800', icon: ShieldCheck },
-  'En nettoyage': { label: 'Nettoyage', color: 'bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800', icon: Wrench },
+const bedStatusConfig: Record<BedStatus, { color: string; icon: React.ComponentType<{ className?: string }> }> = {
+  Libre: { color: 'bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800', icon: ShieldCheck },
+  Occupé: { color: 'bg-rose-100 text-rose-700 border-rose-300 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800', icon: User },
+  Réservé: { color: 'bg-sky-100 text-sky-700 border-sky-300 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800', icon: ShieldCheck },
+  'En nettoyage': { color: 'bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800', icon: Wrench },
 }
 
 export function HospitalizationPage() {
   const { beds, updateBed, admitPatient, dischargeBed } = useDataStore()
   const { toast } = useToast()
+  const { t } = useTranslation('hospitalization')
+  const { t: tc } = useTranslation('common')
   const [search, setSearch] = useState('')
   const [showNewDialog, setShowNewDialog] = useState(false)
   const [selectedBed, setSelectedBed] = useState<BedUnit | null>(null)
@@ -39,6 +42,16 @@ export function HospitalizationPage() {
   const [admitPatientName, setAdmitPatientName] = useState('')
   const [admitPatientId, setAdmitPatientId] = useState('')
   const [admitBedId, setAdmitBedId] = useState('')
+
+  const getBedStatusLabel = (status: BedStatus) => {
+    switch (status) {
+      case 'Libre': return t('bedStatus.available', 'Disponible')
+      case 'Occupé': return t('bedStatus.occupied', 'Occupé')
+      case 'Réservé': return t('bedStatus.reserved', 'Réservé')
+      case 'En nettoyage': return t('bedStatus.cleaning', 'Nettoyage')
+      default: return status
+    }
+  }
 
   const occupied = beds.filter(b => b.status === 'Occupé').length
   const available = beds.filter(b => b.status === 'Libre').length
@@ -54,11 +67,11 @@ export function HospitalizationPage() {
 
   const handleAdmit = () => {
     if (!admitPatientName || !admitBedId) {
-      toast({ title: 'Erreur', description: 'Nom patient et lit sont obligatoires', variant: 'destructive' })
+      toast({ title: tc('error', 'Erreur'), description: t('errorRequiredFields', 'Nom patient et lit sont obligatoires'), variant: 'destructive' })
       return
     }
     admitPatient(admitBedId, admitPatientName, admitPatientId || '')
-    toast({ title: 'Patient admis', description: `${admitPatientName} admis(e) dans le lit ${beds.find(b => b.id === admitBedId)?.number || admitBedId}` })
+    toast({ title: t('admissionSuccess', 'Patient admis'), description: t('admissionSuccessDesc', `${admitPatientName} admis(e) dans le lit ${beds.find(b => b.id === admitBedId)?.number || admitBedId}`) })
     setAdmitPatientName('')
     setAdmitPatientId('')
     setAdmitBedId('')
@@ -68,14 +81,14 @@ export function HospitalizationPage() {
   const handleDischarge = (bedId: string) => {
     const bed = beds.find(b => b.id === bedId)
     dischargeBed(bedId)
-    toast({ title: 'Lit libéré', description: `Lit ${bed?.number || bedId} libéré — patient sorti` })
+    toast({ title: t('dischargeSuccess', 'Lit libéré'), description: t('dischargeSuccessDesc', `Lit ${bed?.number || bedId} libéré — patient sorti`) })
     setSelectedBed(null)
   }
 
   const handleReserve = (bedId: string) => {
     const bed = beds.find(b => b.id === bedId)
     updateBed(bedId, { status: 'Réservé' })
-    toast({ title: 'Lit réservé', description: `Lit ${bed?.number || bedId} réservé` })
+    toast({ title: t('reserveSuccess', 'Lit réservé'), description: t('reserveSuccessDesc', `Lit ${bed?.number || bedId} réservé`) })
     setSelectedBed(null)
   }
 
@@ -86,22 +99,22 @@ export function HospitalizationPage() {
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center size-10 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 shadow-lg shadow-teal-500/20"><Bed className="size-5 text-white" /></div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Hospitalisation</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Gestion des admissions et lits</p>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{t('title', 'Hospitalisation')}</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t('subtitle', 'Gestion des admissions et lits')}</p>
           </div>
         </div>
         <Button onClick={() => setShowNewDialog(true)} className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white shadow-lg shadow-teal-500/20">
-          <Plus className="size-4 mr-2" /> Admettre patient
+          <Plus className="size-4 mr-2" /> {t('admitPatient', 'Admettre patient')}
         </Button>
       </motion.div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: "Taux d'occupation", value: `${occupancyRate}%`, color: 'from-teal-500 to-emerald-600' },
-          { label: 'Lits occupés', value: occupied, color: 'from-rose-500 to-red-600' },
-          { label: 'Lits disponibles', value: available, color: 'from-emerald-500 to-green-600' },
-          { label: 'Réservés / Nettoyage', value: reserved + cleaning, color: 'from-amber-500 to-orange-600' },
+          { label: t('occupancyRate', "Taux d'occupation"), value: `${occupancyRate}%`, color: 'from-teal-500 to-emerald-600' },
+          { label: t('bedsOccupied', 'Lits occupés'), value: occupied, color: 'from-rose-500 to-red-600' },
+          { label: t('bedsAvailable', 'Lits disponibles'), value: available, color: 'from-emerald-500 to-green-600' },
+          { label: t('reservedCleaning', 'Réservés / Nettoyage'), value: reserved + cleaning, color: 'from-amber-500 to-orange-600' },
         ].map(stat => (
           <motion.div key={stat.label} variants={itemVariants}>
             <Card className="relative overflow-hidden border-slate-200/60 dark:border-slate-800/60">
@@ -120,8 +133,8 @@ export function HospitalizationPage() {
         <motion.div variants={itemVariants}>
           <Card className="border-slate-200/60 dark:border-slate-800/60 h-full">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">Occupation des lits</CardTitle>
-              <CardDescription className="text-xs">Vue par service</CardDescription>
+              <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">{t('bedOccupancy', 'Occupation des lits')}</CardTitle>
+              <CardDescription className="text-xs">{t('viewByService', 'Vue par service')}</CardDescription>
             </CardHeader>
             <CardContent className="pt-0">
               <div className="grid grid-cols-2 gap-3">
@@ -144,10 +157,10 @@ export function HospitalizationPage() {
                 })}
               </div>
               <div className="flex items-center gap-4 mt-4 pt-3 border-t border-slate-200 dark:border-slate-700 text-xs flex-wrap">
-                <span className="flex items-center gap-1.5"><span className="size-3 rounded bg-emerald-500" /> Libre</span>
-                <span className="flex items-center gap-1.5"><span className="size-3 rounded bg-rose-500" /> Occupé</span>
-                <span className="flex items-center gap-1.5"><span className="size-3 rounded bg-sky-500" /> Réservé</span>
-                <span className="flex items-center gap-1.5"><span className="size-3 rounded bg-amber-500" /> Nettoyage</span>
+                <span className="flex items-center gap-1.5"><span className="size-3 rounded bg-emerald-500" /> {t('bedStatus.available', 'Libre')}</span>
+                <span className="flex items-center gap-1.5"><span className="size-3 rounded bg-rose-500" /> {t('bedStatus.occupied', 'Occupé')}</span>
+                <span className="flex items-center gap-1.5"><span className="size-3 rounded bg-sky-500" /> {t('bedStatus.reserved', 'Réservé')}</span>
+                <span className="flex items-center gap-1.5"><span className="size-3 rounded bg-amber-500" /> {t('bedStatus.cleaning', 'Nettoyage')}</span>
               </div>
             </CardContent>
           </Card>
@@ -159,12 +172,12 @@ export function HospitalizationPage() {
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">Patients hospitalisés</CardTitle>
-                  <CardDescription className="text-xs">{occupiedBeds.length} patients</CardDescription>
+                  <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">{t('hospitalizedPatients', 'Patients hospitalisés')}</CardTitle>
+                  <CardDescription className="text-xs">{t('patientCount', `${occupiedBeds.length} patients`)}</CardDescription>
                 </div>
                 <div className="relative">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-slate-400" />
-                  <Input placeholder="Rechercher..." className="pl-8 h-8 text-xs w-[160px]" value={search} onChange={e => setSearch(e.target.value)} />
+                  <Input placeholder={t('searchPlaceholder', 'Rechercher...')} className="pl-8 h-8 text-xs w-[160px]" value={search} onChange={e => setSearch(e.target.value)} />
                 </div>
               </div>
             </CardHeader>
@@ -180,10 +193,10 @@ export function HospitalizationPage() {
                         <p className="text-sm font-medium text-slate-900 dark:text-white">{bed.patient}</p>
                         <p className="text-xs text-slate-500 dark:text-slate-400">{bed.service}</p>
                       </div>
-                      <Badge className="bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/40 dark:text-teal-300 text-[10px]">Lit {bed.number}</Badge>
+                      <Badge className="bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/40 dark:text-teal-300 text-[10px]">{t('beds', 'Lit')} {bed.number}</Badge>
                     </div>
                     <div className="flex items-center gap-2 text-[10px] text-slate-400">
-                      <Clock className="size-3" /> Depuis le {bed.admissionDate}
+                      <Clock className="size-3" /> {t('since', 'Depuis le')} {bed.admissionDate}
                     </div>
                   </motion.div>
                 ))}
@@ -198,32 +211,32 @@ export function HospitalizationPage() {
         <DialogContent className="sm:max-w-[500px]">
           {selectedBed && (
             <>
-              <DialogHeader><DialogTitle className="flex items-center gap-2"><Bed className="size-5 text-teal-600" /> Lit {selectedBed.number}</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle className="flex items-center gap-2"><Bed className="size-5 text-teal-600" /> {t('beds', 'Lit')} {selectedBed.number}</DialogTitle></DialogHeader>
               <div className="space-y-4 py-2">
                 <div className="flex items-center gap-2">
                   <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${bedStatusConfig[selectedBed.status].color}`}>
-                    {bedStatusConfig[selectedBed.status].label}
+                    {getBedStatusLabel(selectedBed.status)}
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div><span className="text-xs text-slate-500">Service</span><p className="font-medium text-slate-900 dark:text-white">{selectedBed.service}</p></div>
-                  <div><span className="text-xs text-slate-500">Statut</span><p className="font-medium text-slate-900 dark:text-white">{bedStatusConfig[selectedBed.status].label}</p></div>
+                  <div><span className="text-xs text-slate-500">{t('service', 'Service')}</span><p className="font-medium text-slate-900 dark:text-white">{selectedBed.service}</p></div>
+                  <div><span className="text-xs text-slate-500">{tc('status', 'Statut')}</span><p className="font-medium text-slate-900 dark:text-white">{getBedStatusLabel(selectedBed.status)}</p></div>
                 </div>
                 {selectedBed.patient && (
                   <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div><span className="text-xs text-slate-500">Patient</span><p className="font-medium text-slate-900 dark:text-white">{selectedBed.patient}</p></div>
-                    <div><span className="text-xs text-slate-500">Date admission</span><p className="font-medium text-slate-900 dark:text-white">{selectedBed.admissionDate || '—'}</p></div>
+                    <div><span className="text-xs text-slate-500">{t('patient', 'Patient')}</span><p className="font-medium text-slate-900 dark:text-white">{selectedBed.patient}</p></div>
+                    <div><span className="text-xs text-slate-500">{t('admissionDate', "Date d'admission")}</span><p className="font-medium text-slate-900 dark:text-white">{selectedBed.admissionDate || '—'}</p></div>
                   </div>
                 )}
               </div>
               <DialogFooter className="flex gap-2">
                 {selectedBed.status === 'Occupé' && (
-                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => handleDischarge(selectedBed.id)}>Libérer lit</Button>
+                  <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => handleDischarge(selectedBed.id)}>{t('releaseBed', 'Libérer lit')}</Button>
                 )}
                 {selectedBed.status === 'Libre' && (
-                  <Button variant="outline" onClick={() => handleReserve(selectedBed.id)}>Réserver</Button>
+                  <Button variant="outline" onClick={() => handleReserve(selectedBed.id)}>{t('reserve', 'Réserver')}</Button>
                 )}
-                <Button variant="outline" onClick={() => setSelectedBed(null)}>Fermer</Button>
+                <Button variant="outline" onClick={() => setSelectedBed(null)}>{tc('close', 'Fermer')}</Button>
               </DialogFooter>
             </>
           )}
@@ -233,20 +246,20 @@ export function HospitalizationPage() {
       {/* New Admission Dialog */}
       <Dialog open={showNewDialog} onOpenChange={setShowNewDialog}>
         <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader><DialogTitle>Admettre patient</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('admitPatient', 'Admettre patient')}</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label>Nom patient *</Label>
-              <Input placeholder="Nom complet..." value={admitPatientName} onChange={e => setAdmitPatientName(e.target.value)} />
+              <Label>{t('patientName', 'Nom patient')} *</Label>
+              <Input placeholder={t('patientNamePlaceholder', 'Nom complet...')} value={admitPatientName} onChange={e => setAdmitPatientName(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>ID Patient</Label>
-              <Input placeholder="ID patient..." value={admitPatientId} onChange={e => setAdmitPatientId(e.target.value)} />
+              <Label>{t('patientId', 'ID Patient')}</Label>
+              <Input placeholder={t('patientIdPlaceholder', 'ID patient...')} value={admitPatientId} onChange={e => setAdmitPatientId(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Lit disponible *</Label>
+              <Label>{t('availableBed', 'Lit disponible')} *</Label>
               <Select value={admitBedId} onValueChange={setAdmitBedId}>
-                <SelectTrigger><SelectValue placeholder="Sélectionner un lit..." /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t('selectBedPlaceholder', 'Sélectionner un lit...')} /></SelectTrigger>
                 <SelectContent>
                   {beds.filter(b => b.status === 'Libre').map(b => (
                     <SelectItem key={b.id} value={b.id}>{b.number} — {b.service}</SelectItem>
@@ -256,8 +269,8 @@ export function HospitalizationPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowNewDialog(false)}>Annuler</Button>
-            <Button className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white" onClick={handleAdmit}>Admettre</Button>
+            <Button variant="outline" onClick={() => setShowNewDialog(false)}>{tc('cancel', 'Annuler')}</Button>
+            <Button className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white" onClick={handleAdmit}>{t('admit', 'Admettre')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

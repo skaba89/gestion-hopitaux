@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useMemo } from 'react'
+import { useTranslation } from '@/i18n/provider'
 import { motion } from 'framer-motion'
 import {
   Syringe, Plus, Search, ShieldCheck, Clock, AlertCircle, CheckCircle2, Baby, Calendar,
@@ -53,6 +54,8 @@ export function VaccinationPage() {
 
   const { vaccineRecords, addVaccineRecord, administerVaccine } = useDataStore()
   const { toast } = useToast()
+  const { t } = useTranslation('vaccination')
+  const { t: tc } = useTranslation('common')
 
   // New child form state
   const [newChildName, setNewChildName] = useState('')
@@ -97,7 +100,7 @@ export function VaccinationPage() {
         status: 'Planifié' as const,
       })),
     })
-    toast({ title: 'Enfant enregistré', description: `${newChildName} a été ajouté au calendrier vaccinal.` })
+    toast({ title: t('childRegistered', 'Enfant enregistré'), description: t('childAddedToSchedule', `${newChildName} a été ajouté au calendrier vaccinal.`) })
     setShowNewDialog(false)
     setNewChildName('')
     setNewChildId('')
@@ -106,7 +109,7 @@ export function VaccinationPage() {
 
   const handleAdminister = (recordId: string, vaccineName: string) => {
     administerVaccine(recordId, vaccineName)
-    toast({ title: 'Vaccin administré', description: `${vaccineName} a été marqué comme administré.` })
+    toast({ title: t('vaccineAdministered', 'Vaccin administré'), description: t('vaccineMarkedAdministered', `${vaccineName} a été marqué comme administré.`) })
     if (selectedRecord) {
       setSelectedRecord(useDataStore.getState().vaccineRecords.find(r => r.id === recordId) || null)
     }
@@ -119,22 +122,22 @@ export function VaccinationPage() {
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center size-10 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 shadow-lg shadow-teal-500/20"><Syringe className="size-5 text-white" /></div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Vaccination</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Calendrier vaccinal et couverture</p>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{t('title', 'Vaccination')}</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t('subtitle', 'Calendrier vaccinal et couverture')}</p>
           </div>
         </div>
         <Button onClick={() => setShowNewDialog(true)} className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white shadow-lg shadow-teal-500/20">
-          <Plus className="size-4 mr-2" /> Nouvel enfant
+          <Plus className="size-4 mr-2" /> {t('newChild', 'Nouvel enfant')}
         </Button>
       </motion.div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Enfants suivis', value: vaccineRecords.length, color: 'from-teal-500 to-emerald-600' },
-          { label: 'Vaccins dus', value: dueVaccinations.length, color: 'from-amber-500 to-orange-600' },
-          { label: 'Couverture BCG', value: coverageData.find(c => c.vaccine === 'BCG') ? `${coverageData.find(c => c.vaccine === 'BCG')!.rate}%` : '—', color: 'from-emerald-500 to-green-600' },
-          { label: 'Couverture DTC', value: coverageData.find(c => c.vaccine.includes('DTC')) ? `${coverageData.find(c => c.vaccine.includes('DTC'))!.rate}%` : '—', color: 'from-cyan-500 to-teal-600' },
+          { label: t('childrenTracked', 'Enfants suivis'), value: vaccineRecords.length, color: 'from-teal-500 to-emerald-600' },
+          { label: t('vaccinesDue', 'Vaccins dus'), value: dueVaccinations.length, color: 'from-amber-500 to-orange-600' },
+          { label: t('coverageBCG', 'Couverture BCG'), value: coverageData.find(c => c.vaccine === 'BCG') ? `${coverageData.find(c => c.vaccine === 'BCG')!.rate}%` : '—', color: 'from-emerald-500 to-green-600' },
+          { label: t('coverageDTC', 'Couverture DTC'), value: coverageData.find(c => c.vaccine.includes('DTC')) ? `${coverageData.find(c => c.vaccine.includes('DTC'))!.rate}%` : '—', color: 'from-cyan-500 to-teal-600' },
         ].map(stat => (
           <motion.div key={stat.label} variants={itemVariants}>
             <Card className="relative overflow-hidden border-slate-200/60 dark:border-slate-800/60">
@@ -155,12 +158,12 @@ export function VaccinationPage() {
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">Calendrier par enfant</CardTitle>
-                  <CardDescription className="text-xs">{filtered.length} enfants</CardDescription>
+                  <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">{t('schedulePerChild', 'Calendrier par enfant')}</CardTitle>
+                  <CardDescription className="text-xs">{filtered.length} {t('children', 'enfants')}</CardDescription>
                 </div>
                 <div className="relative">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-slate-400" />
-                  <Input placeholder="Rechercher..." className="pl-8 h-8 text-xs w-[140px]" value={search} onChange={e => setSearch(e.target.value)} />
+                  <Input placeholder={`${tc('search', 'Rechercher')}...`} className="pl-8 h-8 text-xs w-[140px]" value={search} onChange={e => setSearch(e.target.value)} />
                 </div>
               </div>
             </CardHeader>
@@ -179,7 +182,7 @@ export function VaccinationPage() {
                       <div className="flex items-center justify-between mb-2">
                         <div>
                           <p className="text-sm font-medium text-slate-900 dark:text-white">{record.childName}</p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">{ageMonths} mois • ID: {record.childId}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">{ageMonths} {t('months', 'mois')} • ID: {record.childId}</p>
                         </div>
                         <span className="text-xs font-bold text-teal-600 dark:text-teal-400">{pct}%</span>
                       </div>
@@ -206,8 +209,8 @@ export function VaccinationPage() {
         <motion.div variants={itemVariants}>
           <Card className="border-slate-200/60 dark:border-slate-800/60 h-full">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">Couverture vaccinale</CardTitle>
-              <CardDescription className="text-xs">Taux de couverture par vaccin — Hôpital Donka</CardDescription>
+              <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">{t('vaccineCoverage', 'Couverture vaccinale')}</CardTitle>
+              <CardDescription className="text-xs">{t('coverageDescription', 'Taux de couverture par vaccin — Hôpital Donka')}</CardDescription>
             </CardHeader>
             <CardContent className="pt-0">
               <div className="h-[280px] w-full">
@@ -223,7 +226,7 @@ export function VaccinationPage() {
                     <XAxis dataKey="vaccine" tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} domain={[0, 100]} unit="%" />
                     <Tooltip content={<CustomTooltip />} />
-                    <Bar dataKey="rate" fill="url(#vaccGrad)" radius={[6, 6, 0, 0]} maxBarSize={48} name="Couverture" />
+                    <Bar dataKey="rate" fill="url(#vaccGrad)" radius={[6, 6, 0, 0]} maxBarSize={48} name={t('coverage', 'Couverture')} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -231,7 +234,7 @@ export function VaccinationPage() {
               {/* Due Vaccinations */}
               <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
                 <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-1.5">
-                  <AlertCircle className="size-3.5 text-amber-500" /> Vaccinations dues ({dueVaccinations.length})
+                  <AlertCircle className="size-3.5 text-amber-500" /> {t('dueVaccinations', 'Vaccinations dues')} ({dueVaccinations.length})
                 </p>
                 <div className="space-y-1.5 max-h-[150px] overflow-y-auto custom-scrollbar">
                   {dueVaccinations.map((v, i) => (
@@ -256,9 +259,9 @@ export function VaccinationPage() {
               <>
                 <DialogHeader><DialogTitle className="flex items-center gap-2"><Baby className="size-5 text-teal-600" /> {selectedRecord.childName}</DialogTitle></DialogHeader>
                 <div className="space-y-4 py-2">
-                  <p className="text-xs text-slate-500">{ageMonths} mois • ID: {selectedRecord.childId} • Né(e) le {selectedRecord.dateOfBirth}</p>
+                  <p className="text-xs text-slate-500">{ageMonths} {t('months', 'mois')} • ID: {selectedRecord.childId} • {t('bornOn', 'Né(e) le')} {selectedRecord.dateOfBirth}</p>
                   <div>
-                    <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">Calendrier vaccinal</p>
+                    <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">{t('vaccineSchedule', 'Calendrier vaccinal')}</p>
                     <div className="space-y-1.5">
                       {selectedRecord.vaccines.map(v => (
                         <div key={v.name} className={`flex items-center justify-between p-2 rounded-lg ${v.status === 'Fait' ? 'bg-emerald-50 dark:bg-emerald-950/30' : v.status === 'En retard' ? 'bg-amber-50 dark:bg-amber-950/20' : 'bg-slate-50 dark:bg-slate-800'}`}>
@@ -272,7 +275,7 @@ export function VaccinationPage() {
                               <Button size="sm" className="bg-teal-600 hover:bg-teal-700 text-white text-xs h-6"
                                 onClick={(e) => { e.stopPropagation(); handleAdminister(selectedRecord.id, v.name) }}
                               >
-                                Administrer
+                                {t('administer', 'Administrer')}
                               </Button>
                             )}
                           </div>
@@ -281,7 +284,7 @@ export function VaccinationPage() {
                     </div>
                   </div>
                 </div>
-                <DialogFooter><Button variant="outline" onClick={() => setSelectedRecord(null)}>Fermer</Button></DialogFooter>
+                <DialogFooter><Button variant="outline" onClick={() => setSelectedRecord(null)}>{tc('close', 'Fermer')}</Button></DialogFooter>
               </>
             )
           })()}
@@ -291,15 +294,15 @@ export function VaccinationPage() {
       {/* New Child Dialog */}
       <Dialog open={showNewDialog} onOpenChange={setShowNewDialog}>
         <DialogContent className="sm:max-w-[440px]">
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><Syringe className="size-5 text-teal-600" /> Nouvel enfant</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Syringe className="size-5 text-teal-600" /> {t('newChild', 'Nouvel enfant')}</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="space-y-2"><Label>Nom de l&apos;enfant *</Label><Input placeholder="Nom complet" value={newChildName} onChange={e => setNewChildName(e.target.value)} /></div>
-            <div className="space-y-2"><Label>Identifiant *</Label><Input placeholder="C-XXX" value={newChildId} onChange={e => setNewChildId(e.target.value)} /></div>
-            <div className="space-y-2"><Label>Date de naissance *</Label><Input type="date" value={newDob} onChange={e => setNewDob(e.target.value)} /></div>
+            <div className="space-y-2"><Label>{t('childName', "Nom de l'enfant")} *</Label><Input placeholder={t('childNamePlaceholder', 'Nom complet')} value={newChildName} onChange={e => setNewChildName(e.target.value)} /></div>
+            <div className="space-y-2"><Label>{t('identifier', 'Identifiant')} *</Label><Input placeholder={t('identifierPlaceholder', 'C-XXX')} value={newChildId} onChange={e => setNewChildId(e.target.value)} /></div>
+            <div className="space-y-2"><Label>{t('dateOfBirth', 'Date de naissance')} *</Label><Input type="date" value={newDob} onChange={e => setNewDob(e.target.value)} /></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowNewDialog(false)}>Annuler</Button>
-            <Button className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white" onClick={handleNewChild}>Enregistrer</Button>
+            <Button variant="outline" onClick={() => setShowNewDialog(false)}>{tc('cancel', 'Annuler')}</Button>
+            <Button className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white" onClick={handleNewChild}>{tc('save', 'Enregistrer')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

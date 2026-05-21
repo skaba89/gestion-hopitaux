@@ -76,6 +76,12 @@
     "principal": "Ardino",
     "medical": "Keɓal",
     "management": "Yoggitorde",
+    "telemedicine": "Telifaandito",
+    "aiHealth": "IA Keɓal",
+    "fhirInterop": "FHIR Yaajnugol",
+    "nationalIntegrations": "Lesdi Naatnugol",
+    "nationalDeployment": "Lesdi Neldugol",
+    "security": "Kisal",
     "system": "Yannde"
   },
   "dashboard": {
