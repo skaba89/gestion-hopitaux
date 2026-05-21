@@ -101,6 +101,7 @@ import {
 } from '@/components/ui/sidebar'
 import { hasPermission, toHFRole, type HFRole } from '@/lib/rbac'
 import { HospitalScopeSwitcher } from '@/components/app/hospital-scope-switcher'
+import { useTranslation } from '@/i18n/provider'
 
 /* ─────────── Navigation Configuration ─────────── */
 
@@ -111,31 +112,31 @@ interface NavItem {
   requiredPermission?: { resource: Parameters<typeof hasPermission>[1]; action: Parameters<typeof hasPermission>[2] }
 }
 
-const navGroups: { label: string; items: NavItem[] }[] = [
+const createNavGroups = (t: (key: string, fallback: string) => string): { label: string; items: NavItem[] }[] => [
   {
     label: 'Principal',
     items: [
-      { view: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-      { view: 'patients', label: 'Patients', icon: Users, requiredPermission: { resource: 'patients', action: 'read' } },
-      { view: 'appointments', label: 'Rendez-vous', icon: Calendar },
-      { view: 'consultations', label: 'Consultations', icon: Stethoscope, requiredPermission: { resource: 'consultations', action: 'read' } },
+      { view: 'dashboard', label: t('dashboard', 'Dashboard'), icon: LayoutDashboard },
+      { view: 'patients', label: t('patients', 'Patients'), icon: Users, requiredPermission: { resource: 'patients', action: 'read' } },
+      { view: 'appointments', label: t('appointments', 'Rendez-vous'), icon: Calendar },
+      { view: 'consultations', label: t('consultations', 'Consultations'), icon: Stethoscope, requiredPermission: { resource: 'consultations', action: 'read' } },
     ],
   },
   {
     label: 'Médical',
     items: [
-      { view: 'laboratory', label: 'Laboratoire', icon: Microscope, requiredPermission: { resource: 'laboratory', action: 'read' } },
-      { view: 'pharmacy', label: 'Pharmacie', icon: Pill, requiredPermission: { resource: 'pharmacy', action: 'read' } },
-      { view: 'hospitalization', label: 'Hospitalisation', icon: Bed, requiredPermission: { resource: 'hospitalization', action: 'read' } },
-      { view: 'emergencies', label: 'Urgences', icon: Siren, requiredPermission: { resource: 'emergencies', action: 'read' } },
-      { view: 'maternity', label: 'Maternité', icon: Baby, requiredPermission: { resource: 'maternity', action: 'read' } },
-      { view: 'vaccination', label: 'Vaccination', icon: Syringe, requiredPermission: { resource: 'vaccinations', action: 'read' } },
+      { view: 'laboratory', label: t('laboratory', 'Laboratoire'), icon: Microscope, requiredPermission: { resource: 'laboratory', action: 'read' } },
+      { view: 'pharmacy', label: t('pharmacy', 'Pharmacie'), icon: Pill, requiredPermission: { resource: 'pharmacy', action: 'read' } },
+      { view: 'hospitalization', label: t('hospitalization', 'Hospitalisation'), icon: Bed, requiredPermission: { resource: 'hospitalization', action: 'read' } },
+      { view: 'emergencies', label: t('emergencies', 'Urgences'), icon: Siren, requiredPermission: { resource: 'emergencies', action: 'read' } },
+      { view: 'maternity', label: t('maternity', 'Maternité'), icon: Baby, requiredPermission: { resource: 'maternity', action: 'read' } },
+      { view: 'vaccination', label: t('vaccination', 'Vaccination'), icon: Syringe, requiredPermission: { resource: 'vaccinations', action: 'read' } },
     ],
   },
   {
     label: 'Gestion',
     items: [
-      { view: 'billing', label: 'Facturation', icon: Receipt, requiredPermission: { resource: 'billing', action: 'read' } },
+      { view: 'billing', label: t('billing', 'Facturation'), icon: Receipt, requiredPermission: { resource: 'billing', action: 'read' } },
       { view: 'payments', label: 'Paiements', icon: CreditCard },
       { view: 'messaging', label: 'Messagerie', icon: MessageSquare, requiredPermission: { resource: 'messaging', action: 'send' } },
       { view: 'insurance', label: 'Assurance', icon: ShieldCheck, requiredPermission: { resource: 'insurance', action: 'read' } },
@@ -200,8 +201,8 @@ const navGroups: { label: string; items: NavItem[] }[] = [
   {
     label: 'Système',
     items: [
-      { view: 'administration', label: 'Administration', icon: Settings2, requiredPermission: { resource: 'admin', action: 'read' } },
-      { view: 'settings', label: 'Paramètres', icon: Cog },
+      { view: 'administration', label: t('administration', 'Administration'), icon: Settings2, requiredPermission: { resource: 'admin', action: 'read' } },
+      { view: 'settings', label: t('settings', 'Paramètres'), icon: Cog },
       { view: 'patient-portal', label: 'Portail Patient', icon: Smartphone },
     ],
   },
@@ -277,6 +278,8 @@ const notifColors: Record<string, string> = {
 function AppSidebar() {
   const { currentView, setCurrentView, user } = useStore()
   const userRole = toHFRole(user.role)
+  const { t } = useTranslation('nav')
+  const navGroups = createNavGroups(t)
 
   // Check if a nav item should be visible
   const isItemVisible = (item: NavItem): boolean => {

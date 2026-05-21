@@ -37,6 +37,7 @@ import { Progress } from '@/components/ui/progress'
 import { useDataStore } from '@/lib/data-store'
 import { useStore } from '@/lib/store'
 import { useAuthStore } from '@/lib/auth-store'
+import { useTranslation } from '@/i18n/provider'
 
 /* ─────────── Animation Variants ─────────── */
 
@@ -113,6 +114,7 @@ export function DashboardPage() {
   const { patients, appointments, medications, beds, emergencies } = useDataStore()
   const { setCurrentView } = useStore()
   const authUser = useAuthStore((s) => s.user)
+  const { t } = useTranslation('dashboard')
 
   const today = new Date()
   const todayISO = today.toISOString().split('T')[0]
@@ -149,11 +151,11 @@ export function DashboardPage() {
 
   const kpiCards = useMemo(() => [
     {
-      label: 'Patients aujourd\'hui',
+      label: t('totalPatients', 'Patients aujourd\'hui'),
       value: String(patientsToday),
       trend: patientsToday > 0 ? `+${patientsToday}` : '0',
       trendUp: true,
-      sublabel: 'aujourd\'hui',
+      sublabel: t('today', 'aujourd\'hui'),
       icon: Users,
       gradient: 'from-teal-500 to-emerald-600',
       bgLight: 'bg-teal-50',
@@ -161,11 +163,11 @@ export function DashboardPage() {
       iconColor: 'text-teal-600 dark:text-teal-400',
     },
     {
-      label: 'Rendez-vous',
+      label: t('appointmentsToday', 'Rendez-vous'),
       value: String(appointmentsToday),
       trend: appointmentsToday > 0 ? `+${appointmentsToday}` : '0',
       trendUp: true,
-      sublabel: 'aujourd\'hui',
+      sublabel: t('today', 'aujourd\'hui'),
       icon: Calendar,
       gradient: 'from-cyan-500 to-teal-600',
       bgLight: 'bg-cyan-50',
@@ -173,11 +175,11 @@ export function DashboardPage() {
       iconColor: 'text-cyan-600 dark:text-cyan-400',
     },
     {
-      label: 'Lits disponibles',
+      label: t('bedsOccupied', 'Lits disponibles'),
       value: `${bedsAvailable}/${totalBeds}`,
       trend: totalBeds > 0 ? `${Math.round((bedsAvailable / totalBeds) * 100)}%` : '0%',
       trendUp: bedsAvailable / totalBeds > 0.3,
-      sublabel: 'disponibles',
+      sublabel: t('available', 'disponibles'),
       icon: Bed,
       gradient: 'from-amber-500 to-orange-600',
       bgLight: 'bg-amber-50',
@@ -185,11 +187,11 @@ export function DashboardPage() {
       iconColor: 'text-amber-600 dark:text-amber-400',
     },
     {
-      label: 'Urgences',
+      label: t('emergenciesActive', 'Urgences'),
       value: String(activeEmergencies),
       trend: activeEmergencies > 0 ? `+${activeEmergencies}` : '0',
       trendUp: false,
-      sublabel: 'actives',
+      sublabel: t('active', 'actives'),
       icon: Siren,
       gradient: 'from-rose-500 to-red-600',
       bgLight: 'bg-rose-50',
@@ -322,7 +324,7 @@ export function DashboardPage() {
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
-            Bonjour, {authUser?.name || 'Dr. Mamadou Diallo'}
+            {t('welcome', 'Bonjour')}, {authUser?.name || 'Dr. Mamadou Diallo'}
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
             <Activity className="size-4 text-teal-500" />
@@ -334,7 +336,7 @@ export function DashboardPage() {
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800 text-xs px-3 py-1">
             <span className="mr-1.5 size-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
-            Système opérationnel
+            {t('systemOperational', 'Système opérationnel')}
           </Badge>
         </div>
       </motion.div>
@@ -395,20 +397,20 @@ export function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">
-                    Consultations cette semaine
+                    {t('weeklyAppointments', 'Consultations cette semaine')}
                   </CardTitle>
                   <CardDescription className="text-xs mt-0.5">
-                    Comparaison avec la semaine précédente
+                    {t('comparisonLastWeek', 'Comparaison avec la semaine précédente')}
                   </CardDescription>
                 </div>
                 <div className="flex items-center gap-4 text-xs">
                   <span className="flex items-center gap-1.5">
                     <span className="size-2.5 rounded-full bg-teal-500" />
-                    Cette semaine
+                    {t('thisWeek', 'Cette semaine')}
                   </span>
                   <span className="flex items-center gap-1.5">
                     <span className="size-2.5 rounded-full bg-slate-300 dark:bg-slate-600" />
-                    Semaine dernière
+                    {t('lastWeek', 'Semaine dernière')}
                   </span>
                 </div>
               </div>
@@ -473,10 +475,10 @@ export function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">
-                    Admissions par service
+                    {t('admissionsByService', 'Admissions par service')}
                   </CardTitle>
                   <CardDescription className="text-xs mt-0.5">
-                    Répartition des admissions ce mois
+                    {t('monthlyDistribution', 'Répartition des admissions ce mois')}
                   </CardDescription>
                 </div>
                 <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
@@ -536,10 +538,10 @@ export function DashboardPage() {
                   </div>
                   <div>
                     <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">
-                      Prochains rendez-vous
+                      {t('upcomingAppointments', 'Prochains rendez-vous')}
                     </CardTitle>
                     <CardDescription className="text-xs">
-                      {upcomingAppts.length} rendez-vous à venir
+                      {upcomingAppts.length} {t('appointmentsUpcoming', 'rendez-vous à venir')}
                     </CardDescription>
                   </div>
                 </div>
@@ -547,7 +549,7 @@ export function DashboardPage() {
                   onClick={() => setCurrentView('appointments')}
                   className="text-xs text-teal-600 dark:text-teal-400 font-medium hover:underline flex items-center gap-1"
                 >
-                  Voir tout <ArrowRight className="size-3" />
+                  {t('viewAll', 'Voir tout')} <ArrowRight className="size-3" />
                 </button>
               </div>
             </CardHeader>
@@ -601,10 +603,10 @@ export function DashboardPage() {
                   </div>
                   <div>
                     <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">
-                      Alertes stocks critiques
+                      {t('stockAlerts', 'Alertes stocks critiques')}
                     </CardTitle>
                     <CardDescription className="text-xs">
-                      Médicaments sous seuil minimum
+                      {t('belowMinimum', 'Médicaments sous seuil minimum')}
                     </CardDescription>
                   </div>
                 </div>
@@ -612,7 +614,7 @@ export function DashboardPage() {
                   onClick={() => setCurrentView('pharmacy')}
                   className="text-xs text-rose-600 dark:text-rose-400 font-medium hover:underline flex items-center gap-1"
                 >
-                  Gérer <ArrowRight className="size-3" />
+                  {t('manage', 'Gérer')} <ArrowRight className="size-3" />
                 </button>
               </div>
             </CardHeader>
@@ -703,10 +705,10 @@ export function DashboardPage() {
                   </div>
                   <div>
                     <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">
-                      Pathologies fréquentes
+                      {t('topDiagnoses', 'Pathologies fréquentes')}
                     </CardTitle>
                     <CardDescription className="text-xs">
-                      Top 5 diagnostics ce mois
+                      {t('top5ThisMonth', 'Top 5 diagnostics ce mois')}
                     </CardDescription>
                   </div>
                 </div>
@@ -771,10 +773,10 @@ export function DashboardPage() {
                   </div>
                   <div>
                     <CardTitle className="text-base font-semibold text-slate-900 dark:text-white">
-                      Performance services
+                      {t('departmentPerformance', 'Performance services')}
                     </CardTitle>
                     <CardDescription className="text-xs">
-                      Temps d&apos;attente et satisfaction
+                      {t('waitTimeAndSatisfaction', "Temps d'attente et satisfaction")}
                     </CardDescription>
                   </div>
                 </div>

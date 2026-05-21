@@ -1140,19 +1140,24 @@ export const useDataStore = create<DataState>()(
     }),
     {
       name: 'healthflow-data-store',
-      // SECURITY FIX v2: partialize to avoid persisting PHI (Protected Health Information)
-      // to localStorage. PHI should only be loaded from the database via API routes.
-      // This store is DEPRECATED for production — migrate to React Query + API calls.
-      // Only UI state (currentView, selectedPatientId, etc.) should be persisted.
-      partialize: (state) => ({
-        // Only persist data that differs from initial demo state
-        patients: state.patients.filter(p => !p.id.startsWith('P-2024-')),
-        appointments: state.appointments.filter(a => !a.id.startsWith('RDV-')),
-        invoices: state.invoices.filter(i => !i.id.startsWith('FAC-')),
-        mobileMoneyTransactions: state.mobileMoneyTransactions.filter(t => !t.id.startsWith('MM-')),
-        insuranceClaims: state.insuranceClaims.filter(c => !c.id.startsWith('CLM-')),
-        reminderSettings: state.reminderSettings,
-      }),
+      // In DEMO_MODE: persist all data so demo survives page reloads
+      // In production: partialize to avoid persisting PHI (Protected Health Information)
+      partialize: (state) => {
+        const isDemo = typeof process !== 'undefined' && process.env?.DEMO_MODE === 'true'
+        if (isDemo) {
+          // In demo mode, persist everything for a seamless experience
+          return state as unknown as Record<string, unknown>
+        }
+        // Production: only persist non-PHI data
+        return {
+          patients: state.patients.filter(p => !p.id.startsWith('P-2024-')),
+          appointments: state.appointments.filter(a => !a.id.startsWith('RDV-')),
+          invoices: state.invoices.filter(i => !i.id.startsWith('FAC-')),
+          mobileMoneyTransactions: state.mobileMoneyTransactions.filter(t => !t.id.startsWith('MM-')),
+          insuranceClaims: state.insuranceClaims.filter(c => !c.id.startsWith('CLM-')),
+          reminderSettings: state.reminderSettings,
+        }
+      },
     }
   )
 )

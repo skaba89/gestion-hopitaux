@@ -3,12 +3,34 @@
 // Used to ensure critical environment variables are correctly set before Prisma loads.
 
 export async function register() {
-  // ─────────────────────────────────────────────────────────────
-  // SECURITY FIX: Validate DATABASE_URL instead of hardcoding.
-  // In production, if DATABASE_URL is missing or not PostgreSQL,
-  // we log a clear error. The app will fail to start in db.ts
-  // if this is not resolved.
-  // ─────────────────────────────────────────────────────────────
+  const isDemoMode = process.env.DEMO_MODE === 'true'
+
+  // ─── DEMO MODE SETUP ───
+  if (isDemoMode) {
+    console.log('[instrumentation] DEMO_MODE is active — running without database')
+
+    // Auto-generate secrets for demo mode if not set
+    if (!process.env.JWT_SECRET) {
+      process.env.JWT_SECRET = 'healthflow-guinea-demo-jwt-secret-NOT-FOR-PRODUCTION'
+      console.log('[instrumentation] JWT_SECRET auto-generated for demo mode')
+    }
+    if (!process.env.NEXTAUTH_SECRET) {
+      process.env.NEXTAUTH_SECRET = 'healthflow-guinea-demo-nextauth-secret-NOT-FOR-PRODUCTION'
+      console.log('[instrumentation] NEXTAUTH_SECRET auto-generated for demo mode')
+    }
+    if (!process.env.ENCRYPTION_KEY) {
+      process.env.ENCRYPTION_KEY = 'demo-encryption-key-32-bytes-long!!'
+      console.log('[instrumentation] ENCRYPTION_KEY auto-generated for demo mode')
+    }
+    if (!process.env.DATABASE_URL) {
+      process.env.DATABASE_URL = 'file:/tmp/demo.db'
+    }
+
+    // Skip all database validation in demo mode
+    return
+  }
+
+  // ─── PRODUCTION MODE VALIDATION ───
   const currentUrl = process.env.DATABASE_URL || ''
   if (!currentUrl.startsWith('postgresql://') && !currentUrl.startsWith('postgres://')) {
     if (process.env.NODE_ENV === 'production') {

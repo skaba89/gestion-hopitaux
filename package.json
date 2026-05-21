@@ -19,7 +19,8 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:ci": "jest --coverage --ci --forceExit",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:netlify": "DEMO_MODE=true JWT_SECRET=healthflow-guinea-demo-jwt-secret NEXTAUTH_SECRET=healthflow-guinea-demo-nextauth-secret ENCRYPTION_KEY=demo-encryption-key-32-bytes-long NEXT_PHASE=phase-production-build next build"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

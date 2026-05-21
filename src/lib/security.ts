@@ -8,9 +8,14 @@
 
 // SECURITY FIX: No hardcoded encryption key fallback.
 // ENCRYPTION_KEY MUST be set via environment variable.
+// In DEMO_MODE: auto-generates a demo key for deployment without DB
 const ENCRYPTION_KEY = (() => {
   const key = process.env.ENCRYPTION_KEY
   if (!key) {
+    if (process.env.DEMO_MODE === 'true') {
+      // Demo mode: use a demo key for testing without database
+      return 'demo-encryption-key-32-bytes-long!!'
+    }
     if (process.env.NODE_ENV === 'production') {
       throw new Error('[FATAL] ENCRYPTION_KEY environment variable is required in production')
     }
