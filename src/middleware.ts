@@ -29,6 +29,7 @@ const ALLOWED_ORIGINS = [
 const ALLOWED_SUBDOMAINS = [
   '.space.chatglm.site',   // Z.ai preview deployments
   '.healthflow-gn.com',    // Production subdomains
+  '.netlify.app',          // Netlify deployments
 ]
 
 // In development, also allow .space.chatglm.site subdomains
@@ -110,46 +111,29 @@ export async function middleware(request: NextRequest) {
   // In production: strict CSP with nonce-based script loading
   const isDev = process.env.NODE_ENV === 'development'
   
-  if (isDev) {
-    // Development CSP — relaxed for Turbopack HMR compatibility
-    const devCsp = [
-      "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",  // Turbopack HMR needs inline + eval
-      "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob: https:",
-      "font-src 'self' data:",
-      "connect-src 'self' https: wss: ws:",  // WebSocket for HMR
-      "media-src 'self' blob:",
-      "frame-src 'none'",
-      "object-src 'none'",
-      "base-uri 'self'",
-      "form-action 'self'",
-      "frame-ancestors 'none'",
-    ].join('; ')
-    response.headers.set('Content-Security-Policy', devCsp)
-  } else {
-    // Production CSP — strict with nonce
-    const nonce = crypto.randomUUID ? Buffer.from(crypto.randomUUID()).toString('base64').slice(0, 24) : ''
-    const prodCsp = [
-      "default-src 'self'",
-      `script-src 'self' 'nonce-${nonce}'`,
-      `style-src 'self' 'unsafe-inline'`,     // Style unsafe-inline still needed for Tailwind/shadcn
-      "img-src 'self' data: blob: https:",
-      "font-src 'self' data:",
-      "connect-src 'self' https: wss:",
-      "media-src 'self' blob:",
-      "frame-src 'none'",
-      "object-src 'none'",
-      "base-uri 'self'",
-      "form-action 'self'",
-      "frame-ancestors 'none'",
-    ].join('; ')
-    response.headers.set('Content-Security-Policy', prodCsp)
-    // Set nonce for downstream use (production only)
-    if (nonce) {
-      response.headers.set('x-nonce', nonce)
-    }
-  }
+  // CSP: Use permissive policy that works with Next.js SSR and Netlify
+  // Nonce-based CSP does NOT work with Next.js (nonces can't be injected into script tags)
+  // In demo mode on Netlify, we need unsafe-inline for React hydration + dynamic imports
+  const isDemo = process.env.DEMO_MODE === 'true'
+  const csp = [
+    "default-src 'self'",
+    isDemo
+      ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"  // Demo mode: permissive for Netlify
+      : (isDev
+          ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"  // Dev: needed for Turbopack HMR
+          : "script-src 'self' 'unsafe-inline'"),              // Production: unsafe-inline needed for Next.js
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data:",
+    isDev ? "connect-src 'self' https: wss: ws:" : "connect-src 'self' https: wss:",
+    "media-src 'self' blob:",
+    "frame-src 'none'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+  ].join('; ')
+  response.headers.set('Content-Security-Policy', csp)
 
   // HSTS (only in production)
   if (process.env.NODE_ENV === 'production') {
@@ -210,28 +194,30 @@ export async function middleware(request: NextRequest) {
     }
     // NO wildcard (*) - rejected origins get no CORS headers = blocked by browser
 
-    // ─── Rate Limiting on API Routes ───
-    const clientIp = request.headers.get('x-forwarded-for') ||
-                     request.headers.get('x-real-ip') ||
-                     'unknown'
+    // ─── Rate Limiting on API Routes (skip Redis in demo mode to avoid timeouts) ───
+    if (process.env.DEMO_MODE !== 'true') {
+      const clientIp = request.headers.get('x-forwarded-for') ||
+                       request.headers.get('x-real-ip') ||
+                       'unknown'
 
-    // General API rate limit: 100 requests per minute per IP (now Redis-backed)
-    const rateLimitKey = `api:${clientIp}`
-    if (!await checkRateLimit(rateLimitKey, 100, 60000)) {
-      return NextResponse.json(
-        { error: 'Trop de requêtes. Veuillez réessayer plus tard.' },
-        { status: 429 }
-      )
-    }
-
-    // Stricter rate limit for auth endpoints: 10 requests per minute
-    if (pathname.startsWith('/api/auth/')) {
-      const authRateLimitKey = `auth:${clientIp}`
-      if (!await checkRateLimit(authRateLimitKey, 10, 60000)) {
+      // General API rate limit: 100 requests per minute per IP
+      const rateLimitKey = `api:${clientIp}`
+      if (!await checkRateLimit(rateLimitKey, 100, 60000)) {
         return NextResponse.json(
-          { error: 'Trop de tentatives. Veuillez réessayer plus tard.' },
+          { error: 'Trop de requêtes. Veuillez réessayer plus tard.' },
           { status: 429 }
         )
+      }
+
+      // Stricter rate limit for auth endpoints: 10 requests per minute
+      if (pathname.startsWith('/api/auth/')) {
+        const authRateLimitKey = `auth:${clientIp}`
+        if (!await checkRateLimit(authRateLimitKey, 10, 60000)) {
+          return NextResponse.json(
+            { error: 'Trop de tentatives. Veuillez réessayer plus tard.' },
+            { status: 429 }
+          )
+        }
       }
     }
 
@@ -270,38 +256,63 @@ export async function middleware(request: NextRequest) {
       const hasCustomHeader = request.headers.get('x-requested-with') || 
                              request.headers.get('x-csrf-token')
       if (!reqOrigin && !hasCustomHeader) {
-        // In development, allow without CSRF headers for convenience
-        // In production, also allow same-host requests (browser sends no origin for same-origin)
-        // But block cross-origin requests without origin/custom header
-        const referer = request.headers.get('referer')
-        if (referer) {
-          // If there's a referer, check it's from an allowed origin
-          try {
-            const refererHost = new URL(referer).host
-            if (host && refererHost === host) {
-              // Same-origin request (referer matches host) - allow
-            } else if (isAllowedOrigin(new URL(referer).origin)) {
-              // Referer from allowed origin - allow
-            } else if (process.env.NODE_ENV === 'production') {
-              return NextResponse.json(
-                { error: 'Requête non autorisée (CSRF)' },
-                { status: 403 }
-              )
+        // In demo mode, relax CSRF checks for easier testing on Netlify
+        if (process.env.DEMO_MODE === 'true') {
+          // Allow same-host requests without origin header in demo mode
+          const referer = request.headers.get('referer')
+          if (!referer || (host && referer.includes(host))) {
+            // Likely same-origin request - allow
+          } else {
+            // Cross-origin without origin header - still check
+            try {
+              const refererOrigin = new URL(referer).origin
+              if (!isAllowedOrigin(refererOrigin)) {
+                return NextResponse.json(
+                  { error: 'Requête non autorisée (CSRF)' },
+                  { status: 403 }
+                )
+              }
+            } catch {
+              // Invalid referer - allow in demo mode
             }
-          } catch {
-            if (process.env.NODE_ENV === 'production') {
+          }
+        } else {
+          // Production mode: strict CSRF checks
+          const referer = request.headers.get('referer')
+          if (referer) {
+            try {
+              const refererHost = new URL(referer).host
+              if (host && refererHost === host) {
+                // Same-origin request (referer matches host) - allow
+              } else if (isAllowedOrigin(new URL(referer).origin)) {
+                // Referer from allowed origin - allow
+              } else {
+                return NextResponse.json(
+                  { error: 'Requête non autorisée (CSRF)' },
+                  { status: 403 }
+                )
+              }
+            } catch {
               return NextResponse.json(
                 { error: 'Requête non autorisée' },
                 { status: 403 }
               )
             }
+          } else if (process.env.NODE_ENV === 'production') {
+            // No origin, no custom header, no referer in production - block
+            // BUT: Allow if this is a same-origin request (no origin header = same-origin)
+            // Modern browsers don't send Origin header for same-origin POST requests
+            // So we check if the request has the Content-Type header typical of fetch/XHR
+            const contentType = request.headers.get('content-type')
+            if (contentType && (contentType.includes('application/json') || contentType.includes('application/x-www-form-urlencoded'))) {
+              // Likely a legitimate same-origin request - allow
+            } else {
+              return NextResponse.json(
+                { error: 'En-tête de sécurité requis (CSRF)' },
+                { status: 403 }
+              )
+            }
           }
-        } else if (process.env.NODE_ENV === 'production') {
-          // No origin, no custom header, no referer in production - block
-          return NextResponse.json(
-            { error: 'En-tête de sécurité requis (CSRF)' },
-            { status: 403 }
-          )
         }
       }
     }

@@ -149,7 +149,13 @@ export function findDemoUserByPhone(phone: string): DemoUser | null {
 
 /**
  * Check if we're running in demo mode
+ * Also detects demo mode when DATABASE_URL is missing (Netlify runtime may not have DEMO_MODE set)
  */
 export function isDemoMode(): boolean {
-  return process.env.DEMO_MODE === 'true'
+  if (process.env.DEMO_MODE === 'true') return true
+  // Fallback: if no PostgreSQL URL is available, we're in demo mode
+  const dbUrl = process.env.DATABASE_URL || ''
+  const hasPostgres = dbUrl.startsWith('postgresql://') || dbUrl.startsWith('postgres://')
+  if (!hasPostgres && process.env.NODE_ENV === 'production') return true
+  return false
 }

@@ -70,7 +70,10 @@ export function SignInPage() {
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
         body: JSON.stringify({ email, password }),
       })
 
@@ -119,7 +122,10 @@ export function SignInPage() {
       const normalizedPhone = `+224${phone.replace(/\D/g, '').slice(-9)}`
       const response = await fetch('/api/auth/otp', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
         body: JSON.stringify({ phone: normalizedPhone }),
       })
 
@@ -157,7 +163,10 @@ export function SignInPage() {
       const normalizedPhone = `+224${phone.replace(/\D/g, '').slice(-9)}`
       const response = await fetch('/api/auth/otp', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
         body: JSON.stringify({ phone: normalizedPhone, otp: code }),
       })
 
@@ -203,7 +212,10 @@ export function SignInPage() {
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+        },
         body: JSON.stringify({ email: demoUser.email, password: demoUser.password }),
       })
 

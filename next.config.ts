@@ -1,9 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: "standalone",
-  // Use webpack instead of Turbopack for production builds (Turbopack has issues with ioredis)
-  // Turbopack is still used for dev via `next dev`
+  // "standalone" output removed — incompatible with Netlify's @netlify/plugin-nextjs
+  // Netlify plugin handles serverless function generation automatically
   typescript: {
     ignoreBuildErrors: false,
   },

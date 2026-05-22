@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isDemoMode, findDemoUserByPhone } from '@/lib/demo-users'
 
-// In-memory OTP storage for demo mode
+// DEMO OTP: Always accept "123456" without storing (works on serverless/Netlify)
+// In-memory store only used as optional fallback for non-serverless environments
 const demoOtpStore = new Map<string, { code: string; expires: number; attempts: number }>()
+const DEMO_OTP_CODE = '123456'
 
 /**
  * POST /api/auth/otp - Generate and send OTP
- * DEMO MODE: Returns OTP in response (auto-filled on frontend)
+ * DEMO MODE: Returns OTP in response (auto-filled on frontend), no storage needed
  * PRODUCTION: Sends via SMS, never returns OTP in response
  */
 export async function POST(request: NextRequest) {
@@ -26,9 +28,9 @@ export async function POST(request: NextRequest) {
 
     // ─── DEMO MODE ───
     if (isDemoMode()) {
-      const demoCode = '123456'
+      // Store OTP in memory (best-effort for serverless, not required for verification)
       demoOtpStore.set(normalizedPhone, {
-        code: demoCode,
+        code: DEMO_OTP_CODE,
         expires: Date.now() + 5 * 60 * 1000, // 5 minutes
         attempts: 0,
       })
@@ -39,7 +41,7 @@ export async function POST(request: NextRequest) {
         data: {
           phoneLast4: normalizedPhone.slice(-4),
           expiresIn: 300,
-          otp: demoCode, // In demo mode, return OTP for auto-fill
+          otp: DEMO_OTP_CODE, // In demo mode, return OTP for auto-fill
         },
       })
     }
@@ -75,7 +77,7 @@ export async function POST(request: NextRequest) {
 
 /**
  * PUT /api/auth/otp - Verify OTP and return user data
- * DEMO MODE: Verifies against in-memory store, matches demo users
+ * DEMO MODE: Always accepts "123456" (no server-side state needed for Netlify serverless)
  * PRODUCTION: Verifies via Redis, looks up user in PostgreSQL
  */
 export async function PUT(request: NextRequest) {
@@ -95,42 +97,25 @@ export async function PUT(request: NextRequest) {
 
     // ─── DEMO MODE ───
     if (isDemoMode()) {
+      // On Netlify serverless, in-memory store may not persist between POST and PUT.
+      // So we always accept the demo OTP code "123456" without requiring stored state.
+      if (code !== DEMO_OTP_CODE) {
+        return NextResponse.json(
+          { error: 'Code OTP invalide. En mode démo, utilisez le code 123456.' },
+          { status: 401 }
+        )
+      }
+
+      // Check if stored OTP exists and is valid (optional, best-effort)
       const stored = demoOtpStore.get(normalizedPhone)
-
-      if (!stored) {
-        return NextResponse.json(
-          { error: 'Aucun code OTP trouvé. Veuillez demander un nouveau code.' },
-          { status: 401 }
-        )
+      if (stored) {
+        if (Date.now() > stored.expires) {
+          demoOtpStore.delete(normalizedPhone)
+          // Still allow in demo mode - just warn
+        }
       }
 
-      if (Date.now() > stored.expires) {
-        demoOtpStore.delete(normalizedPhone)
-        return NextResponse.json(
-          { error: 'Code OTP expiré. Veuillez demander un nouveau code.' },
-          { status: 401 }
-        )
-      }
-
-      stored.attempts++
-
-      if (stored.attempts > 3) {
-        demoOtpStore.delete(normalizedPhone)
-        return NextResponse.json(
-          { error: 'Trop de tentatives. Veuillez demander un nouveau code.' },
-          { status: 429 }
-        )
-      }
-
-      if (code !== stored.code) {
-        return NextResponse.json(
-          { error: 'Code OTP invalide' },
-          { status: 401 }
-        )
-      }
-
-      // OTP verified — find demo user
-      demoOtpStore.delete(normalizedPhone)
+      // Find demo user by phone
       const demoUser = findDemoUserByPhone(normalizedPhone)
 
       if (!demoUser) {
@@ -140,6 +125,7 @@ export async function PUT(request: NextRequest) {
         )
       }
 
+      demoOtpStore.delete(normalizedPhone)
       return NextResponse.json({
         success: true,
         data: {

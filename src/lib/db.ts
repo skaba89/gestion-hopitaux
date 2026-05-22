@@ -7,7 +7,9 @@ import { PrismaClient } from '@prisma/client'
 // ─────────────────────────────────────────────────────────────
 
 const currentUrl = process.env.DATABASE_URL || ''
-const isDemoMode = process.env.DEMO_MODE === 'true'
+const isDemoMode = process.env.DEMO_MODE === 'true' ||
+  // Fallback: detect demo mode when no PostgreSQL URL is available
+  ((!currentUrl.startsWith('postgresql://') && !currentUrl.startsWith('postgres://')) && process.env.NODE_ENV === 'production')
 const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build'
 const hasPostgresUrl = currentUrl.startsWith('postgresql://') || currentUrl.startsWith('postgres://')
 
@@ -38,7 +40,7 @@ function createPrismaClient(): PrismaClient {
   })
 }
 
-// Only create real Prisma client if we have a real PostgreSQL URL
+// Only create real Prisma client if we have a real PostgreSQL URL AND not in demo mode
 export const db = (hasPostgresUrl && !isDemoMode)
   ? (globalForPrisma.prisma ?? createPrismaClient())
   : createPrismaClient() // Placeholder client — won't actually connect

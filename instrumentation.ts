@@ -3,7 +3,11 @@
 // Used to ensure critical environment variables are correctly set before Prisma loads.
 
 export async function register() {
-  const isDemoMode = process.env.DEMO_MODE === 'true'
+  // Detect demo mode: either explicitly set, or no PostgreSQL URL in production
+  const dbUrl = process.env.DATABASE_URL || ''
+  const hasPostgresUrl = dbUrl.startsWith('postgresql://') || dbUrl.startsWith('postgres://')
+  const isDemoMode = process.env.DEMO_MODE === 'true' ||
+    (!hasPostgresUrl && process.env.NODE_ENV === 'production')
 
   // ─── DEMO MODE SETUP ───
   if (isDemoMode) {

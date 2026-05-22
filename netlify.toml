@@ -8,6 +8,17 @@
   NODE_ENV = "production"
   NEXT_TELEMETRY_DISABLED = "1"
 
+# Runtime environment variables for serverless functions
+# These are available in API routes at runtime (not just during build)
+[context.production.environment]
+  DEMO_MODE = "true"
+
+[context.deploy-preview.environment]
+  DEMO_MODE = "true"
+
+[context.branch-deploy.environment]
+  DEMO_MODE = "true"
+
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
