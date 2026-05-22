@@ -1,6 +1,7 @@
 # HealthFlow Guinea — Netlify Configuration
 [build]
-  command = "npm run build"
+  # Clean .next directory before build to avoid stale chunks from previous builds
+  command = "rm -rf .next && npm run build"
   publish = ".next"
 
 [build.environment]
@@ -22,7 +23,27 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
-# Security headers
+# Proper MIME type headers for static assets
+[[headers]]
+  for = "/_next/static/*.js"
+  [headers.values]
+    Content-Type = "application/javascript; charset=utf-8"
+    Cache-Control = "public, max-age=31536000, immutable"
+    X-Content-Type-Options = "nosniff"
+
+[[headers]]
+  for = "/_next/static/*.css"
+  [headers.values]
+    Content-Type = "text/css; charset=utf-8"
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/_next/static/*.wasm"
+  [headers.values]
+    Content-Type = "application/wasm"
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Security headers for all other resources
 [[headers]]
   for = "/*"
   [headers.values]
