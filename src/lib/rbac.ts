@@ -311,9 +311,33 @@ export function filterDataByRole<T extends Record<string, unknown>>(
 
 /**
  * Convert role string to HFRole type
+ * Supports both English role names (from DB/demo) and French display names
  */
 export function toHFRole(role: string): HFRole {
   const validRoles: HFRole[] = ['Administrateur', 'Médecin', 'Infirmier', 'Laborantin', 'Pharmacien', 'Secrétaire', 'ASC', 'Patient']
   if (validRoles.includes(role as HFRole)) return role as HFRole
-  return 'Patient' // Default to most restrictive
+
+  // Map English role names to French HFRole
+  const englishToFrench: Record<string, HFRole> = {
+    'ADMIN': 'Administrateur',
+    'Administrateur': 'Administrateur',
+    'DOCTOR': 'Médecin',
+    'Médecin': 'Médecin',
+    'NURSE': 'Infirmier',
+    'Infirmier': 'Infirmier',
+    'LAB_TECH': 'Laborantin',
+    'Laborantin': 'Laborantin',
+    'LABORANTIN': 'Laborantin',
+    'PHARMACIST': 'Pharmacien',
+    'Pharmacien': 'Pharmacien',
+    'SECRETARY': 'Secrétaire',
+    'Secrétaire': 'Secrétaire',
+    'ACCOUNTANT': 'Secrétaire',  // Accountant gets secretary-level access
+    'BIOLOGIST': 'Laborantin',   // Biologist gets lab tech access
+    'ASC': 'ASC',
+    'PATIENT': 'Patient',
+    'Patient': 'Patient',
+  }
+
+  return englishToFrench[role] || 'Patient' // Default to most restrictive
 }
