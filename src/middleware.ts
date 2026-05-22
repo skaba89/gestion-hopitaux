@@ -1,8 +1,7 @@
-// HealthFlow Guinea - Security Middleware (Hardened v2)
-// SEC-02 FIX: CORS restricted to allowed origins (no wildcard)
-// SEC-06 FIX: CSRF protection with origin checking + custom header pattern
-// SEC-08 FIX: Tightened CSP (removed unsafe-inline/unsafe-eval)
-// Rate limiting, security headers
+// HealthFlow Guinea - Security Middleware (Netlify-compatible)
+// FIX: Production CSP now allows 'unsafe-inline' for scripts (required by Next.js)
+// FIX: Redis import is guarded — uses in-memory fallback when Redis is unavailable
+// FIX: Demo mode relaxes some security checks for a smoother experience
 
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
@@ -32,38 +31,20 @@ const ALLOWED_SUBDOMAINS = [
   '.netlify.app',          // Netlify deployments
 ]
 
-// In development, also allow .space.chatglm.site subdomains
 function isAllowedOrigin(origin: string): boolean {
   if (ALLOWED_ORIGINS.includes(origin)) return true
-  // Allow recognized subdomains (always, not just in dev)
+  // Allow recognized subdomains
   for (const subdomain of ALLOWED_SUBDOMAINS) {
     if (origin.includes(subdomain)) return true
   }
   // Also check for http variants of preview URLs
   if (origin.match(/^https?:\/\/[^/]+\.space\.chatglm\.site/)) return true
+  if (origin.match(/^https?:\/\/[^/]+\.netlify\.app/)) return true
   return false
 }
 
-// ─────────── Rate Limiting (Redis-backed with in-memory fallback) ───────────
+// ─────────── In-memory Rate Limiting (always available) ───────────
 
-import { getRedis, RedisRateLimiter } from '@/lib/redis'
-
-let middlewareRateLimiter: RedisRateLimiter | null = null
-
-async function checkRateLimit(key: string, maxRequests: number, windowMs: number): Promise<boolean> {
-  try {
-    if (!middlewareRateLimiter) {
-      middlewareRateLimiter = new RedisRateLimiter()
-    }
-    const result = await middlewareRateLimiter.check(key, maxRequests, Math.ceil(windowMs / 1000))
-    return result.allowed
-  } catch {
-    // Fallback to in-memory if Redis is unavailable
-    return checkRateLimitMemory(key, maxRequests, windowMs)
-  }
-}
-
-// In-memory fallback
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>()
 
 function checkRateLimitMemory(key: string, maxRequests: number, windowMs: number): boolean {
@@ -83,7 +64,21 @@ function checkRateLimitMemory(key: string, maxRequests: number, windowMs: number
   return true
 }
 
-// Clean up old rate limit entries periodically (memory fallback only)
+// Optional Redis rate limiter — gracefully falls back to in-memory
+async function checkRateLimit(key: string, maxRequests: number, windowMs: number): Promise<boolean> {
+  try {
+    // Try to use Redis-backed rate limiter if available
+    const { RedisRateLimiter } = await import('@/lib/redis')
+    const limiter = new RedisRateLimiter()
+    const result = await limiter.check(key, maxRequests, Math.ceil(windowMs / 1000))
+    return result.allowed
+  } catch {
+    // Redis unavailable — use in-memory fallback
+    return checkRateLimitMemory(key, maxRequests, windowMs)
+  }
+}
+
+// Clean up old rate limit entries periodically
 if (typeof globalThis !== 'undefined') {
   setInterval(() => {
     const now = Date.now()
@@ -99,25 +94,28 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const response = NextResponse.next()
 
+  // Detect demo mode
+  const isDemoMode = process.env.DEMO_MODE === 'true'
+
   // ─── Security Headers ───
-  response.headers.set('X-Frame-Options', 'DENY')
+  response.headers.set('X-Frame-Options', 'SAMEORIGIN')
   response.headers.set('X-Content-Type-Options', 'nosniff')
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
   response.headers.set('X-XSS-Protection', '0') // Deprecated, CSP is better
   response.headers.set('Permissions-Policy', 'camera=(self), microphone=(self), geolocation=(self)')
 
-  // SEC-08 FIX: Tightened Content Security Policy
-  // In development: relax CSP for Turbopack HMR (inline scripts, eval, WebSocket)
-  // In production: strict CSP with nonce-based script loading
+  // ─── Content Security Policy ───
+  // Next.js requires 'unsafe-inline' for scripts because it generates inline
+  // <script> tags for hydration, chunk loading, and runtime configuration.
+  // Nonce-based CSP doesn't work reliably with Next.js SSR/SSG on Netlify.
   const isDev = process.env.NODE_ENV === 'development'
-  
+
   // CSP: Use permissive policy that works with Next.js SSR and Netlify
   // Nonce-based CSP does NOT work with Next.js (nonces can't be injected into script tags)
   // In demo mode on Netlify, we need unsafe-inline for React hydration + dynamic imports
-  const isDemo = process.env.DEMO_MODE === 'true'
   const csp = [
     "default-src 'self'",
-    isDemo
+    isDemoMode
       ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"  // Demo mode: permissive for Netlify
       : (isDev
           ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"  // Dev: needed for Turbopack HMR
@@ -165,11 +163,11 @@ export async function middleware(request: NextRequest) {
   // ─── SEC-02 FIX: CORS for API Routes ───
   if (pathname.startsWith('/api/')) {
     const origin = request.headers.get('origin')
-    
+
     // Handle preflight requests
     if (request.method === 'OPTIONS') {
       const preflightResponse = new Response(null, { status: 204 })
-      
+
       if (origin && isAllowedOrigin(origin)) {
         preflightResponse.headers.set('Access-Control-Allow-Origin', origin)
         preflightResponse.headers.set('Access-Control-Allow-Credentials', 'true')
@@ -181,8 +179,7 @@ export async function middleware(request: NextRequest) {
         preflightResponse.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS')
         preflightResponse.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-CSRF-Token, X-Requested-With')
       }
-      // If origin is present but not allowed: NO CORS headers = browser blocks it
-      
+
       return preflightResponse
     }
 
@@ -192,10 +189,9 @@ export async function middleware(request: NextRequest) {
       response.headers.set('Access-Control-Allow-Credentials', 'true')
       response.headers.set('Vary', 'Origin')
     }
-    // NO wildcard (*) - rejected origins get no CORS headers = blocked by browser
 
     // ─── Rate Limiting on API Routes (skip Redis in demo mode to avoid timeouts) ───
-    if (process.env.DEMO_MODE !== 'true') {
+    if (!isDemoMode) {
       const clientIp = request.headers.get('x-forwarded-for') ||
                        request.headers.get('x-real-ip') ||
                        'unknown'
@@ -219,6 +215,30 @@ export async function middleware(request: NextRequest) {
           )
         }
       }
+    } else {
+      // In demo mode, use higher rate limits to avoid blocking demo users
+      const clientIp = request.headers.get('x-forwarded-for') ||
+                       request.headers.get('x-real-ip') ||
+                       'unknown'
+
+      const rateLimitKey = `api:${clientIp}`
+      if (!await checkRateLimit(rateLimitKey, 300, 60000)) {
+        return NextResponse.json(
+          { error: 'Trop de requêtes. Veuillez réessayer plus tard.' },
+          { status: 429 }
+        )
+      }
+
+      // Stricter rate limit for auth endpoints
+      if (pathname.startsWith('/api/auth/')) {
+        const authRateLimitKey = `auth:${clientIp}`
+        if (!await checkRateLimit(authRateLimitKey, 30, 60000)) {
+          return NextResponse.json(
+            { error: 'Trop de tentatives. Veuillez réessayer plus tard.' },
+            { status: 429 }
+          )
+        }
+      }
     }
 
     // Exempt CSRF token endpoint from CSRF check
@@ -226,58 +246,39 @@ export async function middleware(request: NextRequest) {
       return response
     }
 
-    // ─── CSRF Protection (SEC-06 FIX: Always active for mutating requests) ───
+    // ─── CSRF Protection (relaxed in demo mode) ───
     if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method)) {
-      const reqOrigin = request.headers.get('origin')
-      const host = request.headers.get('host')
+      // In demo mode, skip CSRF checks to avoid blocking demo logins
+      // The sign-in page now handles demo auth client-side anyway
+      if (!isDemoMode) {
+        const reqOrigin = request.headers.get('origin')
+        const host = request.headers.get('host')
 
-      // Strategy 1: Origin header validation
-      if (reqOrigin && host) {
-        try {
-          const originHost = new URL(reqOrigin).host
-          if (originHost !== host) {
-            // SEC-02 FIX: Also check against allowed origins list
-            if (!isAllowedOrigin(reqOrigin)) {
-              return NextResponse.json(
-                { error: 'Requête non autorisée (CSRF/CORS)' },
-                { status: 403 }
-              )
-            }
-          }
-        } catch {
-          return NextResponse.json(
-            { error: 'Requête non autorisée' },
-            { status: 403 }
-          )
-        }
-      }
-      
-      // Strategy 2: Custom request header pattern (for non-browser clients)
-      const hasCustomHeader = request.headers.get('x-requested-with') || 
-                             request.headers.get('x-csrf-token')
-      if (!reqOrigin && !hasCustomHeader) {
-        // In demo mode, relax CSRF checks for easier testing on Netlify
-        if (process.env.DEMO_MODE === 'true') {
-          // Allow same-host requests without origin header in demo mode
-          const referer = request.headers.get('referer')
-          if (!referer || (host && referer.includes(host))) {
-            // Likely same-origin request - allow
-          } else {
-            // Cross-origin without origin header - still check
-            try {
-              const refererOrigin = new URL(referer).origin
-              if (!isAllowedOrigin(refererOrigin)) {
+        // Strategy 1: Origin header validation
+        if (reqOrigin && host) {
+          try {
+            const originHost = new URL(reqOrigin).host
+            if (originHost !== host) {
+              // SEC-02 FIX: Also check against allowed origins list
+              if (!isAllowedOrigin(reqOrigin)) {
                 return NextResponse.json(
-                  { error: 'Requête non autorisée (CSRF)' },
+                  { error: 'Requête non autorisée (CSRF/CORS)' },
                   { status: 403 }
                 )
               }
-            } catch {
-              // Invalid referer - allow in demo mode
             }
+          } catch {
+            return NextResponse.json(
+              { error: 'Requête non autorisée' },
+              { status: 403 }
+            )
           }
-        } else {
-          // Production mode: strict CSRF checks
+        }
+
+        // Strategy 2: Custom request header pattern (for non-browser clients)
+        const hasCustomHeader = request.headers.get('x-requested-with') ||
+                               request.headers.get('x-csrf-token')
+        if (!reqOrigin && !hasCustomHeader) {
           const referer = request.headers.get('referer')
           if (referer) {
             try {
@@ -286,17 +287,19 @@ export async function middleware(request: NextRequest) {
                 // Same-origin request (referer matches host) - allow
               } else if (isAllowedOrigin(new URL(referer).origin)) {
                 // Referer from allowed origin - allow
-              } else {
+              } else if (process.env.NODE_ENV === 'production') {
                 return NextResponse.json(
                   { error: 'Requête non autorisée (CSRF)' },
                   { status: 403 }
                 )
               }
             } catch {
-              return NextResponse.json(
-                { error: 'Requête non autorisée' },
-                { status: 403 }
-              )
+              if (process.env.NODE_ENV === 'production') {
+                return NextResponse.json(
+                  { error: 'Requête non autorisée' },
+                  { status: 403 }
+                )
+              }
             }
           } else if (process.env.NODE_ENV === 'production') {
             // No origin, no custom header, no referer in production - block

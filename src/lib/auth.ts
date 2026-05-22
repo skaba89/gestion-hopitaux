@@ -10,7 +10,7 @@ import { verifyOtp } from '@/lib/otp-service'
 import { normalizeGuineaPhone } from '@/lib/sms-provider'
 
 // SEC-07 FIX: Fail fast if NEXTAUTH_SECRET is not set in production
-if (!process.env.NEXTAUTH_SECRET && process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE !== 'phase-production-build') {
+if (!process.env.NEXTAUTH_SECRET && process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE !== 'phase-production-build' && process.env.DEMO_MODE !== 'true') {
   throw new Error(
     '[SECURITY] NEXTAUTH_SECRET environment variable is required in production. ' +
     'Generate one with: openssl rand -base64 32'
@@ -318,11 +318,13 @@ export const authOptions: NextAuthOptions = {
     },
   },
 
-  // SEC-07 FIX: In development, use a warning fallback. In production, MUST be set via env.
+  // SEC-07 FIX: In development/demo, use a warning fallback. In production, MUST be set via env.
   secret: process.env.NEXTAUTH_SECRET || (
-    process.env.NODE_ENV === 'development'
-      ? 'healthflow-dev-only-secret-DO-NOT-USE-IN-PRODUCTION'
-      : undefined
+    process.env.DEMO_MODE === 'true'
+      ? 'healthflow-guinea-demo-nextauth-secret-NOT-FOR-PRODUCTION'
+      : process.env.NODE_ENV === 'development'
+        ? 'healthflow-dev-only-secret-DO-NOT-USE-IN-PRODUCTION'
+        : undefined
   ),
 
   debug: process.env.NODE_ENV === 'development',

@@ -9,6 +9,7 @@ import { QueryProvider } from '@/lib/query-provider'
 import { PWARegistrar } from '@/components/app/pwa-registrar'
 import { demoVideoSessions } from '@/lib/telemedicine'
 import { useAuthStore } from '@/lib/auth-store'
+import { roleDisplayNames } from '@/lib/demo-users'
 
 // Lazy-load sign-in page
 const SignInPage = dynamic(() => import('@/components/auth/sign-in-page').then(m => ({ default: m.SignInPage })))
@@ -184,8 +185,25 @@ const viewComponents: Record<AppView, React.ComponentType> = {
 }
 
 function AppContent() {
-  const { currentView } = useStore()
-  const { isAuthenticated } = useAuthStore()
+  const { currentView, updateUser } = useStore()
+  const { isAuthenticated, user: authUser } = useAuthStore()
+
+  // Sync auth user data to app store on mount / when auth changes.
+  // The auth store (useAuthStore) persists user data via localStorage,
+  // but the app store (useStore) does NOT persist. After page refresh,
+  // the app store's user has empty strings. This sync ensures the
+  // sidebar and header show correct user info after refresh.
+  React.useEffect(() => {
+    if (isAuthenticated && authUser) {
+      updateUser({
+        name: authUser.name,
+        role: roleDisplayNames[authUser.role] || authUser.role,
+        establishment: 'Hôpital National Donka',
+        email: authUser.email,
+        phone: authUser.phone,
+      })
+    }
+  }, [isAuthenticated, authUser, updateUser])
 
   // Auth guard: show sign-in page if not authenticated
   if (!isAuthenticated) {

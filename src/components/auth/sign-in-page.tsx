@@ -12,7 +12,10 @@ import { Label } from '@/components/ui/label'
 import { OTPInput } from '@/components/auth/otp-input'
 import { useAuthStore } from '@/lib/auth-store'
 import { useStore } from '@/lib/store'
-import { demoUsers, roleDisplayNames, roleColors } from '@/lib/demo-users'
+import {
+  demoUsers, roleDisplayNames, roleColors,
+  isDemoModeClient, findDemoUser, findDemoUserByPhone, generateDemoToken,
+} from '@/lib/demo-users'
 import { useTranslation } from '@/i18n/provider'
 
 type LoginTab = 'email' | 'phone'
@@ -41,6 +44,9 @@ export function SignInPage() {
   const { login } = useAuthStore()
   const { updateUser } = useStore()
 
+  // Whether we should bypass API routes and authenticate client-side only
+  const demoMode = isDemoModeClient()
+
   // Countdown timer for OTP resend
   useEffect(() => {
     if (countdown > 0) {
@@ -57,6 +63,28 @@ export function SignInPage() {
     }
   }, [otp, phoneLoading])
 
+  // ─── Helper: complete login after user is identified ───
+  const completeLogin = useCallback((demoUser: typeof demoUsers[0]) => {
+    const token = generateDemoToken(demoUser.id, demoUser.role)
+
+    login({
+      id: demoUser.id,
+      name: `${demoUser.firstName} ${demoUser.lastName}`,
+      email: demoUser.email,
+      phone: demoUser.phone,
+      role: demoUser.role,
+      establishmentId: demoUser.establishmentId,
+    }, token) // CRITICAL: Pass the token!
+
+    updateUser({
+      name: `${demoUser.firstName} ${demoUser.lastName}`,
+      role: roleDisplayNames[demoUser.role] || demoUser.role,
+      establishment: demoUser.establishmentName || 'Hôpital Donka',
+      email: demoUser.email,
+      phone: demoUser.phone,
+    })
+  }, [login, updateUser])
+
   // ─── Email + Password Login ───
   const handleEmailLogin = useCallback(async () => {
     if (!email || !password) {
@@ -68,6 +96,20 @@ export function SignInPage() {
     setEmailError(null)
 
     try {
+      // ── DEMO MODE: Client-side authentication (no API call needed) ──
+      if (demoMode) {
+        const demoUser = findDemoUser(email, password)
+
+        if (!demoUser) {
+          setEmailError('Identifiants invalides')
+          return
+        }
+
+        completeLogin(demoUser)
+        return
+      }
+
+      // ── PRODUCTION MODE: Server-side authentication ──
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
@@ -92,7 +134,7 @@ export function SignInPage() {
         phone: user.phone || '',
         role: user.role,
         establishmentId: user.establishmentId || '',
-      })
+      }, result.token) // FIX: Pass the server-issued JWT token!
 
       updateUser({
         name: user.name,
@@ -106,7 +148,7 @@ export function SignInPage() {
     } finally {
       setEmailLoading(false)
     }
-  }, [email, password, login, updateUser])
+  }, [email, password, login, updateUser, demoMode, completeLogin])
 
   // ─── Phone + OTP Login ───
   const handleSendOtp = useCallback(async () => {
@@ -120,6 +162,24 @@ export function SignInPage() {
 
     try {
       const normalizedPhone = `+224${phone.replace(/\D/g, '').slice(-9)}`
+
+      // ── DEMO MODE: Client-side OTP (no API call) ──
+      if (demoMode) {
+        // Check if phone matches a demo user
+        const demoUser = findDemoUserByPhone(normalizedPhone)
+        if (!demoUser) {
+          setPhoneError('Numéro non enregistré en mode démo')
+          return
+        }
+
+        setPhoneStep('otp')
+        setCountdown(60)
+        // Auto-fill the demo OTP after 500ms
+        setTimeout(() => setOtp('123456'), 500)
+        return
+      }
+
+      // ── PRODUCTION MODE ──
       const response = await fetch('/api/auth/otp', {
         method: 'POST',
         headers: {
@@ -148,7 +208,7 @@ export function SignInPage() {
     } finally {
       setPhoneLoading(false)
     }
-  }, [phone])
+  }, [phone, demoMode])
 
   const doVerifyOtp = async (code: string) => {
     if (code.length !== 6) {
@@ -161,6 +221,27 @@ export function SignInPage() {
 
     try {
       const normalizedPhone = `+224${phone.replace(/\D/g, '').slice(-9)}`
+
+      // ── DEMO MODE: Client-side OTP verification ──
+      if (demoMode) {
+        if (code !== '123456') {
+          setPhoneError('Code OTP invalide')
+          setOtp('')
+          return
+        }
+
+        const demoUser = findDemoUserByPhone(normalizedPhone)
+        if (!demoUser) {
+          setPhoneError('Numéro non enregistré en mode démo')
+          setOtp('')
+          return
+        }
+
+        completeLogin(demoUser)
+        return
+      }
+
+      // ── PRODUCTION MODE ──
       const response = await fetch('/api/auth/otp', {
         method: 'PUT',
         headers: {
@@ -186,7 +267,7 @@ export function SignInPage() {
         phone: user.phone,
         role: user.role,
         establishmentId: user.establishmentId,
-      })
+      }, result.token) // FIX: Pass the server-issued JWT token!
 
       updateUser({
         name: user.name,
@@ -210,6 +291,13 @@ export function SignInPage() {
     setEmailError(null)
 
     try {
+      // ── DEMO MODE: Client-side authentication (instant, no API call) ──
+      if (demoMode) {
+        completeLogin(demoUser)
+        return
+      }
+
+      // ── PRODUCTION MODE: Still use the API for demo accounts ──
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
@@ -234,7 +322,7 @@ export function SignInPage() {
         phone: user.phone,
         role: user.role,
         establishmentId: user.establishmentId,
-      })
+      }, result.token) // FIX: Pass the token!
 
       updateUser({
         name: user.name,
@@ -248,7 +336,7 @@ export function SignInPage() {
     } finally {
       setEmailLoading(false)
     }
-  }, [login, updateUser])
+  }, [login, updateUser, demoMode, completeLogin])
 
   const formatPhoneDisplay = (value: string) => {
     const digits = value.replace(/\D/g, '').slice(-9)
@@ -305,6 +393,9 @@ export function SignInPage() {
           <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
             <span className="px-2 py-1 rounded bg-teal-100 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 font-medium">v2.0</span>
             <span>DataSphere Innovation</span>
+            {demoMode && (
+              <span className="px-2 py-1 rounded bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 font-medium">Démo</span>
+            )}
           </div>
         </motion.div>
 
@@ -328,6 +419,13 @@ export function SignInPage() {
             </div>
 
             <div className="p-6 space-y-5">
+              {/* Demo Mode Banner */}
+              {demoMode && (
+                <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-sm text-amber-700 dark:text-amber-400 text-center">
+                  Mode Démonstration — Cliquez sur un compte ci-dessous pour vous connecter
+                </div>
+              )}
+
               {/* Tab Switcher */}
               <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
                 <button

@@ -1,5 +1,6 @@
 // HealthFlow Africa - API Client
 // Centralized HTTP client with auth, error handling, and offline support
+// FIX: In demo mode, don't auto-logout on 401 (demo routes may not exist)
 
 import { useAuthStore } from '@/lib/auth-store'
 
@@ -30,6 +31,11 @@ interface RequestOptions extends RequestInit {
 const DEFAULT_TIMEOUT = 30000
 const MAX_RETRIES = 2
 
+function isDemoModeClient(): boolean {
+  if (typeof window === 'undefined') return false
+  return process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
+}
+
 class ApiClient {
   private baseUrl: string
 
@@ -51,7 +57,6 @@ class ApiClient {
     }
 
     // CSRF protection: add X-Requested-With header for mutating requests
-    // This allows the server middleware to distinguish AJAX from form submissions
     if (method && ['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
       headers['X-Requested-With'] = 'XMLHttpRequest'
     }
@@ -108,7 +113,10 @@ class ApiClient {
 
       if (!response.ok) {
         // Handle 401 - session expired
-        if (response.status === 401 && typeof window !== 'undefined') {
+        // FIX: In demo mode, don't auto-logout on 401 — demo API routes may not exist
+        // or may return 401 for routes that aren't implemented for demo mode.
+        // The client-side demo flow doesn't depend on API routes at all.
+        if (response.status === 401 && typeof window !== 'undefined' && !isDemoModeClient()) {
           useAuthStore.getState().logout()
         }
 

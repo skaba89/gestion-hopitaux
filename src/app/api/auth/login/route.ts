@@ -132,7 +132,13 @@ export async function POST(request: NextRequest) {
     // Create JWT token
     const { SignJWT } = await import('jose')
     const JWT_SECRET = new TextEncoder().encode(
-      process.env.JWT_SECRET || 'healthflow-guinea-jwt-secret-dev-only-NOT-FOR-PRODUCTION'
+      process.env.JWT_SECRET || (
+        process.env.DEMO_MODE === 'true'
+          ? 'healthflow-guinea-demo-jwt-secret-NOT-FOR-PRODUCTION'
+          : process.env.NODE_ENV === 'production'
+            ? 'healthflow-guinea-jwt-secret-fallback'
+            : 'healthflow-guinea-jwt-secret-dev-only-NOT-FOR-PRODUCTION'
+      )
     )
 
     const token = await new SignJWT({

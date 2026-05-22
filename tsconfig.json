@@ -42,6 +42,7 @@
     "examples",
     "agent-ctx",
     "download",
+    "gestion-hopitaux",
     "jest.config.ts",
     "prisma/seed.ts",
     "src/test/**",

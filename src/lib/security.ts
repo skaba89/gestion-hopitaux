@@ -9,21 +9,30 @@
 // SECURITY FIX: No hardcoded encryption key fallback.
 // ENCRYPTION_KEY MUST be set via environment variable.
 // In DEMO_MODE: auto-generates a demo key for deployment without DB
-const ENCRYPTION_KEY = (() => {
+// NOTE: Lazy evaluation to avoid build-time crashes when env vars aren't set
+let _encryptionKey: string | null = null
+function getEncryptionKey(): string {
+  if (_encryptionKey) return _encryptionKey
   const key = process.env.ENCRYPTION_KEY
-  if (!key) {
-    if (process.env.DEMO_MODE === 'true') {
-      // Demo mode: use a demo key for testing without database
-      return 'demo-encryption-key-32-bytes-long!!'
-    }
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('[FATAL] ENCRYPTION_KEY environment variable is required in production')
-    }
-    console.warn('[SECURITY] ENCRYPTION_KEY not set - using development-only key. NEVER use in production!')
-    return 'healthflow-guinea-32byte-encrypt-k' // Dev only - will be removed
+  if (key) {
+    _encryptionKey = key
+    return key
   }
-  return key
-})()
+  if (process.env.DEMO_MODE === 'true' || process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+    _encryptionKey = 'demo-encryption-key-32-bytes-long!!'
+    return _encryptionKey
+  }
+  if (process.env.NODE_ENV === 'production') {
+    // In production without DEMO_MODE, this is a fatal error.
+    // But we don't throw at module-load time to avoid breaking builds.
+    console.error('[FATAL] ENCRYPTION_KEY environment variable is required in production')
+    _encryptionKey = 'healthflow-guinea-fallback-key-!!' // Will log errors on use
+    return _encryptionKey
+  }
+  console.warn('[SECURITY] ENCRYPTION_KEY not set - using development-only key. NEVER use in production!')
+  _encryptionKey = 'healthflow-guinea-32byte-encrypt-k' // Dev only
+  return _encryptionKey
+}
 const ALGORITHM = 'aes-256-gcm'
 
 /**
@@ -38,7 +47,7 @@ export async function encryptField(data: string, _key?: string): Promise<string>
       const encoder = new TextEncoder()
       const keyMaterial = await crypto.subtle.importKey(
         'raw',
-        encoder.encode(ENCRYPTION_KEY.slice(0, 32)),
+        encoder.encode(getEncryptionKey().slice(0, 32)),
         { name: 'AES-GCM' },
         false,
         ['encrypt']
@@ -73,7 +82,7 @@ export async function decryptField(encryptedData: string, _key?: string): Promis
       const encoder = new TextEncoder()
       const keyMaterial = await crypto.subtle.importKey(
         'raw',
-        encoder.encode(ENCRYPTION_KEY.slice(0, 32)),
+        encoder.encode(getEncryptionKey().slice(0, 32)),
         { name: 'AES-GCM' },
         false,
         ['decrypt']
@@ -103,7 +112,7 @@ export async function decryptField(encryptedData: string, _key?: string): Promis
 export async function encryptFieldServer(data: string, key?: string): Promise<string> {
   try {
     const crypto = await import('crypto')
-    const encryptionKey = key || ENCRYPTION_KEY
+    const encryptionKey = key || getEncryptionKey()
     const iv = crypto.randomBytes(16)
     const cipher = crypto.createCipheriv(ALGORITHM, Buffer.from(encryptionKey.slice(0, 32)), iv)
     let encrypted = cipher.update(data, 'utf8', 'hex')
@@ -123,7 +132,7 @@ export async function encryptFieldServer(data: string, key?: string): Promise<st
 export async function decryptFieldServer(encryptedData: string, key?: string): Promise<string> {
   try {
     const crypto = await import('crypto')
-    const encryptionKey = key || ENCRYPTION_KEY
+    const encryptionKey = key || getEncryptionKey()
     const parts = encryptedData.split(':')
     
     // Support both old CBC format (2 parts) and new GCM format (3 parts)

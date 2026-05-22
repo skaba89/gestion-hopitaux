@@ -159,3 +159,32 @@ export function isDemoMode(): boolean {
   if (!hasPostgres && process.env.NODE_ENV === 'production') return true
   return false
 }
+
+/**
+ * Check if we're running in demo mode (client-side)
+ * Uses NEXT_PUBLIC_DEMO_MODE which is exposed via next.config.ts env
+ */
+export function isDemoModeClient(): boolean {
+  if (typeof window !== 'undefined') {
+    return process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
+  }
+  return isDemoMode()
+}
+
+/**
+ * Generate a demo JWT-like token for client-side demo mode.
+ * This is NOT a real JWT — it's a placeholder that lets the api-client
+ * include an Authorization header so demo API routes don't reject the request.
+ * In production, real JWTs are generated server-side via jose.
+ */
+export function generateDemoToken(userId: string, role: string): string {
+  // Simple base64-encoded JSON — just enough for the server to identify demo requests
+  const payload = {
+    sub: userId,
+    role,
+    demo: true,
+    iat: Date.now(),
+    exp: Date.now() + 12 * 60 * 60 * 1000, // 12 hours
+  }
+  return `demo.${btoa(JSON.stringify(payload))}`
+}

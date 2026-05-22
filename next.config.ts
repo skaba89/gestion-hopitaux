@@ -3,6 +3,8 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // "standalone" output removed — incompatible with Netlify's @netlify/plugin-nextjs
   // Netlify plugin handles serverless function generation automatically
+  // Use webpack instead of Turbopack for production builds (Turbopack has issues with ioredis)
+  // Turbopack is still used for dev via `next dev`
   typescript: {
     ignoreBuildErrors: false,
   },
@@ -18,6 +20,11 @@ const nextConfig: NextConfig = {
     'canvas',
     'sharp',
   ],
+  // Expose DEMO_MODE to client-side code so the UI can detect demo mode
+  env: {
+    NEXT_PUBLIC_DEMO_MODE: process.env.DEMO_MODE || '',
+  },
+
   async headers() {
     return [
       {
