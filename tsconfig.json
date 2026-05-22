@@ -44,6 +44,7 @@
     "download",
     "jest.config.ts",
     "prisma/seed.ts",
+    "src/test/**",
     "**/__tests__/**",
     "**/__mocks__/**"
   ]
