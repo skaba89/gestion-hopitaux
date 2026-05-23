@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { extractPrescriptionData } from '@/lib/smart-hospital/prescription-ocr'
-import { auditExportMedicalData } from '@/lib/audit'
+import { auditEvent, getRequestAuditContext } from '@/lib/audit'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,10 +18,17 @@ export async function POST(request: NextRequest) {
 
     const extraction = extractPrescriptionData(rawText)
 
-    await auditExportMedicalData({
-      request,
+    await auditEvent({
+      ...getRequestAuditContext(request),
+      action: 'PRESCRIPTION_OCR_ANALYSIS',
+      module: 'smart-hospital',
       entity: 'PrescriptionOCR',
       description: 'Analyse OCR d’une ordonnance médicale',
+      severity: 'INFO',
+      newValue: {
+        medicationCount: extraction.medications.length,
+        hasPatientName: Boolean(extraction.patientName),
+      },
     })
 
     return NextResponse.json({
