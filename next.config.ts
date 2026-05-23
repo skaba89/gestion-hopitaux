@@ -1,8 +1,13 @@
 import type { NextConfig } from "next";
 
+const isNetlifyBuild = process.env.NETLIFY === "true" || Boolean(process.env.NETLIFY_BUILD_BASE);
+
 const nextConfig: NextConfig = {
-  // "standalone" output removed — incompatible with Netlify's @netlify/plugin-nextjs
-  // Netlify plugin handles serverless function generation automatically
+  // Docker/VM deployments need the standalone server generated under .next/standalone.
+  // Netlify must keep the default output because @netlify/plugin-nextjs generates
+  // the required serverless functions itself.
+  ...(isNetlifyBuild ? {} : { output: "standalone" as const }),
+
   // Use webpack instead of Turbopack for production builds (Turbopack has issues with ioredis)
   // Turbopack is still used for dev via `next dev`
   typescript: {
