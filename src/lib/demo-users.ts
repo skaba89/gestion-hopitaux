@@ -1,10 +1,9 @@
-// HealthFlow Guinea — Demo Users for DEMO_MODE
-// These accounts work without any database connection.
+// HealthFlow Guinea — Public demo users for DEMO_MODE
+// No password or private secret must be stored in this client-importable file.
 
 export interface DemoUser {
   id: string
   email: string
-  password: string
   phone: string
   firstName: string
   lastName: string
@@ -18,7 +17,6 @@ export const demoUsers: DemoUser[] = [
   {
     id: 'demo-admin-001',
     email: 'admin@healthflow-gn.com',
-    password: 'Admin123!',
     phone: '+224622000001',
     firstName: 'Mamadou',
     lastName: 'Bah',
@@ -29,7 +27,6 @@ export const demoUsers: DemoUser[] = [
   {
     id: 'demo-doctor-001',
     email: 'dr.bah@healthflow-gn.com',
-    password: 'Doctor123!',
     phone: '+224622000002',
     firstName: 'Abdoulaye',
     lastName: 'Bah',
@@ -40,7 +37,6 @@ export const demoUsers: DemoUser[] = [
   {
     id: 'demo-nurse-001',
     email: 'inf.sow@healthflow-gn.com',
-    password: 'Nurse123!',
     phone: '+224622000003',
     firstName: 'Mariama',
     lastName: 'Sow',
@@ -51,7 +47,6 @@ export const demoUsers: DemoUser[] = [
   {
     id: 'demo-pharmacist-001',
     email: 'pharma.toure@healthflow-gn.com',
-    password: 'Pharma123!',
     phone: '+224622000004',
     firstName: 'Ibrahima',
     lastName: 'Touré',
@@ -62,7 +57,6 @@ export const demoUsers: DemoUser[] = [
   {
     id: 'demo-lab-001',
     email: 'lab.camara@healthflow-gn.com',
-    password: 'Lab123!',
     phone: '+224622000005',
     firstName: 'Fatoumata',
     lastName: 'Camara',
@@ -73,7 +67,6 @@ export const demoUsers: DemoUser[] = [
   {
     id: 'demo-secretary-001',
     email: 'reception.cisse@healthflow-gn.com',
-    password: 'Reception123!',
     phone: '+224622000006',
     firstName: 'Aissatou',
     lastName: 'Cissé',
@@ -84,7 +77,6 @@ export const demoUsers: DemoUser[] = [
   {
     id: 'demo-accountant-001',
     email: 'compta.keita@healthflow-gn.com',
-    password: 'Compta123!',
     phone: '+224622000007',
     firstName: 'Ousmane',
     lastName: 'Keita',
@@ -95,7 +87,6 @@ export const demoUsers: DemoUser[] = [
   {
     id: 'demo-biologist-001',
     email: 'bio.diallo@healthflow-gn.com',
-    password: 'Bio123!',
     phone: '+224622000008',
     firstName: 'Thierno',
     lastName: 'Diallo',
@@ -105,7 +96,6 @@ export const demoUsers: DemoUser[] = [
   },
 ]
 
-// Map role to display name in French
 export const roleDisplayNames: Record<string, string> = {
   ADMIN: 'Administrateur',
   DOCTOR: 'Médecin',
@@ -117,7 +107,6 @@ export const roleDisplayNames: Record<string, string> = {
   BIOLOGIST: 'Biologiste',
 }
 
-// Map role to icon color for UI
 export const roleColors: Record<string, string> = {
   ADMIN: 'from-purple-500 to-indigo-600',
   DOCTOR: 'from-teal-500 to-emerald-600',
@@ -130,15 +119,13 @@ export const roleColors: Record<string, string> = {
 }
 
 /**
- * Find a demo user by email and password
+ * Demo login is intentionally passwordless because demo accounts are public.
+ * Production authentication must always go through server-side auth routes.
  */
-export function findDemoUser(email: string, password: string): DemoUser | null {
-  return demoUsers.find(u => u.email === email && u.password === password) || null
+export function findDemoUser(email: string, _password?: string): DemoUser | null {
+  return demoUsers.find(u => u.email.toLowerCase() === email.toLowerCase()) || null
 }
 
-/**
- * Find a demo user by phone number
- */
 export function findDemoUserByPhone(phone: string): DemoUser | null {
   const normalized = phone.replace(/\D/g, '')
   return demoUsers.find(u => {
@@ -147,23 +134,14 @@ export function findDemoUserByPhone(phone: string): DemoUser | null {
   }) || null
 }
 
-/**
- * Check if we're running in demo mode
- * Also detects demo mode when DATABASE_URL is missing (Netlify runtime may not have DEMO_MODE set)
- */
 export function isDemoMode(): boolean {
   if (process.env.DEMO_MODE === 'true') return true
-  // Fallback: if no PostgreSQL URL is available, we're in demo mode
   const dbUrl = process.env.DATABASE_URL || ''
   const hasPostgres = dbUrl.startsWith('postgresql://') || dbUrl.startsWith('postgres://')
   if (!hasPostgres && process.env.NODE_ENV === 'production') return true
   return false
 }
 
-/**
- * Check if we're running in demo mode (client-side)
- * Uses NEXT_PUBLIC_DEMO_MODE which is exposed via next.config.ts env
- */
 export function isDemoModeClient(): boolean {
   if (typeof window !== 'undefined') {
     return process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
@@ -171,20 +149,13 @@ export function isDemoModeClient(): boolean {
   return isDemoMode()
 }
 
-/**
- * Generate a demo JWT-like token for client-side demo mode.
- * This is NOT a real JWT — it's a placeholder that lets the api-client
- * include an Authorization header so demo API routes don't reject the request.
- * In production, real JWTs are generated server-side via jose.
- */
 export function generateDemoToken(userId: string, role: string): string {
-  // Simple base64-encoded JSON — just enough for the server to identify demo requests
   const payload = {
     sub: userId,
     role,
     demo: true,
     iat: Date.now(),
-    exp: Date.now() + 12 * 60 * 60 * 1000, // 12 hours
+    exp: Date.now() + 12 * 60 * 60 * 1000,
   }
   return `demo.${btoa(JSON.stringify(payload))}`
 }
